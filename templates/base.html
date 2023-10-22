@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+
+{% include 'head.html' %}
+
+{% include 'header.html' %}
+
+<title>
+    {% block title %}
+    {% block subtitle %}
+    {% endblock %}・Dot Website
+    {% endblock %}
+</title>
+
+<body style="background-color: #F8F8FF;">
+
+<div class="container">
+    <div class="row">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+                {% block breadcrumb %}
+                {% endblock %}
+            </ol>
+        </nav>
+    </div>
+</div>
+
+{% block body %}
+{% block sub_body %}
+{% endblock %}
+{% endblock %}
+</body>
+
+{% include 'footer.html' %}
+</html>
