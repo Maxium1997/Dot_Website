@@ -11,19 +11,23 @@
 <!--                <li class="nav-item">-->
 <!--                    <a class="nav-link disabled" aria-disabled="true">Disabled</a>-->
 <!--                </li>-->
+                {% for category in categories %}
                 <li class="nav-item">
-                    <a class="nav-link"href="#">Data Structure</a>
+                    <a class="nav-link" href="#{{ category }}">{{ category }}</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Link</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Link</a>
-                </li>
+                {% endfor %}
             </ul>
         </div>
         <div class="col-lg-8 col-sm-12">
-            Empty page
+            {% for subjects in c_subjects %}
+            <div class="card mb-2">
+                <ul class="list-group list-group-flush">
+                    {% for subject in subjects %}
+                    <li class="list-group-item">{{ subject }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </div>
