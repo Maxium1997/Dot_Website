@@ -6,5 +6,26 @@
 {% endblock %}
 
 {% block body %}
-{{ subject }}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-4 col-sm-12">
+            <ul class="nav flex-column nav-pills">
+                {% for s in subjects %}
+                {% if s == subject %}
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">{{ s }}</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'subject' s.category.slug s.slug %}">{{ s }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="col-lg-8 col-sm-12">
+            {{ subject.context|linebreaks|safe }}
+        </div>
+    </div>
+</div>
 {% endblock %}
