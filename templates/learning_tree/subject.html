@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'category' subject.category.slug %}">{{ subject.category }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ subject }}</li>
+{% endblock %}
+
+{% block body %}
+{{ subject }}
+{% endblock %}

@@ -1,25 +1,28 @@
 {% extends 'base.html' %}
 
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">{{ s_category }}</li>
+{% endblock %}
+
 {% block body %}
 <div class="container">
     <div class="row">
         <div class="col-lg-4 col-sm-12">
             <ul class="nav flex-column nav-pills">
-<!--                <li class="nav-item">-->
-<!--                    <a class="nav-link active" aria-current="page" href="#">Active</a>-->
-<!--                </li>-->
-<!--                <li class="nav-item">-->
-<!--                    <a class="nav-link disabled" aria-disabled="true">Disabled</a>-->
-<!--                </li>-->
                 {% for category in categories %}
+                {% if category == s_category %}
+                <li class="nav-item">
+                    <a class="nav-link active" href="#{{ category }}">{{ category }}</a>
+                </li>
+                {% else %}
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'category' category.slug %}">{{ category }}</a>
                 </li>
+                {% endif %}
                 {% endfor %}
             </ul>
         </div>
         <div class="col-lg-8 col-sm-12">
-            {% for subjects in c_subjects %}
             <div class="card mb-2">
                 <ul class="list-group list-group-flush">
                     {% for subject in subjects %}
@@ -27,7 +30,6 @@
                     {% endfor %}
                 </ul>
             </div>
-            {% endfor %}
         </div>
     </div>
 </div>
