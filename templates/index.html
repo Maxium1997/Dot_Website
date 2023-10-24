@@ -1,34 +1,17 @@
-{% extends 'base.html' %}
-
-{% block body %}
-<div class="container">
-    <div class="row">
-        <div class="col-lg-4 col-sm-12">
-            <ul class="nav flex-column nav-pills">
-<!--                <li class="nav-item">-->
-<!--                    <a class="nav-link active" aria-current="page" href="#">Active</a>-->
-<!--                </li>-->
-<!--                <li class="nav-item">-->
-<!--                    <a class="nav-link disabled" aria-disabled="true">Disabled</a>-->
-<!--                </li>-->
-                {% for category in categories %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'category' category.slug %}">{{ category }}</a>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        <div class="col-lg-8 col-sm-12">
-            {% for subjects in c_subjects %}
-            <div class="card mb-2">
-                <ul class="list-group list-group-flush">
-                    {% for subject in subjects %}
-                    <li class="list-group-item"><a href="{% url 'subject' subject.category.slug subject.slug %}">{{ subject }}</a></li>
-                    {% endfor %}
-                </ul>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</div>
-{% endblock %}
+{% load socialaccount %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1 style="text-align: center;"> My google OAuth Project </h1>
+    {% if user.is_authenticated %}
+    <p>Welcome. You are logged in as {{user.username}} </p>
+    {% else %}
+    <a href="{% provider_login_url 'google' %}">Login with Google</a>
+    {% endif %}
+</body>
+</html>
