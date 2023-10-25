@@ -13,7 +13,8 @@ class CategoryView(ListView):
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(CategoryView, self).get_context_data(object_list=None, **kwargs)
         category = get_object_or_404(Category, slug=self.kwargs.get('category_slug'))
-        subjects = Subject.objects.filter(category=category)
+        subjects = Subject.objects.filter(category=category,
+                                          is_public=True)
         context['subjects'] = subjects
         context['categories'] = Category.objects.all()
         context['s_category'] = Category.objects.get(slug=self.kwargs.get('category_slug'))
@@ -31,7 +32,8 @@ class SubjectView(DeleteView):
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(SubjectView, self).get_context_data(object_list=None, **kwargs)
-        context['subjects'] = Subject.objects.filter(category=self.get_object().category)
+        context['subjects'] = Subject.objects.filter(category=self.get_object().category,
+                                                     is_public=True)
         return context
 
     def get_object(self, queryset=None):

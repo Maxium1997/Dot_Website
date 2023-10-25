@@ -1,5 +1,9 @@
 {% extends 'base.html' %}
 
+{% block subtitle %}
+{{ s_category }}
+{% endblock %}
+
 {% block breadcrumb %}
 <li class="breadcrumb-item active" aria-current="page">{{ s_category }}</li>
 {% endblock %}

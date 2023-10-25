@@ -11,4 +11,4 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
-    list_display = ['name', 'slug', 'category']
+    list_display = ['name', 'slug', 'category', 'is_public']

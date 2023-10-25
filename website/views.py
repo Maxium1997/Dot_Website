@@ -18,6 +18,6 @@ class IndexView(ListView):
         context['categories'] = Category.objects.all()
         c_subjects = []
         for c in Category.objects.all():
-            c_subjects.append([_ for _ in Subject.objects.filter(category=c)])
+            c_subjects.append([_ for _ in Subject.objects.filter(category=c, is_public=True)])
         context['c_subjects'] = c_subjects
         return context

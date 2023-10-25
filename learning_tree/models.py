@@ -20,7 +20,8 @@ class Subject(models.Model):
     slug = models.SlugField()
     category = models.ForeignKey(Category, on_delete=models.PROTECT)
     tags = GenericRelation(TaggedItem)
-    context = RichTextField(default=None, null=True)
+    context = RichTextField(default=None, blank=True, null=True)
+    is_public = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name
