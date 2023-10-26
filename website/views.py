@@ -6,11 +6,11 @@ from learning_tree.models import Category, Subject
 
 
 # class IndexView(TemplateView):
-#     template_name = 'index.html'
+#     template_name = 'website_index.html'
 
 
 class IndexView(ListView):
-    template_name = 'index.html'
+    template_name = 'website_index.html'
     model = Category
 
     def get_context_data(self, *, object_list=None, **kwargs):
