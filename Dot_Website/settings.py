@@ -12,6 +12,12 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from pathlib import Path
 import os
+# LINE BOT
+from dotenv import load_dotenv
+
+load_dotenv(encoding="utf-8")
+CHANNEL_SECRET = os.getenv('CHANNEL_SECRET')
+CHANNEL_ACCESS_TOKEN = os.getenv('CHANNEL_ACCESS_TOKEN')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,7 +32,8 @@ SECRET_KEY = 'django-insecure-%bvp7yd^&^5aktfosx-pekg5^e&k1yn^x$a=!96@0_keu$h3as
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1',
+                 'https://b425-112-78-71-35.ngrok-free.app']
 
 
 # Application definition
@@ -41,6 +48,8 @@ INSTALLED_APPS = [
     'ckeditor',
     'website',
     'learning_tree',
+    # line
+    'line_bot',
 ]
 
 MIDDLEWARE = [
