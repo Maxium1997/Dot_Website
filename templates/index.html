@@ -6,17 +6,35 @@ Dot Website
 {% endblock %}
 
 {% block body %}
-<div class="container">
-    <div class="row">
-        <div class="col-lg-3 col-sm-6">
-            <a href="{% url 'learning_tree' %}">
-                <img src="{% static 'pic/check-list.png' %}" width="100%">
-            </a>
+<div class="container text-center">
+    <div class="row align-items-center">
+        <div class="col-md-6 col-sm-12">
+            <h1>Dot Website</h1>
+            <p>Welcome to "Dot Website," where each pixel tells a story! Dive into a digital realm where creativity meets precision. Navigate through a symphony of code, crafting an online experience that transcends the ordinary. From sleek designs to seamless functionality, Dot Website is your passport to the visually stunning and effortlessly functional web. Discover the art of the pixel – explore Dot Website now!</p>
         </div>
-        <div class="col-lg-3 col-sm-6">
-            <a href="{% url 'market_place' %}">
-                <img src="{% static 'pic/ecommerce.png' %}" width="100%">
+        <div class="col-md-6 col-sm-12">
+            <img src="{% static 'pic/self-learning.png' %}" width="80%">
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 col-sm-6">
+            <a href="{% url 'learning_tree' %}">
+                <img src="{% static 'pic/check-list.png' %}" width="80%">
             </a>
+            <h3>Learning Tree</h3>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <a href="{% url 'market_place' %}">
+                <img src="{% static 'pic/ecommerce.png' %}" width="80%">
+            </a>
+            <h3>Market Place</h3>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <a href="{% url 'market_place' %}">
+                <img src="{% static 'pic/business-idea.png' %}" width="80%">
+            </a>
+            <h3>Business</h3>
         </div>
 
 
