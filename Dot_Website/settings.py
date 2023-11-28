@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'ckeditor',
     'website',
     'learning_tree',
+    'business',
 ]
 
 MIDDLEWARE = [
