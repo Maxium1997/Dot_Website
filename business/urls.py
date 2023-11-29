@@ -1,13 +1,10 @@
 from django.urls import path, include
 
-from .views import BusinessView
+from .views import BusinessView, MobileStorageEquipmentView
 
 urlpatterns = [
     path('business', BusinessView.as_view(), name='business'),
-    # path('learning_tree/', include([
-    #     path('<slug:category_slug>', CategoryView.as_view(), name='category'),
-    #     path('<slug:category_slug>/', include([
-    #         path('<slug:subject_slug>', SubjectView.as_view(), name='subject'),
-    #     ])),
-    # ])),
+    path('business/', include([
+        path('MobileStorageEquipment', MobileStorageEquipmentView.as_view(), name='mobile_storage_equipments'),
+    ])),
 ]

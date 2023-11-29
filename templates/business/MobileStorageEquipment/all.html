@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load mse_filter %}
+
+{% block subtitle %}
+Business
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'business' %}">Business</a></li>
+<li class="breadcrumb-item active" aria-current="page">Mobile Storage Equipments</li>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row">
+        <div>
+            <button type="button" class="btn btn-primary">Apply</button>
+<!--            <button type="button" class="btn btn-secondary">Secondary</button>-->
+<!--            <button type="button" class="btn btn-success">Success</button>-->
+<!--            <button type="button" class="btn btn-danger">Danger</button>-->
+<!--            <button type="button" class="btn btn-warning">Warning</button>-->
+<!--            <button type="button" class="btn btn-info">Info</button>-->
+<!--            <button type="button" class="btn btn-light">Light</button>-->
+<!--            <button type="button" class="btn btn-dark">Dark</button>-->
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle text-center">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">S/N</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Brand/Type</th>
+                        <th scope="col">Capacity</th>
+                        <th scope="col">Manager</th>
+                        <th scope="col">Deputy</th>
+                        <th scope="col">Remarks</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for mse in mobile_storage_equipments %}
+                    <tr>
+                        <th scope="row">{{ forloop.counter }}</th>
+                        <td>{{ mse.serial_number }}</td>
+                        <td>
+                            {{ mse.name }}
+                            {% if mse.builtin_memory %}
+                            </br>（內建記憶體）
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ mse.brand }}</br>
+                            {{ mse.type }}
+                        </td>
+                        <td>
+                            {% if mse.capacity %}
+                            {{ mse.capacity }}{{ mse.storage_unit|readable_storage_unit }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ mse.manage_unit|readable_manage_unit }}</br>
+                            {{ mse.manager }}
+                        </td>
+                        <td>
+                            {{ mse.manage_unit|readable_manage_unit }}</br>
+                            {{ mse.deputy_manager }}
+                        </td>
+                        <td>{{ mse.remarks }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
