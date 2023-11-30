@@ -17,7 +17,7 @@ Business
         <div>
             <button type="button" class="btn btn-primary">Apply</button>
 <!--            <button type="button" class="btn btn-secondary">Secondary</button>-->
-<!--            <button type="button" class="btn btn-success">Success</button>-->
+            <button type="button" class="btn btn-success">Export All</button>
 <!--            <button type="button" class="btn btn-danger">Danger</button>-->
 <!--            <button type="button" class="btn btn-warning">Warning</button>-->
 <!--            <button type="button" class="btn btn-info">Info</button>-->
@@ -26,16 +26,22 @@ Business
         </div>
         <div class="table-responsive">
             <table class="table table-striped table-hover align-middle text-center">
-                <thead>
+                <thead class="align-middle">
                     <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">S/N</th>
+                        <th rowspan="2" scope="col">#</th>
+                        <th rowspan="2" scope="col">S/N</th>
+                        <th colspan="2" scope="col">Info.</th>
+                        <th colspan="2" scope="col">Storage</th>
+                        <th rowspan="2" scope="col">Capacity</th>
+                        <th rowspan="2" scope="col">Manager</th>
+                        <th rowspan="2" scope="col">Deputy</th>
+                        <th rowspan="2" scope="col">Remarks</th>
+                    </tr>
+                    <tr>
                         <th scope="col">Name</th>
                         <th scope="col">Brand/Type</th>
-                        <th scope="col">Capacity</th>
-                        <th scope="col">Manager</th>
-                        <th scope="col">Deputy</th>
-                        <th scope="col">Remarks</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Brand/Type</th>
                     </tr>
                 </thead>
 
@@ -44,6 +50,8 @@ Business
                     <tr>
                         <th scope="row">{{ forloop.counter }}</th>
                         <td>{{ mse.serial_number }}</td>
+
+                        {% if mse.type|is_info_equip %}
                         <td>
                             {{ mse.name }}
                             {% if mse.builtin_memory %}
@@ -52,8 +60,22 @@ Business
                         </td>
                         <td>
                             {{ mse.brand }}</br>
-                            {{ mse.type }}
+                            {{ mse.model }}
                         </td>
+                        <td></td>
+                        <td></td>
+                        {% else %}
+                        <td></td>
+                        <td></td>
+                        <td>
+                            {{ mse.name }}
+                        </td>
+                        <td>
+                            {{ mse.brand }}</br>
+                            {{ mse.model }}
+                        </td>
+                        {% endif %}
+
                         <td>
                             {% if mse.capacity %}
                             {{ mse.capacity }}{{ mse.storage_unit|readable_storage_unit }}
