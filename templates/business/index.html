@@ -12,7 +12,12 @@ Business
 {% block body %}
 <div class="container">
     <div class="row">
-        <a href="{% url 'mobile_storage_equipments' %}">Mobile Storage Equipments</a>
+        <div class="col-lg-4 col-sm-6 text-center shadow p-3 mb-5 bg-body-tertiary rounded" onclick="window.location.href='{% url 'mobile_storage_equipments' %}'">
+            <div class="p-5">
+                <img src="{% static 'icons/journal-alt.png' %}" width="30%">
+            </div>
+            <h5>Mobile Storage Equipments</h5>
+        </div>
     </div>
 </div>
 {% endblock %}
