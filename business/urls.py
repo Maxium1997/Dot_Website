@@ -1,6 +1,6 @@
 from django.urls import path, include
 
-from .views import BusinessView, MobileStorageEquipmentView
+from .views import BusinessView, MobileStorageEquipmentView, MobileStorageEquipmentFilteredView
 from .views import export_all
 
 urlpatterns = [
@@ -9,6 +9,7 @@ urlpatterns = [
         path('MobileStorageEquipment', MobileStorageEquipmentView.as_view(), name='mobile_storage_equipments'),
         path('MobileStorageEquipment/', include([
             path('export_all', export_all, name='export_mse_all'),
+            path('filtered/', MobileStorageEquipmentFilteredView.as_view(), name='mse_filtered'),
         ])),
     ])),
 ]

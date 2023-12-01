@@ -1,13 +1,13 @@
 from django.shortcuts import render
+from django.http import HttpResponse
 from django.views.generic import TemplateView, ListView
-# from django.http import HttpResponse
+from openpyxl import Workbook
 # import pandas as pd
-# from openpyxl import Workbook
 # from openpyxl.writer.excel import save_virtual_workbook
 
 
 from .models import MobileStorageEquipment
-from .definitions import CPC4Unit
+from organization.definitions import CPC4Unit
 
 # Create your views here.
 
@@ -23,11 +23,32 @@ class MobileStorageEquipmentView(ListView):
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(MobileStorageEquipmentView, self).get_context_data(object_list=None, **kwargs)
         context['mobile_storage_equipments'] = MobileStorageEquipment.objects.all().order_by('manage_unit')
+        context['manage_units'] = [(_.value[0], _.value[2]) for _ in CPC4Unit.__members__.values()]
         return context
 
 
-from django.http import HttpResponse
-from openpyxl import Workbook
+class MobileStorageEquipmentFilteredView(ListView):
+    template_name = 'business/MobileStorageEquipment/filtered.html'
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super(MobileStorageEquipmentFilteredView, self).get_context_data(object_list=None, **kwargs)
+        manage_unit = self.request.GET.get('manage_unit')
+        if manage_unit == "":
+            context['manage_unit'] = ""
+        else:
+            context['manage_unit'] = int(self.request.GET.get('manage_unit'))
+
+        context['mobile_storage_equipments'] = self.get_queryset()
+        context['manage_units'] = [(_.value[0], _.value[2]) for _ in CPC4Unit.__members__.values()]
+        return context
+
+    def get_queryset(self):
+        manage_unit = self.request.GET.get('manage_unit')
+        if manage_unit == "":
+            return MobileStorageEquipment.objects.all()
+        else:
+            return MobileStorageEquipment.objects.filter(manage_unit=manage_unit)
+
 
 def export_all(request):
     # Get queryset data

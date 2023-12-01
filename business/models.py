@@ -1,6 +1,7 @@
 from django.db import models
 
-from .definitions import EquipmentType, StorageUnit, CPC4Unit
+from organization.definitions import CPC4Unit
+from .definitions import EquipmentType, StorageUnit
 
 # Create your models here.
 

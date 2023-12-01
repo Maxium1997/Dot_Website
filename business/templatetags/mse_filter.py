@@ -1,7 +1,8 @@
 from django import template
 from django.utils.safestring import mark_safe
 from datetime import datetime, timedelta
-from business.definitions import CPC4Unit, StorageUnit, EquipmentType
+from business.definitions import StorageUnit, EquipmentType
+from organization.definitions import CPC4Unit
 
 register = template.Library()
 

@@ -23,28 +23,3 @@ class StorageUnit(Enum):
     MB = (2, 'MB')
     GB = (3, 'GB')
     TB = (4, 'TB')
-
-
-class CPC4Unit(Enum):
-    CIE_squad = (804012, 'CIE Squad', '通資小隊')   # CIE = Communication, Information and Electronic
-    first_patrol_station = (704310, 'First Patrol Station', '第一機動巡邏站')
-    second_patrol_station = (704320, 'Second Patrol Station', '第二機動巡邏站')
-    # 許厝寮安檢所
-    # 麥寮工業港安檢所
-    # 蚊港安檢所
-    # 五條港漁港安檢所
-    # 台西漁港安檢所
-    # 三條崙漁港安檢所
-    # 箔子寮漁港安檢所
-    # 金湖漁港安檢所
-    # 台子村漁港安檢所
-    # 下湖口安檢所
-    # 副瀨漁港安檢所
-    # 型厝漁港安檢所
-    # 塭港漁港安檢所
-    # 東石漁港安檢所
-    # 網寮漁港安檢所
-    # 白水湖漁港安檢所
-    # 布袋漁港安檢所
-    # 布袋商港安檢所
-    # 好美里漁港安檢所
