@@ -1,6 +1,7 @@
 from django.db import models
+from django.contrib.contenttypes.fields import GenericRelation
 
-from organization.definitions import CPC4Unit
+from organization.definitions import CPC4Unit, ArmyCommission
 from .definitions import EquipmentType, StorageUnit
 
 # Create your models here.
@@ -51,3 +52,33 @@ class MobileStorageEquipment(models.Model):
     deputy_manager = models.CharField(max_length=10)
     remarks = models.TextField(null=True, blank=True)
 
+    def __str__(self):
+        return str(self.name) + str(self.serial_number)
+
+
+class MobileDevice(models.Model):
+    owner = models.CharField(max_length=10)
+    OWNER_UNIT_CHOICES = [(_.value[0], _.value[1]) for _ in CPC4Unit.__members__.values()]
+    owner_unit = models.PositiveIntegerField(default=CPC4Unit.NonSet.value[0],
+                                             choices=OWNER_UNIT_CHOICES,
+                                             null=True, blank=True)
+    ARMY_COMMISSION_CHOICES = [(_.value[0], _.value[1]) for _ in ArmyCommission.__members__.values()]
+    owner_commission = models.PositiveIntegerField(default=ArmyCommission.NonSet.value[0],
+                                                   choices=ARMY_COMMISSION_CHOICES,
+                                                   null=False, blank=False)
+    # SP = Smart Phone
+    SP_brand = models.CharField(max_length=20, null=True, blank=True)
+    SP_model = models.CharField(max_length=20, null=True, blank=True)
+    # SW = Smart Watch
+    SW_brand = models.CharField(max_length=20, null=True, blank=True)
+    SW_model = models.CharField(max_length=20, null=True, blank=True)
+    number = models.CharField(max_length=10, unique=True, null=True, blank=True)    # phone number
+
+
+class MobileDeviceList(models.Model):
+    MANAGE_UNIT_CHOICES = [(_.value[0], _.value[1]) for _ in CPC4Unit.__members__.values()]
+    manage_unit = models.PositiveIntegerField(default=CPC4Unit.CIE_squad.value[0],
+                                              choices=MANAGE_UNIT_CHOICES)
+    manager = models.CharField(max_length=10)
+    remarks = models.TextField(null=True, blank=True)
+    items = GenericRelation(MobileDevice)

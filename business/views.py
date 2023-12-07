@@ -6,7 +6,7 @@ from openpyxl import Workbook
 # from openpyxl.writer.excel import save_virtual_workbook
 
 
-from .models import MobileStorageEquipment
+from .models import MobileStorageEquipment, MobileDevice
 from organization.definitions import CPC4Unit
 
 # Create your views here.
@@ -50,7 +50,7 @@ class MobileStorageEquipmentFilteredView(ListView):
             return MobileStorageEquipment.objects.filter(manage_unit=manage_unit)
 
 
-def export_all(request):
+def export_mse_all(request):
     # Get queryset data
     queryset = MobileStorageEquipment.objects.all()
 
@@ -81,3 +81,17 @@ def export_all(request):
     wb.save(response)
 
     return response
+
+
+class MobileDeviceView(ListView):
+    model = MobileDevice
+    template_name = 'business/MobileDevice/all.html'
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super(MobileDeviceView, self).get_context_data(object_list=None, **kwargs)
+        context['mobile_devices'] = self.get_queryset()
+        # context['manage_units'] = [(_.value[0], _.value[2]) for _ in CPC4Unit.__members__.values()]
+        return context
+
+    def get_queryset(self):
+        return MobileDevice.objects.all()

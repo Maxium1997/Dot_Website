@@ -11,13 +11,22 @@ Business
 
 {% block body %}
 <div class="container">
-    <div class="row">
-        <div class="col-lg-4 col-sm-6 text-center shadow p-3 mb-5 bg-body-tertiary rounded" onclick="window.location.href='{% url 'mobile_storage_equipments' %}'">
-            <div class="p-5">
-                <img src="{% static 'icons/journal-alt.png' %}" width="30%">
-            </div>
-            <h5>Mobile Storage Equipments</h5>
-        </div>
+    <div class="row justify-content-center">
+        <table class="table">
+            <tbody>
+                <tr class="align-middle">
+                    <td class="col-1"><img src="{% static 'icons/journal-alt.png' %}" width="100%"></td>
+                    <td class="col-5">
+                        <a href="{% url 'mobile_storage_equipments' %}" class="h5">Mobile Storage Equipments</a>
+
+                    </td>
+                    <td class="col-1"><img src="{% static 'icons/laptop-mobile.png' %}" width="100%"></td>
+                    <td class="col-5">
+                        <a href="{% url 'mobile_devices' %}" class="h5">Mobile Devices</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

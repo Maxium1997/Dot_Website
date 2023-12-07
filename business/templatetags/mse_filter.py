@@ -2,13 +2,13 @@ from django import template
 from django.utils.safestring import mark_safe
 from datetime import datetime, timedelta
 from business.definitions import StorageUnit, EquipmentType
-from organization.definitions import CPC4Unit
+from organization.definitions import CPC4Unit, ArmyCommission
 
 register = template.Library()
 
 
-@register.filter(name='readable_manage_unit')
-def readable_manage_unit(unit_code: int):
+@register.filter(name='readable_unit')
+def readable_unit(unit_code: int):
     cpc4_units = {_.value[0]: _.value[2] for _ in CPC4Unit.__members__.values()}
     return cpc4_units.get(unit_code)
 
@@ -29,3 +29,13 @@ def is_info_equip(equip_code: int):
         return False
     else:
         return False
+
+
+@register.filter(name='readable_commission')
+def readable_commission(commission_code):
+    army_commission = {hex(_.value[0]): _.value[2] for _ in ArmyCommission.__members__.values()}
+    try:
+        hex_commission_code = hex(int(commission_code))
+        return army_commission.get(hex_commission_code)
+    except ValueError as e:
+        print(f"Error: {e}")

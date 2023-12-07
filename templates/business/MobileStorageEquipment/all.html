@@ -12,7 +12,7 @@ Business
 {% endblock %}
 
 {% block body %}
-<div class="container">
+<div class="container-fluid">
     <div class="row">
         <div class="mt-1 mb-1">
             <button type="button" class="btn btn-primary">Apply</button>
@@ -94,11 +94,11 @@ Business
                             {% endif %}
                         </td>
                         <td>
-                            {{ mse.manage_unit|readable_manage_unit }}</br>
+                            {{ mse.manage_unit|readable_unit }}</br>
                             {{ mse.manager }}
                         </td>
                         <td>
-                            {{ mse.manage_unit|readable_manage_unit }}</br>
+                            {{ mse.manage_unit|readable_unit }}</br>
                             {{ mse.deputy_manager }}
                         </td>
                         <td>{{ mse.remarks }}</td>
