@@ -1,0 +1,14 @@
+<!-- template2.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Excel 讀取結果</title>
+</head>
+<body>
+    <h2>Excel 讀取結果</h2>
+<!--    {{ excel_data | safe }}-->
+    {% for i in excel_data %}
+    {{ i }}</br>
+    {% endfor %}
+</body>
+</html>

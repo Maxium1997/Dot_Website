@@ -95,3 +95,28 @@ class MobileDeviceView(ListView):
 
     def get_queryset(self):
         return MobileDevice.objects.all()
+
+
+# views.py
+from django.shortcuts import render
+import pandas as pd
+
+
+def process_excel(request):
+    if request.method == 'POST':
+        excel_file = request.FILES['excel_file']
+
+        # 讀取 Excel 文件
+        df = pd.read_excel(excel_file)
+        # excel_data = ['#', 'owner_unit', 'commission', 'owner', 'SP_brand', 'SP_model', 'SW_brand', 'SW_model']
+        excel_data = []
+        for index, row in df.iterrows():
+            # 將每一行的數據轉換為字典
+            row_data = row.to_dict()
+            excel_data.append(row_data)
+
+        # 傳遞讀取結果到 template2
+        return render(request, 'business/MobileDevice/import_result.html', {'excel_data': excel_data})
+
+    return render(request, 'business/MobileDevice/import.html')
+

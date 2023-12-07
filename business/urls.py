@@ -2,7 +2,7 @@ from django.urls import path, include
 
 from .views import BusinessView, MobileStorageEquipmentView, MobileStorageEquipmentFilteredView, \
     MobileDeviceView
-from .views import export_mse_all
+from .views import export_mse_all, process_excel
 
 urlpatterns = [
     path('business', BusinessView.as_view(), name='business'),
@@ -14,5 +14,8 @@ urlpatterns = [
         ])),
 
         path('MobileDevice', MobileDeviceView.as_view(), name='mobile_devices'),
+        path('MobileDevice', include([
+            path('import_md_excel', process_excel, name='process_excel'),
+        ])),
     ])),
 ]

@@ -1,0 +1,6 @@
+<!-- template1.html -->
+<form method="post" enctype="multipart/form-data" action="{% url 'process_excel' %}">
+    {% csrf_token %}
+    <input type="file" name="excel_file">
+    <button type="submit">上傳 Excel</button>
+</form>
