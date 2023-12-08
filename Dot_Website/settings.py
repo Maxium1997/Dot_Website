@@ -41,9 +41,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'ckeditor',
     'website',
-    'learning_tree',
     'business',
-    'market_place'
+    'market_place',
+    'learning_tree',
 ]
 
 MIDDLEWARE = [

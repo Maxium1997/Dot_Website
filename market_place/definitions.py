@@ -3,8 +3,8 @@ from enum import Enum
 
 class CertificateUsage(Enum):
     Personal = (1, 'Personal', '個人憑證申請')
-    Agency = (1, 'Agency', '機關（單位）憑證申請')
-    Server = (1, 'Server', '伺服器憑證申請')
+    Agency = (2, 'Agency', '機關（單位）憑證申請')
+    Server = (3, 'Server', '伺服器憑證申請')
 
 
 class CertificateCustodianClassification(Enum):

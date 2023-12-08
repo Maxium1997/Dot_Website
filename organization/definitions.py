@@ -60,6 +60,7 @@ class CPC4Unit(Enum):
     XingCuo_fishing_harbor_inspection_office = (704220, 'XingCuo Fishing Harbor Inspection Office', '型厝漁港安檢所')
     # 型厝漁港安檢所
     WenGang_fishing_harbor_inspection_office = (704230, 'WenGang Fishing Harbor Inspection Office', '塭港漁港安檢所')
+    WenGang_inspection_station = (704233, 'WenGang Inspection Station', '塭港執檢站')
     # 塭港漁港安檢所
     DongShi_fishing_harbor_inspection_office = (704240, 'DongShi Fishing Harbor Inspection Office', '東石漁港安檢所')
     # 東石漁港安檢所

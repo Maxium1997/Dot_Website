@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load mp_filter %}
+{% load mse_filter %}
+
+{% block subtitle %}
+Market Place
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'market_place' %}">Market Place</a></li>
+<li class="breadcrumb-item active" aria-current="page">Certificate Applications</li>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="mt-1 mb-1">
+<!--            <button type="button" class="btn btn-primary">Apply</button>-->
+<!--            <button type="button" class="btn btn-secondary">Secondary</button>-->
+<!--            <button type="button" class="btn btn-success" onclick="window.location.href=#export_md_all'">Export All</button>-->
+<!--            <button type="button" class="btn btn-danger">Danger</button>-->
+<!--            <button type="button" class="btn btn-warning">Warning</button>-->
+<!--            <button type="button" class="btn btn-info" onclick="window.location.href='{% url 'process_excel' %}'">Import</button>-->
+<!--            <button type="button" class="btn btn-light">Light</button>-->
+<!--            <button type="button" class="btn btn-dark">Dark</button>-->
+        </div>
+
+        <div class="accordion accordion-flush" id="accordionFlushExample">
+            {% for ca in certificate_applications %}
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapse{{ forloop.counter }}" aria-expanded="false" aria-controls="flush-collapse{{ forloop.counter }}">
+                    海岸巡防機關憑證作業申請表{{ ca.applied_date|date:"Y/m/d" }}-{{ ca.applicant_name }}
+                    </button>
+                </h2>
+                <div id="flush-collapse{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#accordionFlushExample">
+<!--                    <div class="accordion-body">Placeholder content for this accordion, which is intended to demonstrate the <code>.accordion-flush</code> class. This is the first item's accordion body.</div>-->
+                    <div class="table-responsive">
+                        <table class="table table-bordered border-primary">
+                            <tbody class="align-middle">
+                            <tr>
+                                <td colspan="4">
+                                    {% if ca.usage == 1 %}
+                                    <i class="bi bi-square-fill"></i>
+                                    {% else %}
+                                    <i class="bi bi-square"></i>
+                                    {% endif %}個人憑證申請
+                                    {% if ca.usage == 2 %}
+                                    <i class="bi bi-square-fill"></i>
+                                    {% else %}
+                                    <i class="bi bi-square"></i>
+                                    {% endif %}機關（單位）憑證申請
+                                    {% if ca.usage == 3 %}
+                                    <i class="bi bi-square-fill"></i>
+                                    {% else %}
+                                    <i class="bi bi-square"></i>
+                                    {% endif %}伺服器憑證申請
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>申請人中文名字</td>
+                                <td>{{ ca.applicant_name }}</td>
+                                <td>憑證保管人員</td>
+                                <td>{{ ca.custodian_commission|readable_commission }}{{ ca.custodian_name }}</td>
+                            </tr>
+                            <tr>
+                                <td>申請人聯絡電話</td>
+                                <td>{{ ca.applicant_contact_number }}</td>
+                                <td>憑證保管人員身分證字號</td>
+                                <td>{{ ca.custodian_ID_number }}</td>
+                            </tr>
+                            <tr>
+                                <td>申請機關（單位）名稱</td>
+                                <td>{{ ca.applicant_unit|readable_cbunit }}</td>
+                                <td>憑證保管人員聯絡電話</td>
+                                <td>{{ ca.custodian_contact_number }}</td>
+                            </tr>
+                            <tr>
+                                <td>機關（單位）通訊地址</td>
+                                <td>{{ ca.applicant_address }}</td>
+                                <td>憑證保管人員電子信箱</td>
+                                <td>{{ ca.custodian_email }}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">人員身分別</td>
+                                <td colspan="2">
+                                    {% if ca.custodian_classification == 1 %}
+                                    <i class="bi bi-square-fill"></i>
+                                    {% else %}
+                                    <i class="bi bi-square"></i>
+                                    {% endif %}
+                                    單位卡
+                                    {% if ca.custodian_classification == 2 %}
+                                    <i class="bi bi-square-fill"></i>
+                                    {% else %}
+                                    <i class="bi bi-square"></i>
+                                    {% endif %}
+                                    志願役
+                                    {% if ca.custodian_classification == 3 %}
+                                    <i class="bi bi-square-fill"></i>
+                                    {% else %}
+                                    <i class="bi bi-square"></i>
+                                    {% endif %}
+                                    義務役
+                                    {% if ca.custodian_classification == 4 %}
+                                    <i class="bi bi-square-fill"></i>
+                                    {% else %}
+                                    <i class="bi bi-square"></i>
+                                    {% endif %}
+                                    文職
+                                    {% if ca.custodian_classification == 5 %}
+                                    <i class="bi bi-square-fill"></i>
+                                    {% else %}
+                                    <i class="bi bi-square"></i>
+                                    {% endif %}
+                                    警職
+                                    {% if ca.custodian_classification == 6 %}
+                                    <i class="bi bi-square-fill"></i>
+                                    {% else %}
+                                    <i class="bi bi-square"></i>
+                                    {% endif %}
+                                    廠商
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">請勾選貴單位所需的金鑰和憑證之儲存媒體：</td>
+                                <td colspan="2">
+                                    {% if ca.storage == 1 %}
+                                    <i class="bi bi-square-fill"></i>智慧卡
+                                    <i class="bi bi-square"></i>磁片
+                                    {% elif ca.storage == 2 %}}
+                                    <i class="bi bi-square"></i>智慧卡
+                                    <i class="bi bi-square-fill"></i>磁片
+                                    {% else %}
+                                    <i class="bi bi-square"></i>智慧卡
+                                    <i class="bi bi-square"></i>磁片
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">請勾選您要申請的憑證作業：</td>
+                                <td colspan="2">
+                                    {% if ca.process == 1 %}
+                                    <i class="bi bi-square-fill"></i>
+                                    {% else %}
+                                    <i class="bi bi-square"></i>
+                                    {% endif %}
+                                    申請
+                                    {% if ca.process == 2 %}
+                                    <i class="bi bi-square-fill"></i>
+                                    {% else %}
+                                    <i class="bi bi-square"></i>
+                                    {% endif %}
+                                    撤銷
+                                    {% if ca.process == 3 %}
+                                    <i class="bi bi-square-fill"></i>
+                                    {% else %}
+                                    <i class="bi bi-square"></i>
+                                    {% endif %}
+                                    補發
+                                    {% if ca.process == 4 %}
+                                    <i class="bi bi-square-fill"></i>
+                                    {% else %}
+                                    <i class="bi bi-square"></i>
+                                    {% endif %}
+                                    掛失
+                                    {% if ca.process == 5 %}
+                                    <i class="bi bi-square-fill"></i>
+                                    {% else %}
+                                    <i class="bi bi-square"></i>
+                                    {% endif %}
+                                    復原
+                                    {% if ca.process == 6 %}
+                                    <i class="bi bi-square-fill"></i>
+                                    {% else %}
+                                    <i class="bi bi-square"></i>
+                                    {% endif %}
+                                    展期
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">申請用途：</td>
+                                <td colspan="2">
+                                    {{ ca.use_for|readable_use_for }}
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

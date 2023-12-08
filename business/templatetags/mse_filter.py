@@ -2,7 +2,7 @@ from django import template
 from django.utils.safestring import mark_safe
 from datetime import datetime, timedelta
 from business.definitions import StorageUnit, EquipmentType
-from organization.definitions import CPC4Unit, ArmyCommission
+from organization.definitions import CBUnit, CPC4Unit, ArmyCommission
 
 register = template.Library()
 
@@ -11,6 +11,12 @@ register = template.Library()
 def readable_unit(unit_code: int):
     cpc4_units = {_.value[0]: _.value[2] for _ in CPC4Unit.__members__.values()}
     return cpc4_units.get(unit_code)
+
+
+@register.filter(name='readable_cbunit')
+def readable_cbunit(unit_code: int):
+    cb_units = {_.value[0]: _.value[2] for _ in CBUnit.__members__.values()}
+    return cb_units.get(unit_code)
 
 
 @register.filter(name='readable_storage_unit')
