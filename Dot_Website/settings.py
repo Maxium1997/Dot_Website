@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'website',
     'learning_tree',
     'business',
+    'market_place'
 ]
 
 MIDDLEWARE = [

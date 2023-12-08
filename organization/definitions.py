@@ -23,6 +23,11 @@ class ArmyCommission(Enum):
     Private = (0x4F522D31, 'Private', '二等兵')
 
 
+class CBUnit(Enum):
+    CPC3 = (803000, 'CPC3', '第三岸巡隊')
+    CPC4 = (804000, 'CPC4', '第四岸巡隊')
+
+
 class CPC4Unit(Enum):
     NonSet = (000000, 'Non Set', '尚未設定')
     Headquarters = (804000, 'Headquarters', '隊本部')
