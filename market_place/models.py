@@ -1,6 +1,6 @@
 from django.db import models
 
-from organization.definitions import CBUnit, ArmyCommission
+from organization.definitions import CBUnit, CPC4UnitVer2, ArmyCommission
 from .definitions import CertificateUsage, CertificateCustodianClassification, CertificateStorage, CertificateProcess, \
     CertificateUseFor
 
@@ -13,8 +13,8 @@ class CertificateApplication(models.Model):
                                              choices=USAGE_CHOICES)
     applicant_name = models.CharField(max_length=10, null=False, blank=False)
     applicant_contact_number = models.CharField(max_length=10, null=False, blank=False)
-    UNIT_CHOICES = [(_.value[0], _.value[1]) for _ in CBUnit.__members__.values()]
-    applicant_unit = models.PositiveSmallIntegerField(default=CBUnit.CPC4.value[0],
+    UNIT_CHOICES = [(_.value[0], _.value[2]) for _ in CPC4UnitVer2.__members__.values()]
+    applicant_unit = models.PositiveSmallIntegerField(default=CPC4UnitVer2.Headquarters.value[0],
                                                       choices=UNIT_CHOICES)
     applicant_address = models.CharField(max_length=255, null=False, blank=False)
     ARMY_COMMISSION_CHOICES = [(_.value[0], _.value[1]) for _ in ArmyCommission.__members__.values()]

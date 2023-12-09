@@ -33,3 +33,10 @@ class CertificateProcess(Enum):
 class CertificateUseFor(Enum):
     Duty = (1, 'Duty', '勤務使用')
     Business = (2, 'Business', '業務使用')
+    SystemUsing = (3, 'System Using', '系統使用需求')
+    Register = (4, 'Register', '新進報到')
+    NewPosition = (5, 'New Position', '新職報到')
+    TransferPosition = (6, 'Transfer Position', '調職')
+    Retirement = (7, 'Retirement', '退伍')
+    ChangeSoftCer = (8, 'Change Soft Certificate', '更換軟憑')
+    BrokenReApply = (9, 'Broken Reapply', '卡片毀損，重新申請')
