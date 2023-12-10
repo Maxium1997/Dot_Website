@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.db import IntegrityError
 from django.views.generic import TemplateView, ListView
 from openpyxl import Workbook
 # import pandas as pd
@@ -7,7 +8,7 @@ from openpyxl import Workbook
 
 
 from .models import MobileStorageEquipment, MobileDevice
-from organization.definitions import CPC4Unit
+from organization.definitions import CPC4Unit, ArmyCommission
 
 # Create your views here.
 
@@ -94,7 +95,7 @@ class MobileDeviceView(ListView):
         return context
 
     def get_queryset(self):
-        return MobileDevice.objects.all()
+        return MobileDevice.objects.all().order_by('owner_unit')
 
 
 # views.py
@@ -115,8 +116,42 @@ def process_excel(request):
             row_data = row.to_dict()
             excel_data.append(row_data)
 
+        query_exists = []
+        query_creates = []
+        for data in excel_data:
+            try:
+                query_exists.append(MobileDevice.objects.get(owner=data.get('owner')))
+            except IntegrityError:
+                break
+            except:
+                cpc4_units = {_.value[2]: _.value[0] for _ in CPC4Unit.__members__.values()}
+                data_owner_unit = data.get('unit')
+                get_owner_unit = cpc4_units.get(data_owner_unit)
+
+                try:
+                    commissions = {_.value[2]: _.value[0] for _ in ArmyCommission.__members__.values()}
+                    data_owner_commission = data.get('owner_commission')
+                    get_owner_commission = commissions.get(data_owner_commission)
+                except:
+                    get_owner_commission = ArmyCommission.NonSet.value[0]
+
+                mobile_device = MobileDevice(
+                    owner=data.get('owner'),
+                    owner_unit=get_owner_unit,
+                    owner_commission=get_owner_commission,
+                    SP_brand=data.get('SP_brand'),
+                    SP_model=data.get('SP_model'),
+                    SW_brand=data.get('SW_brand'),
+                    SW_model=data.get('SW_model'),
+                    number=data.get('number')
+                )
+                mobile_device.save()
+                query_creates.append(mobile_device)
+
         # 傳遞讀取結果到 template2
-        return render(request, 'business/MobileDevice/import_result.html', {'excel_data': excel_data})
+        return render(request, 'business/MobileDevice/import_result.html', {'excel_data': excel_data,
+                                                                            'query_exists': query_exists,
+                                                                            'query_creates': query_creates,})
 
     return render(request, 'business/MobileDevice/import.html')
 

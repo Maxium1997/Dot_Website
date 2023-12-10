@@ -12,21 +12,43 @@ Business
 {% block body %}
 <div class="container">
     <div class="row justify-content-center">
-        <table class="table">
-            <tbody>
-                <tr class="align-middle">
-                    <td class="col-1"><img src="{% static 'icons/journal-alt.png' %}" width="100%"></td>
-                    <td class="col-5">
-                        <a href="{% url 'mobile_storage_equipments' %}" class="h5">Mobile Storage Equipments</a>
+        <div class="col-lg-6 col-sm-12">
+            <button class="card mb-2 border-0" onclick="window.location.href='{% url 'mobile_storage_equipments' %}'">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <div class="container-fluid d-flex">
+                            <div class="row">
+                                <div class="col-3">
+                                    <img src="{% static 'gif/usb.gif' %}" width="100%">
+                                </div>
+                                <div class="col-9 d-flex align-items-center">
+                                    <h5 style="margin: 0;">可攜式資訊媒體</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </button>
+        </div>
 
-                    </td>
-                    <td class="col-1"><img src="{% static 'icons/laptop-mobile.png' %}" width="100%"></td>
-                    <td class="col-5">
-                        <a href="{% url 'mobile_devices' %}" class="h5">Mobile Devices</a>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="col-lg-6 col-sm-12">
+            <button class="card mb-2 border-0" onclick="window.location.href='{% url 'mobile_devices' %}'">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <div class="container-fluid d-flex">
+                            <div class="row">
+                                <div class="col-3">
+                                    <img src="{% static 'gif/responsive.gif' %}" width="100%">
+                                </div>
+                                <div class="col-9 d-flex align-items-center">
+                                    <h5 style="margin: 0;">行動裝置</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </button>
+        </div>
     </div>
 </div>
 {% endblock %}

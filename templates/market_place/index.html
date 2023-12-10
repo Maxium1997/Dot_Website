@@ -12,20 +12,43 @@ Market Place
 {% block body %}
 <div class="container">
     <div class="row justify-content-center">
-        <table class="table">
-            <tbody>
-                <tr class="align-middle">
-                    <td class="col-1"><img src="{% static 'icons/diploma.png' %}" width="100%"></td>
-                    <td class="col-5">
-                        <a href="{% url 'certificate_applications' %}" class="h5">Certificate Applications</a>
-                    </td>
-                    <td class="col-1"><img src="{% static 'icons/laptop-mobile.png' %}" width="100%"></td>
-                    <td class="col-5">
-                        <a href="{% url 'mobile_devices' %}" class="h5">Mobile Devices</a>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="col-lg-6 col-sm-12">
+            <button class="card mb-2 border-0" onclick="window.location.href='{% url 'certificate_applications' %}'">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <div class="container-fluid d-flex">
+                            <div class="row">
+                                <div class="col-3">
+                                    <img src="{% static 'gif/smart-contract.gif' %}" width="100%">
+                                </div>
+                                <div class="col-9 d-flex align-items-center">
+                                    <h5 style="margin: 0;">Certificate Applications</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </button>
+        </div>
+
+        <div class="col-lg-6 col-sm-12">
+            <button class="card mb-2 border-0" onclick="window.location.href='#">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <div class="container-fluid d-flex">
+                            <div class="row">
+                                <div class="col-3">
+                                    <img src="{% static 'gif/smart-contract.gif' %}" width="100%">
+                                </div>
+                                <div class="col-9 d-flex align-items-center">
+                                    <h5 style="margin: 0;">Certificate</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </button>
+        </div>
     </div>
 </div>
 {% endblock %}

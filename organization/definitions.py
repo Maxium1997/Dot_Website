@@ -12,9 +12,9 @@ class ArmyCommission(Enum):
     Captain = (0x4F462D32, 'Captain', '上尉')
     FirstLieutenant = (0x4F462D31, 'First Lieutenant', '中尉')
     SecondLieutenant = (0x4F46, 'Second Lieutenant', '少尉')
-    SergeantMajor = (0x4F522D39, 'Sergeant Major', '一等士官長')
-    FirstSergeant = (0x4F522D38, 'First Sergeant', '二等士官長')
-    SergeantFirstClass = (0x4F522D37, 'Sergeant First Class', '三等士官長')
+    SergeantMajor = (0x4F522D39, 'Sergeant Major', '士官長')      # 一等士官長
+    FirstSergeant = (0x4F522D38, 'First Sergeant', '士官長')      # 二等士官長
+    SergeantFirstClass = (0x4F522D37, 'Sergeant First Class', '士官長')       # 三等士官長
     StaffSergeant = (0x4F522D36, 'Staff Sergeant', '上士')
     Sergeant = (0x4F522D35, 'Sergeant', '中士')
     Corporal = (0x4F522D34, 'Corporal', '下士')
