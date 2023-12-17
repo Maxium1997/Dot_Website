@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'ckeditor',
     'website',
+    'organization',
     'business',
     'market_place',
     'learning_tree',

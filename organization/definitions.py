@@ -1,6 +1,23 @@
 from enum import Enum
 
 
+class Classification(Enum):
+    Headquarters = (0, 'Headquarters', '本部')
+    First = (1, 'First', '第一')
+    Second = (2, 'Second', '第二')
+    Third = (3, 'Third', '第三')
+    Forth = (4, 'Forth', '第四')
+    Fifth = (5, 'Fifth', '第五')
+    Sixth = (6, 'Sixth', '第六')
+    Seventh = (7, 'Seventh', '第七')
+    Eighth = (8, 'Eighth', '第八')
+    Ninth = (9, 'Ninth', '第九')
+    Tenth = (10, 'Tenth', '第十')
+    Eleventh = (11, 'Eleventh', '第十一')
+    Twelfth = (12, 'Twelfth', '第十二')
+    Thirteenth = (13, 'Thirteenth', '第十三')
+
+
 class ArmyCommission(Enum):
     NonSet = (0x4E6F4E, 'Non Set', '尚未設定')
     General = (0x4F462D39, 'General', '上將')
