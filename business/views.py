@@ -25,8 +25,6 @@ class MobileStorageEquipmentView(ListView):
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(MobileStorageEquipmentView, self).get_context_data(object_list=None, **kwargs)
-        # context['mobile_storage_equipments'] = MobileStorageEquipment.objects.all()
-        # context['manage_units'] = [(_.value[0], _.value[2]) for _ in CPC4Unit.__members__.values()]
 
         manage_units = []
         for mse in MobileStorageEquipment.objects.all():
@@ -115,12 +113,32 @@ class MobileDeviceView(ListView):
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(MobileDeviceView, self).get_context_data(object_list=None, **kwargs)
-        context['mobile_devices'] = self.get_queryset()
-        # context['manage_units'] = [(_.value[0], _.value[2]) for _ in CPC4Unit.__members__.values()]
+        owner_units = []
+        for md in MobileDevice.objects.all():
+            if md.owner_unit_content_type.model == 'internalunit':
+                try:
+                    owner_units.append(InternalUnit.objects.get(id=md.owner_unit_object_id))
+                except ObjectDoesNotExist:
+                    owner_units.append("Object does not exist")
+            elif md.owner_unit_content_type.model == 'patrolstation':
+                try:
+                    owner_units.append(PatrolStation.objects.get(id=md.owner_unit_object_id))
+                except ObjectDoesNotExist:
+                    owner_units.append("Object does not exist")
+            elif md.owner_unit_content_type.model == 'inspectionoffice':
+                try:
+                    owner_units.append(InspectionOffice.objects.get(id=md.owner_unit_object_id))
+                except ObjectDoesNotExist:
+                    owner_units.append("Object does not exist")
+            else:
+                owner_units.append(None)
+
+        context['mobile_devices'] = zip(self.get_queryset(), owner_units)
+
         return context
 
     def get_queryset(self):
-        return MobileDevice.objects.all().order_by('owner_unit')
+        return MobileDevice.objects.all()
 
 
 # views.py

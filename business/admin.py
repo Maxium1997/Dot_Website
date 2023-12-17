@@ -15,3 +15,4 @@ class MobileStorageEquipmentAdmin(admin.ModelAdmin):
 @admin.register(MobileDevice)
 class MobileDeviceAdmin(admin.ModelAdmin):
     list_display = ['owner', 'owner_unit', 'owner_commission', 'SP_brand', 'SP_model', 'number', 'SW_brand', 'SW_model']
+    ordering = ['owner_unit_object_id']

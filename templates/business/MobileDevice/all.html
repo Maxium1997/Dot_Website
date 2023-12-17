@@ -20,7 +20,7 @@ Business
             <button type="button" class="btn btn-success" onclick="window.location.href=#export_md_all'">Export All</button>
 <!--            <button type="button" class="btn btn-danger">Danger</button>-->
 <!--            <button type="button" class="btn btn-warning">Warning</button>-->
-            <button type="button" class="btn btn-info" onclick="window.location.href='{% url 'process_excel' %}'">Import</button>
+            <button type="button" class="btn btn-info disabled" onclick="#process_excel">Import</button>
 <!--            <button type="button" class="btn btn-light">Light</button>-->
 <!--            <button type="button" class="btn btn-dark">Dark</button>-->
         </div>
@@ -50,10 +50,10 @@ Business
                 </thead>
 
                 <tbody>
-                {% for md in mobile_devices %}
+                {% for md, md_owner_unit in mobile_devices %}
                     <tr>
                         <th scope="row">{{ forloop.counter }}</th>
-                        <td>{{ md.owner_unit|readable_unit }}</td>
+                        <td>{{ md_owner_unit }}</td>
                         <td>{{ md.owner_commission|readable_commission }}</td>
                         <td>{{ md.owner }}</td>
                         <td>{{ md.SP_brand }}</td>

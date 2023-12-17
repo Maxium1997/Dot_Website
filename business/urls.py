@@ -15,7 +15,8 @@ urlpatterns = [
 
         path('MobileDevice', MobileDeviceView.as_view(), name='mobile_devices'),
         path('MobileDevice', include([
-            path('import_md_excel', process_excel, name='process_excel'),
+            # Modified the MD models, but process excel function does not rewrite.
+            # path('import_md_excel', process_excel, name='process_excel'),
         ])),
     ])),
 ]

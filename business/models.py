@@ -59,10 +59,11 @@ class MobileStorageEquipment(models.Model):
 
 class MobileDevice(models.Model):
     owner = models.CharField(max_length=10)
-    OWNER_UNIT_CHOICES = [(_.value[0], _.value[1]) for _ in CPC4Unit.__members__.values()]
-    owner_unit = models.PositiveIntegerField(default=CPC4Unit.NonSet.value[0],
-                                             choices=OWNER_UNIT_CHOICES,
-                                             null=True, blank=True)
+
+    owner_unit_content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.SET_NULL)
+    owner_unit_object_id = models.PositiveIntegerField(null=True, blank=True)
+    owner_unit = GenericForeignKey('owner_unit_content_type', 'owner_unit_object_id')
+
     ARMY_COMMISSION_CHOICES = [(_.value[0], _.value[1]) for _ in ArmyCommission.__members__.values()]
     owner_commission = models.PositiveIntegerField(default=ArmyCommission.NonSet.value[0],
                                                    choices=ARMY_COMMISSION_CHOICES,
