@@ -1,8 +1,9 @@
 from django.db import models
-from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
 
 from organization.definitions import CPC4Unit, ArmyCommission
-from .definitions import EquipmentType, StorageUnit
+from business.definitions import EquipmentType, StorageUnit
 
 # Create your models here.
 
@@ -45,9 +46,9 @@ class MobileStorageEquipment(models.Model):
     # resource =
     # resource_date =
     # is_private = models.BooleanField(default=False)
-    MANAGE_UNIT_CHOICES = [(_.value[0], _.value[1]) for _ in CPC4Unit.__members__.values()]
-    manage_unit = models.PositiveIntegerField(default=CPC4Unit.CIE_squad.value[0],
-                                              choices=MANAGE_UNIT_CHOICES)
+    manage_unit_content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.SET_NULL)
+    manage_unit_object_id = models.PositiveIntegerField(null=True, blank=True)
+    manage_unit = GenericForeignKey('manage_unit_content_type', 'manage_unit_object_id')
     manager = models.CharField(max_length=10)
     deputy_manager = models.CharField(max_length=10)
     remarks = models.TextField(null=True, blank=True)

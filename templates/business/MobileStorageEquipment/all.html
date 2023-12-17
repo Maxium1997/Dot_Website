@@ -58,7 +58,7 @@ Business
                 </thead>
 
                 <tbody>
-                    {% for mse in mobile_storage_equipments %}
+                    {% for mse, mse_manage_unit in mobile_storage_equipments %}
                     <tr>
                         <th scope="row">{{ forloop.counter }}</th>
                         <td>{{ mse.serial_number }}</td>
@@ -94,11 +94,11 @@ Business
                             {% endif %}
                         </td>
                         <td>
-                            {{ mse.manage_unit|readable_unit }}</br>
+                            {{ mse_manage_unit }}</br>
                             {{ mse.manager }}
                         </td>
                         <td>
-                            {{ mse.manage_unit|readable_unit }}</br>
+                            {{ mse_manage_unit }}</br>
                             {{ mse.deputy_manager }}
                         </td>
                         <td>{{ mse.remarks }}</td>

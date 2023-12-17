@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from django.db import IntegrityError
 from django.views.generic import TemplateView, ListView
@@ -8,6 +9,7 @@ from openpyxl import Workbook
 
 
 from .models import MobileStorageEquipment, MobileDevice
+from organization.models import *
 from organization.definitions import CPC4Unit, ArmyCommission
 
 # Create your views here.
@@ -23,8 +25,31 @@ class MobileStorageEquipmentView(ListView):
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(MobileStorageEquipmentView, self).get_context_data(object_list=None, **kwargs)
-        context['mobile_storage_equipments'] = MobileStorageEquipment.objects.all().order_by('manage_unit')
-        context['manage_units'] = [(_.value[0], _.value[2]) for _ in CPC4Unit.__members__.values()]
+        # context['mobile_storage_equipments'] = MobileStorageEquipment.objects.all()
+        # context['manage_units'] = [(_.value[0], _.value[2]) for _ in CPC4Unit.__members__.values()]
+
+        manage_units = []
+        for mse in MobileStorageEquipment.objects.all():
+            if mse.manage_unit_content_type.model == 'internalunit':
+                try:
+                    manage_units.append(InternalUnit.objects.get(id=mse.manage_unit_object_id))
+                except ObjectDoesNotExist:
+                    manage_units.append("Object does not exist")
+            elif mse.manage_unit_content_type.model == 'patrolstation':
+                try:
+                    manage_units.append(PatrolStation.objects.get(id=mse.manage_unit_object_id))
+                except ObjectDoesNotExist:
+                    manage_units.append("Object does not exist")
+            elif mse.manage_unit_content_type.model == 'inspectionoffice':
+                try:
+                    manage_units.append(InspectionOffice.objects.get(id=mse.manage_unit_object_id))
+                except ObjectDoesNotExist:
+                    manage_units.append("Object does not exist")
+            else:
+                manage_units.append(None)
+
+        context['mobile_storage_equipments'] = zip(MobileStorageEquipment.objects.all(), manage_units)
+
         return context
 
 

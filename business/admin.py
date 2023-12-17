@@ -8,7 +8,7 @@ from .models import MobileStorageEquipment, MobileDevice
 @admin.register(MobileStorageEquipment)
 class MobileStorageEquipmentAdmin(admin.ModelAdmin):
     list_display = ['serial_number', 'name', 'brand', 'type', 'capacity',
-                    'storage_unit', 'manage_unit',
+                    'storage_unit', 'manage_unit_content_type', 'manage_unit_object_id',
                     'manager', 'deputy_manager']
 
 
