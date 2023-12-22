@@ -1,10 +1,11 @@
 from django.shortcuts import render
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.http import HttpResponse
 from django.db import IntegrityError
+from django.apps import apps
 from django.views.generic import TemplateView, ListView
 from openpyxl import Workbook
-# import pandas as pd
+import pandas as pd
 # from openpyxl.writer.excel import save_virtual_workbook
 
 
@@ -26,29 +27,37 @@ class MobileStorageEquipmentView(ListView):
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(MobileStorageEquipmentView, self).get_context_data(object_list=None, **kwargs)
 
-        manage_units = []
-        for mse in MobileStorageEquipment.objects.all():
-            if mse.manage_unit_content_type.model == 'internalunit':
-                try:
-                    manage_units.append(InternalUnit.objects.get(id=mse.manage_unit_object_id))
-                except ObjectDoesNotExist:
-                    manage_units.append("Object does not exist")
-            elif mse.manage_unit_content_type.model == 'patrolstation':
-                try:
-                    manage_units.append(PatrolStation.objects.get(id=mse.manage_unit_object_id))
-                except ObjectDoesNotExist:
-                    manage_units.append("Object does not exist")
-            elif mse.manage_unit_content_type.model == 'inspectionoffice':
-                try:
-                    manage_units.append(InspectionOffice.objects.get(id=mse.manage_unit_object_id))
-                except ObjectDoesNotExist:
-                    manage_units.append("Object does not exist")
-            else:
-                manage_units.append(None)
+        # Get the app configuration for the specified app
+        app_config = apps.get_app_config('organization')
+        # Get all models from the specified app
+        app_models = app_config.get_models()
 
-        context['mobile_storage_equipments'] = zip(MobileStorageEquipment.objects.all(), manage_units)
+        manage_units = []
+        manage_unit_options = []
+
+        for mse in MobileStorageEquipment.objects.all():
+            # Now, app_models is a list of model classes in the 'organization' app
+            for model in app_models:
+                try:
+                    manage_units.append(model.objects.get(id=mse.manage_unit_object_id))
+                    break
+                except ObjectDoesNotExist:
+                    pass
+
+        for model in apps.get_app_config('organization').get_models():
+            if model.__name__ == 'BasicOrgInfo':
+                pass
+            else:
+                for item in model.objects.all():
+                    manage_unit_options.append((item.serial_number, item))
+
+        context['mobile_storage_equipments'] = zip(self.get_queryset(), manage_units)
+        context['manage_unit_options'] = manage_unit_options
 
         return context
+
+    def get_queryset(self):
+        return MobileStorageEquipment.objects.all()
 
 
 class MobileStorageEquipmentFilteredView(ListView):
@@ -56,22 +65,80 @@ class MobileStorageEquipmentFilteredView(ListView):
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(MobileStorageEquipmentFilteredView, self).get_context_data(object_list=None, **kwargs)
-        manage_unit = self.request.GET.get('manage_unit')
-        if manage_unit == "":
-            context['manage_unit'] = ""
-        else:
-            context['manage_unit'] = int(self.request.GET.get('manage_unit'))
 
-        context['mobile_storage_equipments'] = self.get_queryset()
-        context['manage_units'] = [(_.value[0], _.value[2]) for _ in CPC4Unit.__members__.values()]
+        if self.request.GET.get('manage_unit_option') == "":
+            context['manage_unit_option'] = ""
+        else:
+            context['manage_unit_option'] = self.request.GET.get('manage_unit_option')
+
+        # Get the app configuration for the specified app
+        app_config = apps.get_app_config('organization')
+        # Get all models from the specified app
+        app_models = app_config.get_models()
+        # Name of the model to exclude
+        model_to_exclude = 'BasicOrgInfo'
+        # Filter models excluding the one specified
+        filtered_models = [model for model in app_models if model.__name__ != model_to_exclude]
+
+        manage_units = []
+        manage_unit_options = []
+
+        for mse in self.get_queryset():
+            # Now, app_models is a list of model classes in the 'organization' app
+            for model in filtered_models:
+                try:
+                    if model.__name__ == 'BasicOrgInfo':
+                        break
+                    else:
+                        manage_units.append(model.objects.get(id=mse.manage_unit_object_id))
+                except ObjectDoesNotExist:
+                    pass
+
+        for model in apps.get_app_config('organization').get_models():
+            if model.__name__ == 'BasicOrgInfo':
+                pass
+            else:
+                for item in model.objects.all():
+                    if item.serial_number is None:
+                        pass
+                    else:
+                        manage_unit_options.append((item.serial_number, item))
+
+            context['mobile_storage_equipments'] = zip(self.get_queryset(), manage_units)
+            # context['mobile_storage_equipments'] = self.get_queryset()
+            context['manage_unit_options'] = manage_unit_options
         return context
 
     def get_queryset(self):
-        manage_unit = self.request.GET.get('manage_unit')
-        if manage_unit == "":
-            return MobileStorageEquipment.objects.all()
-        else:
-            return MobileStorageEquipment.objects.filter(manage_unit=manage_unit)
+        app_name = 'organization'
+        # Get the app configuration for the specified app
+        app_config = apps.get_app_config(app_name)
+        # Get all models from the specified app
+        app_models = app_config.get_models()
+        # Name of the model to exclude
+        model_to_exclude = 'BasicOrgInfo'
+        # Filter models excluding the one specified
+        filtered_models = [model for model in app_models if model.__name__ != model_to_exclude]
+        query = []
+
+        try:
+            manage_unit_option = self.request.GET.get('manage_unit_option')
+            if manage_unit_option == "":
+                query.extend(MobileStorageEquipment.objects.all())
+            else:
+                # Now, app_models is a list of model classes in the 'organization' app
+                for model in filtered_models:
+                    try:
+                        ta = model.objects.get(serial_number=manage_unit_option).id
+                        # ta.objects.get()
+                        query.extend(MobileStorageEquipment.objects.filter(manage_unit_object_id=ta))
+                        break
+                    except ObjectDoesNotExist:
+                        pass
+
+        except ValidationError:
+            query.append(None)
+        return query
 
 
 def export_mse_all(request):
@@ -140,11 +207,7 @@ class MobileDeviceView(ListView):
     def get_queryset(self):
         return MobileDevice.objects.all()
 
-
 # views.py
-from django.shortcuts import render
-import pandas as pd
-
 
 def process_excel(request):
     if request.method == 'POST':

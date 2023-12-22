@@ -10,6 +10,7 @@ from .definitions import Classification
 class BasicOrgInfo(models.Model):
     name = models.CharField(max_length=20)
     en_name = models.CharField(max_length=255, unique=True)
+    serial_number = models.CharField(verbose_name='intercom', max_length=6, null=True, blank=True)  # 海巡6碼
     director = models.CharField(max_length=10, null=False, blank=False)
     deputy_director1 = models.CharField(max_length=10, null=True, blank=True)
     deputy_director2 = models.CharField(max_length=10, null=True, blank=True)
@@ -58,7 +59,7 @@ class Branch(BasicOrgInfo):
     superior = models.ForeignKey(Administration, null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
-        return str(self.superior) + " " + str(self.name)
+        return str(self.superior.name) + " " + str(self.name)
 
 
 # 巡防區
@@ -100,16 +101,15 @@ class CoastPatrolCorps(BasicOrgInfo):
     superior = models.ForeignKey(Branch, null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
-        return self.name
+        return str(self.superior.name) + " " + str(self.name)
 
 
 # 轄屬岸巡隊的單位（eg.一二組、中隊部、勤務分隊、通資小隊等等）
 class InternalUnit(BasicOrgInfo):
-    serial_number = models.CharField(max_length=10, unique=True, null=True, blank=True)
     superior = models.ForeignKey(CoastPatrolCorps, null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
-        return self.name
+        return str(self.superior.name) + " " + str(self.name)
 
 
 # 機動巡邏站
@@ -118,7 +118,6 @@ class PatrolStation(BasicOrgInfo):
     number = models.PositiveSmallIntegerField(choices=CLASSIFICATION_CHOICES, null=True, blank=True)
     address = models.CharField(max_length=255, null=True, blank=True)
     landline_phone = models.CharField(max_length=10, null=True, blank=True)    # 自動線
-    intercom_phone = models.CharField(max_length=6, null=True, blank=True)     # 海巡6碼
     email = models.EmailField(null=True, blank=True)     # 單位信箱
     superior = models.ForeignKey(InternalUnit, null=True, blank=True, on_delete=models.SET_NULL)
 
@@ -129,7 +128,6 @@ class PatrolStation(BasicOrgInfo):
 class InspectionOffice(BasicOrgInfo):
     address = models.CharField(max_length=255, null=True, blank=True)
     landline_phone = models.CharField(max_length=10, null=True, blank=True)    # 自動線
-    intercom_phone = models.CharField(max_length=6, null=True, blank=True)     # 海巡6碼
     email = models.EmailField(null=True, blank=True)     # 單位信箱
     superior = models.ForeignKey(CoastPatrolCorps, on_delete=models.PROTECT, null=False, blank=False)
 

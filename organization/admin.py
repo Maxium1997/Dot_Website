@@ -27,11 +27,11 @@ class InternalUnitAdmin(admin.ModelAdmin):
 
 @admin.register(InspectionOffice)
 class InspectionOfficeAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'en_name', 'address', 'landline_phone', 'intercom_phone']
-    ordering = ['intercom_phone']
+    list_display = ['id', 'name', 'en_name', 'serial_number', 'address', 'landline_phone',]
+    ordering = ['serial_number']
 
 
 @admin.register(PatrolStation)
 class PatrolStationAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'en_name', 'address', 'landline_phone', 'intercom_phone']
-    ordering = ['intercom_phone']
+    list_display = ['id', 'name', 'en_name', 'serial_number', 'address', 'landline_phone']
+    ordering = ['serial_number']

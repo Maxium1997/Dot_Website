@@ -27,9 +27,9 @@ Business
 
         <div class="mt-1 mb-1 col-lg-3 col-md-6 col-sm-12">
             <form method="get" action="{% url 'mse_filtered' %}" onchange="submit();">
-                <select name="manage_unit" id="manage_unit" class="form-select" aria-label="Floating label select example">
+                <select name="manage_unit_option" id="manage_unit_option" class="form-select" aria-label="Floating label select example">
                     <option value="">Filter by manage unit</option>
-                    {% for unit in manage_units %}
+                    {% for unit in manage_unit_options %}
                     <option value="{{ unit.0 }}">{{ unit.1 }}</option>
                     {% endfor %}
                 </select>

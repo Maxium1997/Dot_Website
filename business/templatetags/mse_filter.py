@@ -33,13 +33,16 @@ def readable_storage_unit(unit_code: int):
 
 @register.filter(name='is_info_equip')
 def is_info_equip(equip_code: int):
-    if 1000 < equip_code < 2000:
-        return True
-    elif 2000 < equip_code < 3000:
-        return False
-    elif equip_code == 5000:
-        return False
-    else:
+    try:
+        if 1000 < equip_code < 2000:
+            return True
+        elif 2000 < equip_code < 3000:
+            return False
+        elif equip_code == 5000:
+            return False
+        else:
+            return False
+    except:
         return False
 
 
