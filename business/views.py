@@ -31,13 +31,17 @@ class MobileStorageEquipmentView(ListView):
         app_config = apps.get_app_config('organization')
         # Get all models from the specified app
         app_models = app_config.get_models()
+        # Name of the model to exclude
+        model_to_exclude = 'BasicOrgInfo'
+        # Filter models excluding the one specified
+        filtered_models = [model for model in app_models if model.__name__ != model_to_exclude]
 
         manage_units = []
         manage_unit_options = []
 
         for mse in MobileStorageEquipment.objects.all():
             # Now, app_models is a list of model classes in the 'organization' app
-            for model in app_models:
+            for model in filtered_models:
                 try:
                     manage_units.append(model.objects.get(id=mse.manage_unit_object_id))
                     break
@@ -180,34 +184,33 @@ class MobileDeviceView(ListView):
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(MobileDeviceView, self).get_context_data(object_list=None, **kwargs)
+        # Get the app configuration for the specified app
+        app_config = apps.get_app_config('organization')
+        # Get all models from the specified app
+        app_models = app_config.get_models()
+        # Name of the model to exclude
+        model_to_exclude = 'BasicOrgInfo'
+        # Filter models excluding the one specified
+        filtered_models = [model for model in app_models if model.__name__ != model_to_exclude]
+
         owner_units = []
-        for md in MobileDevice.objects.all():
-            if md.owner_unit_content_type.model == 'internalunit':
+
+        for md in self.get_queryset():
+            # Now, app_models is a list of model classes in the 'organization' app
+            for model in filtered_models:
                 try:
-                    owner_units.append(InternalUnit.objects.get(id=md.owner_unit_object_id))
+                    owner_units.append(model.objects.get(id=md.owner_unit_object_id))
+                    break
                 except ObjectDoesNotExist:
-                    owner_units.append("Object does not exist")
-            elif md.owner_unit_content_type.model == 'patrolstation':
-                try:
-                    owner_units.append(PatrolStation.objects.get(id=md.owner_unit_object_id))
-                except ObjectDoesNotExist:
-                    owner_units.append("Object does not exist")
-            elif md.owner_unit_content_type.model == 'inspectionoffice':
-                try:
-                    owner_units.append(InspectionOffice.objects.get(id=md.owner_unit_object_id))
-                except ObjectDoesNotExist:
-                    owner_units.append("Object does not exist")
-            else:
-                owner_units.append(None)
+                    pass
 
         context['mobile_devices'] = zip(self.get_queryset(), owner_units)
 
         return context
 
     def get_queryset(self):
-        return MobileDevice.objects.all()
+        return MobileDevice.objects.all().order_by('owner_unit_content_type', 'owner_unit_object_id')
 
-# views.py
 
 def process_excel(request):
     if request.method == 'POST':
