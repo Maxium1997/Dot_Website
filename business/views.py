@@ -53,15 +53,19 @@ class MobileStorageEquipmentView(ListView):
                 pass
             else:
                 for item in model.objects.all():
-                    manage_unit_options.append((item.serial_number, item))
+                    if item.serial_number is None:
+                        pass
+                    else:
+                        manage_unit_options.append((item.serial_number, item))
 
         context['mobile_storage_equipments'] = zip(self.get_queryset(), manage_units)
+        context['count_mobile_storage_equipments'] = len(list(zip(self.get_queryset(), manage_units)))
         context['manage_unit_options'] = manage_unit_options
 
         return context
 
     def get_queryset(self):
-        return MobileStorageEquipment.objects.all()
+        return MobileStorageEquipment.objects.all().order_by('manage_unit_content_type', 'manage_unit_object_id')
 
 
 class MobileStorageEquipmentFilteredView(ListView):
@@ -106,10 +110,13 @@ class MobileStorageEquipmentFilteredView(ListView):
                     if item.serial_number is None:
                         pass
                     else:
-                        manage_unit_options.append((item.serial_number, item))
+                        if item.serial_number is None:
+                            pass
+                        else:
+                            manage_unit_options.append((item.serial_number, item))
 
             context['mobile_storage_equipments'] = zip(self.get_queryset(), manage_units)
-            # context['mobile_storage_equipments'] = self.get_queryset()
+            context['count_mobile_storage_equipments'] = len(list(zip(self.get_queryset(), manage_units)))
             context['manage_unit_options'] = manage_unit_options
         return context
 
@@ -194,6 +201,7 @@ class MobileDeviceView(ListView):
         filtered_models = [model for model in app_models if model.__name__ != model_to_exclude]
 
         owner_units = []
+        owner_unit_options = []
 
         for md in self.get_queryset():
             # Now, app_models is a list of model classes in the 'organization' app
@@ -204,12 +212,113 @@ class MobileDeviceView(ListView):
                 except ObjectDoesNotExist:
                     pass
 
+        for model in apps.get_app_config('organization').get_models():
+            if model.__name__ == 'BasicOrgInfo':
+                pass
+            else:
+                for item in model.objects.all():
+                    if item.serial_number is None:
+                        pass
+                    else:
+                        if item.serial_number is None:
+                            pass
+                        else:
+                            owner_unit_options.append((item.serial_number, item))
+
         context['mobile_devices'] = zip(self.get_queryset(), owner_units)
+        context['count_mobile_devices'] = len(list(zip(self.get_queryset(), owner_units)))
+        context['owner_unit_options'] = owner_unit_options
 
         return context
 
     def get_queryset(self):
-        return MobileDevice.objects.all().order_by('owner_unit_content_type', 'owner_unit_object_id')
+        return MobileDevice.objects.all().order_by('owner_unit_content_type', 'owner_unit_object_id', '-owner_commission')
+
+
+class MobileDeviceFilteredView(ListView):
+    template_name = 'business/MobileDevice/filtered.html'
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super(MobileDeviceFilteredView, self).get_context_data(object_list=None, **kwargs)
+
+        if self.request.GET.get('owner_unit_option') == "":
+            context['owner_unit_option'] = ""
+        else:
+            context['owner_unit_option'] = self.request.GET.get('owner_unit_option')
+
+        # Get the app configuration for the specified app
+        app_config = apps.get_app_config('organization')
+        # Get all models from the specified app
+        app_models = app_config.get_models()
+        # Name of the model to exclude
+        model_to_exclude = 'BasicOrgInfo'
+        # Filter models excluding the one specified
+        filtered_models = [model for model in app_models if model.__name__ != model_to_exclude]
+        owner_units = []
+        owner_unit_options = []
+
+        try:
+            for md in self.get_queryset():
+                # Now, app_models is a list of model classes in the 'organization' app
+                for model in filtered_models:
+                    try:
+                        owner_units.append(model.objects.get(id=md.owner_unit_object_id))
+                        break
+                    except ObjectDoesNotExist:
+                        pass
+
+            for model in apps.get_app_config('organization').get_models():
+                if model.__name__ == 'BasicOrgInfo':
+                    pass
+                else:
+                    for item in model.objects.all():
+                        if item.serial_number is None:
+                            pass
+                        else:
+                            owner_unit_options.append((item.serial_number, item))
+
+            context['mobile_devices'] = zip(self.get_queryset(), owner_units)
+            context['count_mobile_devices'] = len(list(zip(self.get_queryset(), owner_units)))
+        except TypeError:
+            pass
+
+        context['owner_unit_options'] = owner_unit_options
+        return context
+
+    def get_queryset(self):
+        app_name = 'organization'
+        # Get the app configuration for the specified app
+        app_config = apps.get_app_config(app_name)
+        # Get all models from the specified app
+        app_models = app_config.get_models()
+        # Name of the model to exclude
+        model_to_exclude = 'BasicOrgInfo'
+        # Filter models excluding the one specified
+        filtered_models = [model for model in app_models if model.__name__ != model_to_exclude]
+        query = []
+
+        try:
+            owner_unit_option = self.request.GET.get('owner_unit_option')
+            if owner_unit_option == "" or owner_unit_option is None:
+                return MobileDevice.objects.all().order_by('owner_unit_content_type', 'owner_unit_object_id', '-owner_commission')
+            else:
+                # Now, app_models is a list of model classes in the 'organization' app
+                for model in filtered_models:
+                    try:
+                        ta = model.objects.get(serial_number=owner_unit_option).id
+                        # ta.objects.get()
+                        query.append(MobileDevice.objects.filter(owner_unit_object_id=ta))
+                        break
+                    except ObjectDoesNotExist:
+                        pass
+
+                result_query = query[0]
+                for _ in query[0:]:
+                    result_query = result_query.union(_)
+                return result_query.order_by('-owner_commission')
+
+        except ValidationError:
+            return MobileDevice.objects.all().order_by('owner_unit_content_type', 'owner_unit_object_id', '-owner_commission')
 
 
 def process_excel(request):

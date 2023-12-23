@@ -38,9 +38,13 @@ Business
         <div class="mt-1 mb-1 col-lg-3 col-md-6 col-sm-12">
             <form method="get" action="{% url 'md_filtered' %}" onchange="submit();">
                 <select name="owner_unit_option" id="owner_unit_option" class="form-select" aria-label="Floating label select example">
-                    <option value="">Filter by manage unit</option>
+                    <option value="">All</option>
                     {% for unit in owner_unit_options %}
+                    {% if unit.0 == owner_unit_option %}
+                    <option value="{{ unit.0 }}" selected>{{ unit.1 }}</option>
+                    {% else %}
                     <option value="{{ unit.0 }}">{{ unit.1 }}</option>
+                    {% endif %}
                     {% endfor %}
                 </select>
             </form>

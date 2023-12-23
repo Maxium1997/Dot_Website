@@ -1,7 +1,7 @@
 from django.urls import path, include
 
 from .views import BusinessView, MobileStorageEquipmentView, MobileStorageEquipmentFilteredView, \
-    MobileDeviceView
+    MobileDeviceView, MobileDeviceFilteredView
 from .views import export_mse_all, process_excel
 
 urlpatterns = [
@@ -14,9 +14,10 @@ urlpatterns = [
         ])),
 
         path('MobileDevice', MobileDeviceView.as_view(), name='mobile_devices'),
-        path('MobileDevice', include([
+        path('MobileDevice/', include([
             # Modified the MD models, but process excel function does not rewrite.
             # path('import_md_excel', process_excel, name='process_excel'),
+            path('filtered/', MobileDeviceFilteredView.as_view(), name='md_filtered'),
         ])),
     ])),
 ]

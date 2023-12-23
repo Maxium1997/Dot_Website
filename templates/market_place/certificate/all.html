@@ -21,18 +21,12 @@ Market Place
 <!--            <button type="button" class="btn btn-success" onclick="window.location.href=#export_md_all'">Export All</button>-->
 <!--            <button type="button" class="btn btn-danger">Danger</button>-->
 <!--            <button type="button" class="btn btn-warning">Warning</button>-->
-<!--            <button type="button" class="btn btn-info" onclick="window.location.href='{% url 'process_excel' %}'">Import</button>-->
+<!--            <button type="button" class="btn btn-info" onclick="window.location.href='#process_excel'">Import</button>-->
 <!--            <button type="button" class="btn btn-light">Light</button>-->
 <!--            <button type="button" class="btn btn-dark">Dark</button>-->
         </div>
 
         <div class="mt-1 mb-1 col-lg-3 col-md-6 col-sm-12">
-<!--            <form method="get" action="{% url 'mse_filtered' %}" onchange="submit();">-->
-<!--                <select name="manage_unit" id="manage_unit" class="form-select" aria-label="Floating label select example">-->
-<!--                    <option value="">Filter by manage unit</option>-->
-<!--                </select>-->
-<!--            </form>-->
-
             <form method="get" action="{% url 'certificate_application_search' %}" class="d-flex" role="search">
                 <input name="keywords" id="keywords" class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
                 <button class="btn btn-outline-success" type="submit">Search</button>

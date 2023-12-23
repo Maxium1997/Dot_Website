@@ -14,6 +14,16 @@ Business
 {% block body %}
 <div class="container-fluid">
     <div class="row">
+        <div>
+            {% if count_mobile_storage_equipments == 0 %}
+            <h3>No Result.</h3>
+            {% elif count_mobile_storage_equipments == 1 %}
+            <h3>{{ count_mobile_storage_equipments }} Result.</h3>
+            {% else %}
+            <h3>{{ count_mobile_storage_equipments }} Results.</h3>
+            {% endif %}
+        </div>
+
         <div class="mt-1 mb-1">
             <button type="button" class="btn btn-primary">Apply</button>
 <!--            <button type="button" class="btn btn-secondary">Secondary</button>-->
