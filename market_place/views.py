@@ -2,7 +2,8 @@ from django.shortcuts import render
 from django.views.generic import TemplateView, ListView
 from django.db.models import Q
 
-from .models import CertificateApplication
+from .models import CertificateApplication, Item
+from .definitions import ItemStatus
 # Create your views here.
 
 
@@ -43,3 +44,28 @@ class CertificateApplicationSearchView(ListView):
             q_objects |= Q(custodian_contact_number__icontains=keyword)
         # search_criteria = Q(applicant_name=keyword) | Q(custodian_name=keyword) | Q(custodian_ID_number=keyword)
         return CertificateApplication.objects.filter(q_objects)
+
+
+class ItemIndexView(ListView):
+    model = Item
+    template_name = 'market_place/item/index.html'
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super(ItemIndexView, self).get_context_data(object_list=None, **kwargs)
+        items = list(set([_.name for _ in self.get_queryset()]))
+        all_items = []
+
+        for item in items:
+            item_status_list = [item]
+            for status in ItemStatus.__members__.values():
+                criteria = Q(name__icontains=item) & Q(status__icontains=status.value[0])
+                item_status_list.append(Item.objects.filter(criteria).count())
+            all_items.append(item_status_list)
+
+        context['item_status'] = ItemStatus.__members__.values()
+        context['all_items'] = all_items
+
+        return context
+
+    def get_queryset(self):
+        return Item.objects.all()

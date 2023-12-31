@@ -8,27 +8,6 @@ from business.definitions import EquipmentType, StorageUnit
 # Create your models here.
 
 
-class Category(models.Model):
-    name = models.CharField(max_length=255)
-    slug = models.SlugField()
-
-    def __str__(self):
-        return self.name
-
-
-class Subcategory(models.Model):
-    category = models.ForeignKey(Category, on_delete=models.PROTECT, null=True)
-    name = models.CharField(max_length=255)
-    slug = models.SlugField()
-
-    def __str__(self):
-        return self.name
-
-
-class SubcategoryDetail(models.Model):
-    sub_category = models.ForeignKey(Subcategory, on_delete=models.PROTECT, null=True)
-
-
 class MobileStorageEquipment(models.Model):
     serial_number = models.CharField(max_length=9, null=True, blank=True)
     name = models.CharField(max_length=20, null=False, blank=False)
