@@ -1,7 +1,7 @@
 from django.urls import path, include
 
 from .views import BusinessView, MobileStorageEquipmentView, MobileStorageEquipmentFilteredView, \
-    MobileDeviceView, MobileDeviceFilteredView
+    MobileDeviceView, MobileDeviceFilteredView, CertificateApplicationView, CertificateApplicationSearchView
 from .views import export_mse_all, process_excel
 
 urlpatterns = [
@@ -18,6 +18,11 @@ urlpatterns = [
             # Modified the MD models, but process excel function does not rewrite.
             # path('import_md_excel', process_excel, name='process_excel'),
             path('filtered/', MobileDeviceFilteredView.as_view(), name='md_filtered'),
+        ])),
+
+        path('CertificateApplication', CertificateApplicationView.as_view(), name='certificate_applications'),
+        path('CertificateApplication/', include([
+            path('search', CertificateApplicationSearchView.as_view(), name='certificate_application_search'),
         ])),
     ])),
 ]

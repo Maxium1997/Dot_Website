@@ -1,7 +1,7 @@
 from django import template
 from django.utils.safestring import mark_safe
 from datetime import datetime, timedelta
-from business.definitions import StorageUnit, EquipmentType
+from business.definitions import StorageUnit, EquipmentType, CertificateUseFor
 from organization.definitions import CBUnit, CPC4Unit, CPC4UnitVer2, ArmyCommission
 
 register = template.Library()
@@ -54,3 +54,9 @@ def readable_commission(commission_code):
         return army_commission.get(hex_commission_code)
     except ValueError as e:
         print(f"Error: {e}")
+
+
+@register.filter(name='readable_use_for')
+def readable_use_for(code: int):
+    use_for = {_.value[0]: _.value[2] for _ in CertificateUseFor.__members__.values()}
+    return use_for.get(code)

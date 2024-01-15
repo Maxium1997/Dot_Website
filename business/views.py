@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.http import HttpResponse
 from django.db import IntegrityError
+from django.db.models import Q
 from django.apps import apps
 from django.views.generic import TemplateView, ListView
 from openpyxl import Workbook
@@ -9,7 +10,7 @@ import pandas as pd
 # from openpyxl.writer.excel import save_virtual_workbook
 
 
-from .models import MobileStorageEquipment, MobileDevice
+from .models import MobileStorageEquipment, MobileDevice, CertificateApplication
 from organization.models import *
 from organization.definitions import CPC4Unit, ArmyCommission
 
@@ -373,3 +374,79 @@ def process_excel(request):
 
     return render(request, 'business/MobileDevice/import.html')
 
+
+class CertificateApplicationView(ListView):
+    model = CertificateApplication
+    template_name = 'business/Certificate/all.html'
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super(CertificateApplicationView, self).get_context_data(object_list=None, **kwargs)
+        # Get the app configuration for the specified app
+        app_config = apps.get_app_config('organization')
+        # Get all models from the specified app
+        app_models = app_config.get_models()
+        # Name of the model to exclude
+        model_to_exclude = 'BasicOrgInfo'
+        # Filter models excluding the one specified
+        filtered_models = [model for model in app_models if model.__name__ != model_to_exclude]
+
+        applicant_units = []
+        owner_unit_options = []
+
+        for md in self.get_queryset():
+            # Now, app_models is a list of model classes in the 'organization' app
+            for model in filtered_models:
+                try:
+                    applicant_units.append(model.objects.get(id=md.applicant_unit_object_id))
+                    break
+                except ObjectDoesNotExist:
+                    pass
+
+        context['certificate_applications'] = zip(self.get_queryset(), applicant_units)
+
+        return context
+
+    def get_queryset(self):
+        return CertificateApplication.objects.all()
+
+
+class CertificateApplicationSearchView(ListView):
+    template_name = 'business/Certificate/search.html'
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super(CertificateApplicationSearchView, self).get_context_data(object_list=None, **kwargs)
+        # Get the app configuration for the specified app
+        app_config = apps.get_app_config('organization')
+        # Get all models from the specified app
+        app_models = app_config.get_models()
+        # Name of the model to exclude
+        model_to_exclude = 'BasicOrgInfo'
+        # Filter models excluding the one specified
+        filtered_models = [model for model in app_models if model.__name__ != model_to_exclude]
+
+        applicant_units = []
+        owner_unit_options = []
+
+        for md in self.get_queryset():
+            # Now, app_models is a list of model classes in the 'organization' app
+            for model in filtered_models:
+                try:
+                    applicant_units.append(model.objects.get(id=md.applicant_unit_object_id))
+                    break
+                except ObjectDoesNotExist:
+                    pass
+        context['certificate_applications'] = zip(self.get_queryset(), applicant_units)
+        return context
+
+    def get_queryset(self):
+        keywords = self.request.GET.get('keywords')
+        keywords = keywords.split()
+        q_objects = Q()
+        for keyword in keywords:
+            q_objects |= Q(applicant_name__icontains=keyword)
+            q_objects |= Q(applicant_contact_number__icontains=keyword)
+            q_objects |= Q(custodian_name__icontains=keyword)
+            q_objects |= Q(custodian_ID_number__icontains=keyword)
+            q_objects |= Q(custodian_contact_number__icontains=keyword)
+        # search_criteria = Q(applicant_name=keyword) | Q(custodian_name=keyword) | Q(custodian_ID_number=keyword)
+        return CertificateApplication.objects.filter(q_objects)
