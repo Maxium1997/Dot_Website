@@ -69,3 +69,33 @@ class ItemIndexView(ListView):
 
     def get_queryset(self):
         return Item.objects.all()
+
+
+class ItemQueryView(ListView):
+    model = Item
+    template_name = 'market_place/item/query.html'
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super(ItemQueryView, self).get_context_data(object_list=None, **kwargs)
+        context['keyword'] = self.kwargs.get('item_name')
+        context['query_items'] = self.get_queryset()
+        return context
+
+    def get_queryset(self):
+        keyword = self.kwargs.get('item_name')
+        return Item.objects.filter(name__icontains=keyword).order_by('category')
+
+
+class ItemStatusQueryView(ListView):
+    model = Item
+    template_name = 'market_place/item/query.html'
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super(ItemStatusQueryView, self).get_context_data(object_list=None, **kwargs)
+        context['keyword'] = self.kwargs.get('item_status')
+        context['query_items'] = self.get_queryset()
+        return context
+
+    def get_queryset(self):
+        keyword = self.kwargs.get('item_status')
+        return Item.objects.filter(status__icontains=keyword).order_by('category')

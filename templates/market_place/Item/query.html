@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load mp_filter %}
 
 {% block subtitle %}
 Market Place
@@ -25,26 +26,27 @@ Market Place
         </div>
     </div>
 
+    <div class="row justify-content-center text-center">
+        <span>Query By</span>
+        <strong class="h3">{{ keyword|readable_item_status }}</strong>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="history.back()">Back</button>
+
     <div class="table-responsible">
         <table class="table table-striped text-center">
             <thead>
                 <tr>
                     <td>Item</td>
-                    {% for status in item_status %}
-                    <td><a href="{% url 'items_status_query' status.value.0 %}">{{ status.value.2 }}</a></td>
-                    {% endfor %}
+                    <td>S/N</td>
+                    <td>Status</td>
                 </tr>
             </thead>
             <tbody>
-            {% for item in all_items %}
+            {% for item in query_items %}
                 <tr>
-                    {% for value in item %}
-                    {% if forloop.counter == 1 %}
-                    <td><a href="{% url 'items_query' value %}">{{ value }}</a></td>
-                    {% else %}
-                    <td>{{ value }}</td>
-                    {% endif %}
-                    {% endfor %}
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.serial_number }}</td>
+                    <td>{{ item.status|readable_item_status }}</td>
                 </tr>
             {% endfor %}
             </tbody>
