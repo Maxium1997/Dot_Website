@@ -1,8 +1,8 @@
 from django.shortcuts import render
-from django.views.generic import TemplateView, ListView
+from django.views.generic import TemplateView, ListView, CreateView
 from django.db.models import Q
 
-from .models import Item
+from .models import Item, Order
 from .definitions import ItemStatus
 # Create your views here.
 
@@ -64,3 +64,20 @@ class ItemStatusQueryView(ListView):
     def get_queryset(self):
         keyword = self.kwargs.get('item_status')
         return Item.objects.filter(status__icontains=keyword).order_by('category')
+
+
+class MaintenanceManagementView(TemplateView):
+    template_name = 'market_place/MaintenanceManagement/index.html'
+
+
+class OrderDashboardView(ListView):
+    model = Order
+    template_name = 'market_place/MaintenanceManagement/Order/dashboard.html'
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super(OrderDashboardView, self).get_context_data(object_list=None, **kwargs)
+        context['orders'] = self.get_queryset()
+        return context
+
+    def get_queryset(self):
+        return Order.objects.all()
