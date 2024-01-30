@@ -16,7 +16,7 @@ class ItemAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['serial_number', 'purchaser', 'status']
+    list_display = ['serial_number', 'purchaser', 'status', 'created_time']
 
 
 @admin.register(Record)
