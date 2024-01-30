@@ -27,5 +27,4 @@ def order_progress_percentage(order_status: int) -> int:
     if order_status == OrderStatus.Completed.value[0] or order_status == OrderStatus.Canceled.value[0]:
         return 100
     else:
-        return int(order_status / (len(OrderStatus.__members__.values())-1) * 100)
-
+        return int(order_status / (len(OrderStatus.__members__.values())-1) * 100) + 25
