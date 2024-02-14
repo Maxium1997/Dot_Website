@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block subtitle %}
+Playground
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Playground</li>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-sm-12">
+            <button class="card mb-2 border-0" onclick="window.location.href='{% url 'karaoke' %}'">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <div class="container-fluid d-flex">
+                            <div class="row">
+                                <div class="col-3">
+                                    <img src="{% static 'pic/karaoke.png' %}" width="100%">
+                                </div>
+                                <div class="col-9 d-flex align-items-center">
+                                    <h5 style="margin: 0;">Karaoke</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

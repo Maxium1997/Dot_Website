@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'ckeditor',
+    'googleapiclient',
     'website',
     'organization',
     'business',
@@ -146,3 +147,5 @@ CKEDITOR_CONFIGS = {
         'toolbar': 'full',
     },
 }
+
+YOUTUBE_DATA_API_KEY = 'AIzaSyDERE1CVNA1eftej708jxhi1Xr9OYx5ccE'

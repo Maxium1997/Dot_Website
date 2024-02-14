@@ -25,4 +25,5 @@ urlpatterns = [
     path('', include('business.urls')),
     path('', include('market_place.urls')),
     path('', include('learning_tree.urls')),
+    path('', include('playground.urls')),
 ]+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
