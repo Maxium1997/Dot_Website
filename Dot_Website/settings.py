@@ -18,6 +18,9 @@ from dotenv import load_dotenv
 load_dotenv(encoding="utf-8")
 CHANNEL_SECRET = os.getenv('CHANNEL_SECRET')
 CHANNEL_ACCESS_TOKEN = os.getenv('CHANNEL_ACCESS_TOKEN')
+# SECURITY WARNING: keep the secret key used in production secret!
+LINE_CHANNEL_ACCESS_TOKEN = 'U0esetPM19lakdWnPp5Phl69QRAgJHTG3xGVQKxsCnZbvaY/eufsaznFlIxw/7v8MtnLFLZozKoAW5dbHBKQPClBo1bweFpjrc9pjEU7U3yY/KPMKX6uqqVdDbRfbstOoHAzT1dKPqKIwlFVp70hgQdB04t89/1O/w1cDnyilFU='
+LINE_CHANNEL_SECRET = '9d27db238ac8cd06aa7c835929d6a634'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,8 +35,7 @@ SECRET_KEY = 'django-insecure-%bvp7yd^&^5aktfosx-pekg5^e&k1yn^x$a=!96@0_keu$h3as
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1',
-                 'https://b425-112-78-71-35.ngrok-free.app']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -116,9 +118,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'zh-hant'
 
-TIME_ZONE = 'UTC'
+# TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Taipei'
 
 USE_I18N = True
 
@@ -128,7 +132,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 MEDIA_URL = 'media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")

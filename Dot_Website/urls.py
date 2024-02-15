@@ -23,5 +23,5 @@ urlpatterns = [
     path('', include('website.urls')),
     path('', include('learning_tree.urls')),
     # 新增 line bot
-    path('linebot/', include('line_bot.urls')),
+    path('line_bot/', include('line_bot.urls')),
 ]+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
