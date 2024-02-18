@@ -26,4 +26,5 @@ urlpatterns = [
     path('', include('market_place.urls')),
     path('', include('learning_tree.urls')),
     path('', include('playground.urls')),
+    path('line_bot/', include('line_bot.urls')),
 ]+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
