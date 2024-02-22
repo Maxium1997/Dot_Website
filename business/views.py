@@ -1,16 +1,22 @@
-from django.shortcuts import render
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.shortcuts import render, get_object_or_404
+from django.core.exceptions import ObjectDoesNotExist, ValidationError, PermissionDenied
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.utils.datastructures import MultiValueDictKeyError
+from django.utils.decorators import method_decorator
 from django.http import HttpResponse
-from django.db import IntegrityError
 from django.db.models import Q
+from django.db import IntegrityError
 from django.apps import apps
-from django.views.generic import TemplateView, ListView
+from django.urls import reverse_lazy
+from django.views.generic import TemplateView, ListView, UpdateView
 from openpyxl import Workbook
 import pandas as pd
 # from openpyxl.writer.excel import save_virtual_workbook
 
 
-from .models import MobileStorageEquipment, MobileDevice, CertificateApplication
+from .models import MobileStorageEquipment, MobileDevice, CertificateApplication, OceanStation
+from .definitions import OceanStationServiceItems
 from organization.models import *
 from organization.definitions import CPC4Unit, ArmyCommission
 
@@ -19,6 +25,14 @@ from organization.definitions import CPC4Unit, ArmyCommission
 
 class BusinessView(TemplateView):
     template_name = 'business/index.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(BusinessView, self).get_context_data(**kwargs)
+        context['mobile_storage_equipment_nums'] = MobileStorageEquipment.objects.all().count()
+        context['mobile_device_nums'] = MobileDevice.objects.all().count()
+        context['certificate_application_nums'] = CertificateApplication.objects.all().count()
+        context['ocean_station_nums'] = OceanStation.objects.all().count()
+        return context
 
 
 class MobileStorageEquipmentView(ListView):
@@ -151,39 +165,6 @@ class MobileStorageEquipmentFilteredView(ListView):
         except ValidationError:
             query.append(None)
         return query
-
-
-def export_mse_all(request):
-    # Get queryset data
-    queryset = MobileStorageEquipment.objects.all()
-
-    # Create a workbook and add a worksheet
-    wb = Workbook()
-    ws = wb.active
-
-    # Write the header row
-    header = ["Serial Number", "Name", "Built-in Memory", "Brand", "Type", "Model", "Capacity",
-              "Storage Unit", "Manage Unit", "Manager", "Deputy Manager", "Remarks"]
-    ws.append(header)
-
-    # Write data rows
-    for item in queryset:
-        row_data = [
-            item.serial_number, item.name, item.builtin_memory, item.brand,
-            item.get_type_display(), item.model, item.capacity,
-            item.get_storage_unit_display(), item.get_manage_unit_display(),
-            item.manager, item.deputy_manager, item.remarks
-        ]
-        ws.append(row_data)
-
-    # Create a response with the Excel file
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=mobile_storage_equipment.xlsx'
-
-    # Save the workbook directly to the response
-    wb.save(response)
-
-    return response
 
 
 class MobileDeviceView(ListView):
@@ -322,59 +303,6 @@ class MobileDeviceFilteredView(ListView):
             return MobileDevice.objects.all().order_by('owner_unit_content_type', 'owner_unit_object_id', '-owner_commission')
 
 
-def process_excel(request):
-    if request.method == 'POST':
-        excel_file = request.FILES['excel_file']
-
-        # 讀取 Excel 文件
-        df = pd.read_excel(excel_file)
-        # excel_data = ['#', 'owner_unit', 'commission', 'owner', 'SP_brand', 'SP_model', 'SW_brand', 'SW_model']
-        excel_data = []
-        for index, row in df.iterrows():
-            # 將每一行的數據轉換為字典
-            row_data = row.to_dict()
-            excel_data.append(row_data)
-
-        query_exists = []
-        query_creates = []
-        for data in excel_data:
-            try:
-                query_exists.append(MobileDevice.objects.get(owner=data.get('owner')))
-            except IntegrityError:
-                break
-            except:
-                cpc4_units = {_.value[2]: _.value[0] for _ in CPC4Unit.__members__.values()}
-                data_owner_unit = data.get('unit')
-                get_owner_unit = cpc4_units.get(data_owner_unit)
-
-                try:
-                    commissions = {_.value[2]: _.value[0] for _ in ArmyCommission.__members__.values()}
-                    data_owner_commission = data.get('owner_commission')
-                    get_owner_commission = commissions.get(data_owner_commission)
-                except:
-                    get_owner_commission = ArmyCommission.NonSet.value[0]
-
-                mobile_device = MobileDevice(
-                    owner=data.get('owner'),
-                    owner_unit=get_owner_unit,
-                    owner_commission=get_owner_commission,
-                    SP_brand=data.get('SP_brand'),
-                    SP_model=data.get('SP_model'),
-                    SW_brand=data.get('SW_brand'),
-                    SW_model=data.get('SW_model'),
-                    number=data.get('number')
-                )
-                mobile_device.save()
-                query_creates.append(mobile_device)
-
-        # 傳遞讀取結果到 template2
-        return render(request, 'business/MobileDevice/import_result.html', {'excel_data': excel_data,
-                                                                            'query_exists': query_exists,
-                                                                            'query_creates': query_creates,})
-
-    return render(request, 'business/MobileDevice/import.html')
-
-
 class CertificateApplicationView(ListView):
     model = CertificateApplication
     template_name = 'business/Certificate/all.html'
@@ -450,3 +378,77 @@ class CertificateApplicationSearchView(ListView):
             q_objects |= Q(custodian_contact_number__icontains=keyword)
         # search_criteria = Q(applicant_name=keyword) | Q(custodian_name=keyword) | Q(custodian_ID_number=keyword)
         return CertificateApplication.objects.filter(q_objects)
+
+
+class OceanStationIndexView(ListView):
+    model = OceanStation
+    template_name = 'business/OceanStation/index.html'
+
+
+def import_ocean_station(request):
+    ocean_station_exists = []
+    ocean_station_creates = []
+
+    if request.method == 'POST':
+        try:
+            excel_file = request.FILES['excel_file']
+
+            # 讀取 Excel 文件
+            df = pd.read_excel(excel_file)
+
+            excel_data = []
+            for index, row in df.iterrows():
+                row_data = row.to_dict()
+                excel_data.append(row_data)
+
+            for data in excel_data:
+                try:
+                    ocean_station = OceanStation.objects.get(name=data.get('name'), address=data.get('address'))
+                    ocean_station_exists.append(ocean_station)
+                except IntegrityError:
+                    break
+                except ObjectDoesNotExist:
+                    service_item = 0
+                    for item in OceanStationServiceItems.__members__.values():
+                        if item.value[2] in data.get('service_items'):
+                            service_item += item.value[0]
+
+                    ocean_station = OceanStation(
+                        name=data.get('name'),
+                        administrative_district=data.get('administrative_district'),
+                        address=data.get('address'),
+                        contact_number=data.get('contact_number'),
+                        coordinate_longitude=data.get('coordinate_longitude'),
+                        coordinate_latitude=data.get('coordinate_latitude'),
+                        service_items=service_item,
+                    )
+                    ocean_station.save()
+                    ocean_station_creates.append(ocean_station)
+        except MultiValueDictKeyError:
+            messages.warning(request, "Please upload a excel file.")
+            return render(request, 'business/OceanStation/import.html')
+        except:
+            messages.warning(request, "Your file type is not accepted.")
+            return render(request, 'business/OceanStation/import.html')
+
+    return render(request, 'business/OceanStation/import.html', {'exist_ocean_stations': ocean_station_exists,
+                                                                 'created_ocean_stations': ocean_station_creates})
+
+
+class OceanStationUpdateView(UpdateView):
+    model = OceanStation
+    template_name = 'business/OceanStation/update.html'
+    fields = ['administrative_district', 'address', 'contact_number', 'coordinate_longitude',
+              'coordinate_latitude', 'fans_page_url']
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(OceanStation, name=self.kwargs.get('ocean_station_name'))
+
+    def get_context_data(self, **kwargs):
+        context = super(OceanStationUpdateView, self).get_context_data(**kwargs)
+        context['station'] = self.get_object()
+        return context
+
+    def get_success_url(self):
+        messages.success(self.request, "Update successfully.")
+        return reverse_lazy('ocean_station_update', kwargs={'ocean_station_name': self.get_object().name})

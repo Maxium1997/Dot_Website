@@ -64,3 +64,13 @@ class CertificateUseFor(Enum):
     Retirement = (7, 'Retirement', '退伍')
     ChangeSoftCer = (8, 'Change Soft Certificate', '更換軟憑')
     BrokenReApply = (9, 'Broken Reapply', '卡片毀損，重新申請')
+
+
+class OceanStationServiceItems(Enum):
+    Lounge = (0b1, 'Lounge', '民眾休息區')
+    AccessibleRestroom = (0b10, 'AccessibleRestroom', '無障礙廁所')
+    DrinkingFountain = (0b100, 'DrinkingFountain', '飲水機')
+    CleaningFacility = (0b1000, 'CleaningFacility', '沖洗設施')
+    Lockers = (0b10000, 'Lockers', '置物櫃')
+    ParkingLot = (0b100000, 'ParkingLot', '停車場')
+    LifeVestRent = (0b1000000, 'LifeVestRent', '救生衣租借')

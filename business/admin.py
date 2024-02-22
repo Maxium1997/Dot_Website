@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 
-from .models import MobileStorageEquipment, MobileDevice, CertificateApplication
+from .models import MobileStorageEquipment, MobileDevice, CertificateApplication, OceanStation
 
 
 # Register your models here.
@@ -25,3 +25,8 @@ class CertificateApplicationAdmin(admin.ModelAdmin):
                     'custodian_commission', 'custodian_name', 'custodian_ID_number', 'custodian_contact_number',
                     'custodian_email', 'custodian_classification',
                     'storage', 'process', 'use_for', 'applied_date', 'edited_date']
+
+
+@admin.register(OceanStation)
+class OceanStationAdmin(admin.ModelAdmin):
+    list_display = ['name', 'administrative_district', 'address', 'contact_number']

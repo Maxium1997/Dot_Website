@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block subtitle %}
+Ocean Station
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'business' %}">business</a></li>
+<li class="breadcrumb-item"><a href="{% url 'ocean_stations' %}">Ocean Station</a></li>
+<li class="breadcrumb-item"><a href="#{{ station.name }}">{{ station.name }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">Update</li>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-12">
+            <img src="..." width="100%" alt="{{ station.name }}">
+        </div>
+
+        <div class="col-md-6 col-12">
+            <form method="post">
+                {% csrf_token %}
+                {{ form }}
+                <button type="submit" class="btn btn-success">Update</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

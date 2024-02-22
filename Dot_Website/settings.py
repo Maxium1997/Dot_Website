@@ -37,6 +37,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+CSRF_TRUSTED_ORIGINS = ['https://b46d-2403-c300-c10c-fd41-a014-3f0b-f4db-ddaf.ngrok-free.app']
 
 # Application definition
 
@@ -122,8 +123,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
-# LANGUAGE_CODE = 'en-us'
-LANGUAGE_CODE = 'zh-hant'
+LANGUAGE_CODE = 'en-us'
 
 # TIME_ZONE = 'UTC'
 TIME_ZONE = 'Asia/Taipei'
@@ -136,9 +136,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = 'static/'
-# STATIC_ROOT = os.path.join(BASE_DIR, "static")
-# STATIC_URL = '/static/'
+# STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]

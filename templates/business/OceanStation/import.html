@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block subtitle %}
+Ocean Station
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'business' %}">business</a></li>
+<li class="breadcrumb-item active" aria-current="page">Ocean Station</li>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row justify-content-center">
+        <form method="post" enctype="multipart/form-data" action="{% url 'import_ocean_station' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="formFile" class="form-label">Default file input example</label>
+                <input class="form-control" type="file" id="formFile" name="excel_file">
+            </div>
+            <button class="btn btn-success" type="submit">上傳 Excel</button>
+        </form>
+    </div>
+    <div>
+        Exist: {{ exist_ocean_stations }}
+        Created: {{ created_ocean_stations }}
+    </div>
+</div>
+{% endblock %}
