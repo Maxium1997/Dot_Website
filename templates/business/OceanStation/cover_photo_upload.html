@@ -9,26 +9,15 @@ Ocean Station
 <li class="breadcrumb-item"><a href="{% url 'business' %}">business</a></li>
 <li class="breadcrumb-item"><a href="{% url 'ocean_stations' %}">Ocean Station</a></li>
 <li class="breadcrumb-item"><a href="#{{ station.name }}">{{ station.name }}</a></li>
-<li class="breadcrumb-item active" aria-current="page">Update</li>
+<li class="breadcrumb-item"><a href="{% url 'ocean_station_update' station.name %}">Update</a></li>
+<li class="breadcrumb-item active" aria-current="page">Cover Photo Upload</li>
 {% endblock %}
 
 {% block body %}
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-6 col-12">
-            {% if station.cover_photo %}
-            <a href="{% url 'ocean_station_cover_photo_upload' station.name %}">
-                <img src="{{ station.cover_photo.url }}" width="100%" alt="{{ station.name }}">
-            </a>
-            {% else %}
-            <a href="{% url 'ocean_station_cover_photo_upload' station.name %}">
-            <img src="..." width="100%" alt="{{ station.name }}">
-            </a>
-            {% endif %}
-        </div>
-
-        <div class="col-md-6 col-12">
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 {{ form }}
                 <button type="submit" class="btn btn-success">Update</button>

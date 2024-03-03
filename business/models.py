@@ -1,3 +1,5 @@
+import os
+
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
@@ -103,6 +105,10 @@ class CertificateApplication(models.Model):
 
 
 class OceanStation(models.Model):
+    def _image_upload_path(self, filename):
+        return os.path.join("Ocean_Stations/%s/cover_photo/" % self.name, filename)
+
+    cover_photo = models.ImageField(upload_to=_image_upload_path, null=True)
     name = models.CharField(max_length=10, null=False, blank=False, unique=True)
     manage_administration_content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.SET_NULL)
     manage_administration_object_id = models.PositiveIntegerField(null=True, blank=True)

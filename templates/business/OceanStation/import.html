@@ -16,7 +16,7 @@ Ocean Station
         <form method="post" enctype="multipart/form-data" action="{% url 'import_ocean_station' %}">
             {% csrf_token %}
             <div class="mb-3">
-                <label for="formFile" class="form-label">Default file input example</label>
+                <label for="formFile" class="form-label">Select a 'Excel' file to import ocean stations.</label>
                 <input class="form-control" type="file" id="formFile" name="excel_file">
             </div>
             <button class="btn btn-success" type="submit">上傳 Excel</button>

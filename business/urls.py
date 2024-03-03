@@ -3,7 +3,7 @@ from django.urls import path, include
 from .views import BusinessView, MobileStorageEquipmentView, MobileStorageEquipmentFilteredView, \
     MobileDeviceView, MobileDeviceFilteredView, CertificateApplicationView, CertificateApplicationSearchView
 
-from .views import OceanStationIndexView, OceanStationUpdateView
+from .views import OceanStationIndexView, OceanStationUpdateView, OceanStationCoverPhotoUploadView
 from .views import import_ocean_station
 
 urlpatterns = [
@@ -28,6 +28,7 @@ urlpatterns = [
         path('OceanStation/', include([
             path('<str:ocean_station_name>/', include([
                 path('update', OceanStationUpdateView.as_view(), name='ocean_station_update'),
+                path('cover_photo_upload', OceanStationCoverPhotoUploadView.as_view(), name='ocean_station_cover_photo_upload'),
             ])),
             path('import', import_ocean_station, name='import_ocean_station'),
         ])),

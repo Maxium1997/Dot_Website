@@ -452,3 +452,21 @@ class OceanStationUpdateView(UpdateView):
     def get_success_url(self):
         messages.success(self.request, "Update successfully.")
         return reverse_lazy('ocean_station_update', kwargs={'ocean_station_name': self.get_object().name})
+
+
+class OceanStationCoverPhotoUploadView(UpdateView):
+    model = OceanStation
+    template_name = 'business/OceanStation/cover_photo_upload.html'
+    fields = ['cover_photo']
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(OceanStation, name=self.kwargs.get('ocean_station_name'))
+
+    def get_context_data(self, **kwargs):
+        context = super(OceanStationCoverPhotoUploadView, self).get_context_data(**kwargs)
+        context['station'] = self.get_object()
+        return context
+
+    def get_success_url(self):
+        messages.success(self.request, "Update successfully.")
+        return reverse_lazy('ocean_station_update', kwargs={'ocean_station_name': self.get_object().name})

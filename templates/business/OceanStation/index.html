@@ -23,7 +23,11 @@ Ocean Station
             <div class="container-fluid">
                 <div class="row align-items-center">
                     <div class="col-lg-4 col-md-12">
+                        {% if station.cover_photo %}
+                        <img src="{{ station.cover_photo.url }}" width="100%" alt="{{ station.name }}">
+                        {% else %}
                         <img src="..." width="100%" alt="{{ station.name }}">
+                        {% endif %}
                     </div>
                     <div class="col-lg-8 col-md-12">
                         <h1 class="fw-light">{{ station.name }}</h1>
