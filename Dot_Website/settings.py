@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'ckeditor',
     'googleapiclient',
+    'registration',
     'website',
     'organization',
     'business',
@@ -58,6 +59,11 @@ INSTALLED_APPS = [
     # line
     'line_bot',
 ]
+
+AUTH_USER_MODEL = 'registration.Member'
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
