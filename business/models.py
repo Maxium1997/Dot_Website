@@ -4,7 +4,6 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
 
-from organization.definitions import CPC4Unit, ArmyCommission
 from business.definitions import EquipmentType, StorageUnit, CertificateUsage, CertificateCustodianClassification, \
     CertificateStorage, CertificateProcess, CertificateUseFor, \
     OceanStationServiceItems

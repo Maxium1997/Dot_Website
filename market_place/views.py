@@ -109,35 +109,35 @@ class OrderDetailView(DetailView):
         return context
 
 
-class ItemReportView(CreateView):
-    model = Order
+class ItemReportView(TemplateView):
+    # model = Order
     template_name = 'market_place/Item/report.html'
-    fields = ['purchaser', 'content']
-    valid_message = "Successfully Reported."
-
-    def get_form_class(self):
-        return OrderForm
-
-    def form_valid(self, form):
-        today = datetime.now(pytz.timezone('Asia/Taipei'))
-        get_today_order_nums = Order.objects.filter(created_time__year=today.year,
-                                                    created_time__month=today.month,
-                                                    created_time__day=today.day).count()
-        serial_number = str(today.year) + '-' + str(today.month) + '-' + str(today.day) + '-' + \
-                        str(get_today_order_nums+1).zfill(4)
-
-        form.instance.serial_number = serial_number
-
-        order = form.save()
-
-        Record.objects.create(
-            content_type=ContentType.objects.get_for_model(order),
-            object_id=order.id,
-            content="Order created.",
-            creator=order.serial_number,  # Set the creator information
-        )
-
-        return super(ItemReportView, self).form_valid(form)
+    # fields = ['purchaser', 'content']
+    # valid_message = "Successfully Reported."
+    #
+    # def get_form_class(self):
+    #     return OrderForm
+    #
+    # def form_valid(self, form):
+    #     today = datetime.now(pytz.timezone('Asia/Taipei'))
+    #     get_today_order_nums = Order.objects.filter(created_time__year=today.year,
+    #                                                 created_time__month=today.month,
+    #                                                 created_time__day=today.day).count()
+    #     serial_number = str(today.year) + '-' + str(today.month) + '-' + str(today.day) + '-' + \
+    #                     str(get_today_order_nums+1).zfill(4)
+    #
+    #     form.instance.serial_number = serial_number
+    #
+    #     order = form.save()
+    #
+    #     Record.objects.create(
+    #         content_type=ContentType.objects.get_for_model(order),
+    #         object_id=order.id,
+    #         content="Order created.",
+    #         creator=order.serial_number,  # Set the creator information
+    #     )
+    #
+    #     return super(ItemReportView, self).form_valid(form)
 
 
 def order_confirm(request, serial_number):

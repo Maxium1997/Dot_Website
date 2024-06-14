@@ -2,9 +2,20 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 
-from .definitions import Classification
+from .definitions import Classification, PositionRecordStatus
 
 # Create your models here.
+
+
+class PositionRecord(models.Model):
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    name = models.CharField(max_length=25)  # 中文姓名
+    en_name = models.CharField(max_length=125, unique=True)  # 英文姓名
+    inauguration_date = models.DateField(null=False)    # 就職日期
+    retired_date = models.DateField(null=True, blank=True)  # 卸任日期
+    serial_number = models.PositiveBigIntegerField()   # 紀錄順序
+    status = models.PositiveSmallIntegerField(default=PositionRecordStatus.Vacancy.value[0])    # 職務狀態
 
 
 class Head(models.Model):
@@ -12,9 +23,9 @@ class Head(models.Model):
     en_name = models.CharField(max_length=255, unique=True)     # 英文名稱
     business_ID_number = models.CharField(max_length=10, unique=True)   # 統一編號
     responsible_person = models.CharField(max_length=10)    # 負責人
-    deputy_director1 = models.CharField(max_length=10, null=True, blank=True)   # 第一職務代理人
-    deputy_director2 = models.CharField(max_length=10, null=True, blank=True)   # 第二職務代理人
-    deputy_director3 = models.CharField(verbose_name='Chief Secretary', max_length=10, null=True, blank=True)   # 第三職務代理人
+    deputy_director1 = GenericRelation(PositionRecord)      # 第一職務代理人
+    deputy_director2 = GenericRelation(PositionRecord)      # 第二職務代理人
+    deputy_director3 = GenericRelation(PositionRecord)      # 第三職務代理人
     address = models.CharField(max_length=255, null=True, blank=True)   # 地址
     address_longitude = models.CharField(max_length=10, null=True, blank=True)      # 經度
     address_latitude = models.CharField(max_length=10, null=True, blank=True)       # 緯度
@@ -42,7 +53,8 @@ class Branch(Head):
 class Department(models.Model):
     name = models.CharField(max_length=128)  # 中文名稱
     en_name = models.CharField(max_length=255)  # 英文名稱
-    chief = models.CharField(max_length=128, null=True, blank=True)
+    chief = GenericRelation(PositionRecord)
     superior_content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.SET_NULL)
     superior_object_id = models.PositiveIntegerField(null=True, blank=True)
     superior = GenericForeignKey('superior_content_type', 'superior_object_id')
+    staff = GenericRelation(PositionRecord)

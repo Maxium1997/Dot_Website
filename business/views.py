@@ -18,7 +18,6 @@ import pandas as pd
 from .models import OceanStation
 from .definitions import OceanStationServiceItems
 from organization.models import *
-from organization.definitions import CPC4Unit, ArmyCommission
 
 # Create your views here.
 
