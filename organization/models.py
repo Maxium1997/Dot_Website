@@ -41,20 +41,20 @@ class Head(models.Model):
         return self.name
 
 
-class Branch(Head):
-    superior_content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.SET_NULL)
-    superior_object_id = models.PositiveIntegerField(null=True, blank=True)
-    superior = GenericForeignKey('superior_content_type', 'superior_object_id')
-
-    def __str__(self):
-        return str(self.superior) + " " + str(self.name)
-
-
-class Department(models.Model):
-    name = models.CharField(max_length=128)  # 中文名稱
-    en_name = models.CharField(max_length=255)  # 英文名稱
-    chief = GenericRelation(PositionRecord)
-    superior_content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.SET_NULL)
-    superior_object_id = models.PositiveIntegerField(null=True, blank=True)
-    superior = GenericForeignKey('superior_content_type', 'superior_object_id')
-    staff = GenericRelation(PositionRecord)
+# class Branch(Head):
+#     superior_content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.SET_NULL)
+#     superior_object_id = models.PositiveIntegerField(null=True, blank=True)
+#     superior = GenericForeignKey('superior_content_type', 'superior_object_id')
+#
+#     def __str__(self):
+#         return str(self.superior) + " " + str(self.name)
+#
+#
+# class Department(models.Model):
+#     name = models.CharField(max_length=128)  # 中文名稱
+#     en_name = models.CharField(max_length=255)  # 英文名稱
+#     chief = GenericRelation(PositionRecord)
+#     superior_content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.SET_NULL)
+#     superior_object_id = models.PositiveIntegerField(null=True, blank=True)
+#     superior = GenericForeignKey('superior_content_type', 'superior_object_id')
+#     staff = GenericRelation(PositionRecord)

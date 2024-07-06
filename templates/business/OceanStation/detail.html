@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block subtitle %}
+Ocean Station
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'business' %}">business</a></li>
+<li class="breadcrumb-item"><a href="{% url 'ocean_stations' %}">Ocean Station</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ station.name }}</li>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    {% if request.user.is_superuser %}
+    <div class="row">
+        <div class="mt-1 mb-1">
+            <button type="button" class="btn btn-primary" onclick="window.location.href='{% url 'ocean_station_update' station.name %}'">Update</button>
+        </div>
+    </div>
+    {% endif %}
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-12">
+            {% if station.cover_photo %}
+            <img src="{{ station.cover_photo.url }}" width="100%" alt="{{ station.name }}">
+            {% else %}
+            <img src="..." width="100%" alt="{{ station.name }}">
+            {% endif %}
+        </div>
+
+        <div class="col-md-6 col-12">
+            {{ station }}
+            {% if service_items.0 %}
+            <img src="{% static 'icons/business/OceanStation/information-desk-2.png' %}">
+            {% else %}
+            <img src="{% static 'icons/business/OceanStation/information-desk.png' %}">
+            {% endif %}
+
+            {% if service_items.1 %}
+            <img src="{% static 'icons/business/OceanStation/toilet-2.png' %}">
+            {% else %}
+            <img src="{% static 'icons/business/OceanStation/toilet.png' %}">
+            {% endif %}
+
+            {% if service_items.2 %}
+            <img src="{% static 'icons/business/OceanStation/water-dispenser-2.png' %}">
+            {% else %}
+            <img src="{% static 'icons/business/OceanStation/water-dispenser.png' %}">
+            {% endif %}
+
+            {% if service_items.3 %}
+            <img src="{% static 'icons/business/OceanStation/shower-2.png' %}">
+            {% else %}
+            <img src="{% static 'icons/business/OceanStation/shower.png' %}">
+            {% endif %}
+
+            {% if service_items.4 %}
+            <img src="{% static 'icons/business/OceanStation/gym-2.png' %}">
+            {% else %}
+            <img src="{% static 'icons/business/OceanStation/gym.png' %}">
+            {% endif %}
+
+            {% if service_items.5 %}
+            <img src="{% static 'icons/business/OceanStation/parking-area-2.png' %}">
+            {% else %}
+            <img src="{% static 'icons/business/OceanStation/parking-area.png' %}">
+            {% endif %}
+
+            {% if service_items.6 %}
+            <img src="{% static 'icons/business/OceanStation/life-jacket-2.png' %}">
+            {% else %}
+            <img src="{% static 'icons/business/OceanStation/life-jacket.png' %}">
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -8,7 +8,7 @@ Ocean Station
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'business' %}">business</a></li>
 <li class="breadcrumb-item"><a href="{% url 'ocean_stations' %}">Ocean Station</a></li>
-<li class="breadcrumb-item"><a href="#{{ station.name }}">{{ station.name }}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'ocean_station_detail' station.name %}">{{ station.name }}</a></li>
 <li class="breadcrumb-item active" aria-current="page">Update</li>
 {% endblock %}
 
@@ -32,6 +32,7 @@ Ocean Station
                 {% csrf_token %}
                 {{ form }}
                 <button type="submit" class="btn btn-success">Update</button>
+                <button type="button" class="btn btn-secondary" onclick="history.back();">Cancel</button>
             </form>
         </div>
     </div>

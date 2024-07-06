@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ocean Stations</title>
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ocean Stations</h1>
+    <div id="map"></div>
+    <script>
+        function initMap() {
+            var center = {lat: 0, lng: 0}; // Initial center point, will be updated
+            var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 2,
+                center: center
+            });
+
+            var bounds = new google.maps.LatLngBounds();
+            var hasValidCoordinates = false;
+
+            {% for station in ocean_stations %}
+                if ("{{ station.coordinate_latitude }}" && "{{ station.coordinate_longitude }}") {
+                    var lat = parseFloat("{{ station.coordinate_latitude }}");
+                    var lng = parseFloat("{{ station.coordinate_longitude }}");
+
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        hasValidCoordinates = true;
+                        var marker = new google.maps.Marker({
+                            position: {lat: lat, lng: lng},
+                            map: map,
+                            title: '{{ station.name }}'
+                        });
+                        bounds.extend(marker.position);
+                    } else {
+                        console.error('Invalid coordinates for station: {{ station.name }}');
+                    }
+                } else {
+                    console.error('Missing coordinates for station: {{ station.name }}');
+                }
+            {% endfor %}
+
+            if (hasValidCoordinates) {
+                map.fitBounds(bounds);
+            } else {
+                console.error('No valid coordinates found.');
+                map.setCenter({lat: 0, lng: 0}); // Set default center if no valid coordinates
+            }
+        }
+
+        function handleMapError() {
+            console.error('Error loading Google Maps.');
+        }
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDERE1CVNA1eftej708jxhi1Xr9OYx5ccE&callback=initMap&onerror=handleMapError">
+    </script>
+</body>
+</html>

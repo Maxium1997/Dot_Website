@@ -1,6 +1,15 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block customize_head_block %}
+<style>
+    #map {
+        height: 500px;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
 {% block subtitle %}
 Ocean Station
 {% endblock %}
@@ -12,11 +21,39 @@ Ocean Station
 
 {% block body %}
 <div class="container">
+    <div id="map"></div>
+    <script>
+        function initMap() {
+            var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 10,
+                center: {lat: -34.397, lng: 150.644} // Default center
+            });
+
+            var bounds = new google.maps.LatLngBounds();
+
+            {% for station in ocean_stations %}
+                var marker = new google.maps.Marker({
+                    position: {lat: parseFloat("{{ station.coordinate_latitude }}"), lng: parseFloat("{{ station.coordinate_longitude }}")},
+                    map: map,
+                    title: '{{ station.name }}'
+                });
+                bounds.extend(marker.position);
+            {% endfor %}
+
+            map.fitBounds(bounds);
+        }
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDERE1CVNA1eftej708jxhi1Xr9OYx5ccE&callback=initMap">
+    </script>
+
+    {% if request.user.is_superuser %}
     <div class="row">
         <div class="mt-1 mb-1">
             <button type="button" class="btn btn-success" onclick="window.location.href='{% url 'import_ocean_station' %}'">Import</button>
         </div>
     </div>
+    {% endif %}
     <div class="row justify-content-center">
         {% for station in object_list %}
         <div class="col-lg-12 col-sm-6 mb-1">
@@ -32,7 +69,7 @@ Ocean Station
                     <div class="col-lg-8 col-md-12">
                         <h1 class="fw-light">{{ station.name }}</h1>
                         <p class="text-muted">{{ station.address }}</p>
-                        <button type="button" class="btn btn-info" onclick="window.location.href='{% url 'ocean_station_update' station.name %}'">Update</button>
+                        <button type="button" class="btn btn-info" onclick="window.location.href='{% url 'ocean_station_detail' station.name %}'">Info</button>
                     </div>
                 </div>
             </div>

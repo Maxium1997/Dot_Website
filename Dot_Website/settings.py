@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'ckeditor',
     'googleapiclient',
+    'django_google_maps',
     'registration',
     'website',
     'organization',
@@ -165,3 +166,28 @@ CKEDITOR_CONFIGS = {
 }
 
 YOUTUBE_DATA_API_KEY = 'AIzaSyDERE1CVNA1eftej708jxhi1Xr9OYx5ccE'
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'django_debug.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'business': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
