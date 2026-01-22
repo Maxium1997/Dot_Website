@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+<li>
+    <strong onclick="window.location.href=''">{{ unit.name }}</strong>
+    <span style="color: #666;">(主管: {{ unit.director }})</span>
+
+    {% with children=unit.get_all_subordinates_direct %}
+        {% if children %}
+            <ul style="margin-left: 20px; list-style-type: circle;">
+                {% for child in children %}
+                    {% include "organization/unit_node.html" with unit=child %}
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+</li>
+</body>
+</html>

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block subtitle %}
+Coast Guard Mart
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}">Coast Guard Mart</a></li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:staff_order_dashboard' %}">Order Dashboard</a></li>
+<li class="breadcrumb-item active" aria-current="page">Inventory Summary</li>
+{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-box-seam me-2"></i>備貨統計清單</h2>
+        <div class="d-print-none">
+            <a href="{% url 'coast_guard_mart:staff_order_dashboard' %}" class="btn btn-outline-secondary me-2">返回儀表板</a>
+                <a href="{% url 'coast_guard_mart:export_inventory_excel' %}" class="btn btn-success me-2">
+                    <i class="bi bi-file-earmark-excel"></i> 匯出 Excel
+                </a>
+                <button onclick="window.print()" class="btn btn-dark">
+                    <i class="bi bi-printer"></i> 列印清單
+                </button>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-5">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0 fw-bold">1. 主商品需求 (依顏色尺寸)</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">品項名稱</th>
+                        <th>規格 (顏色/尺寸)</th>
+                        <th class="text-center">數量</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in main_list %} <tr>
+                        <td class="ps-4 fw-bold text-dark">{{ item.name }}</td>
+                        <td>{{ item.spec }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-dark px-3 py-2 fs-6">{{ item.total }}</span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center py-4 text-muted">目前無主商品下單紀錄</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-success text-white py-3">
+            <h5 class="mb-0 fw-bold">2. 附屬品 / 加購項需求 (依規格)</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">配件名稱</th>
+                        <th>規格 (顏色/尺寸)</th> <th class="text-center">總計數量</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in acc_list %} <tr>
+                        <td class="ps-4 fw-bold text-success">{{ item.name }}</td>
+                        <td>
+                            {% if item.spec != "無規格" %}
+                                <span class="badge bg-light text-dark border">{{ item.spec }}</span>
+                            {% else %}
+                                <span class="text-muted small">標準規格</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-success px-3 py-2 fs-6">{{ item.total }}</span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center py-4 text-muted">無加購配件紀錄</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* 列印優化：隱藏不必要的 UI */
+    @media print {
+        .d-print-none, .navbar, .breadcrumb, footer { display: none !important; }
+        .card { border: 1px solid #dee2e6 !important; box-shadow: none !important; }
+        .container { max-width: 100% !important; width: 100% !important; }
+        body { background-color: white !important; }
+    }
+</style>
+{% endblock %}

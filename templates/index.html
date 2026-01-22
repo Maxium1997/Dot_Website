@@ -19,10 +19,10 @@ Dot Website
 
     <div class="row">
         <div class="col-md-4 col-6">
-            <a href="{% url 'learning_tree' %}">
+            <a href="">
                 <img src="{% static 'pic/check-list.png' %}" width="80%">
             </a>
-            <h3>Learning Tree</h3>
+            <h3>Work Sheet(Developing...)</h3>
         </div>
         <div class="col-md-4 col-6">
             <a href="{% url 'market_place' %}">
@@ -37,38 +37,16 @@ Dot Website
             <h3>Business</h3>
         </div>
         <div class="col-md-4 col-6">
+            <a href="{% url 'coast_guard_mart:product_list' %}">
+                <img src="{% static 'pic/shopping_cart.png' %}" width="80%">
+            </a>
+            <h3>Coast Guard Mart</h3>
+        </div>
+        <div class="col-md-4 col-6">
             <a href="{% url 'playground' %}">
                 <img src="{% static 'pic/playground.png' %}" width="80%">
             </a>
             <h3>Playground</h3>
-        </div>
-
-
-        <div class="col-lg-4 col-sm-12">
-            <ul class="nav flex-column nav-pills">
-<!--                <li class="nav-item">-->
-<!--                    <a class="nav-link active" aria-current="page" href="#">Active</a>-->
-<!--                </li>-->
-<!--                <li class="nav-item">-->
-<!--                    <a class="nav-link disabled" aria-disabled="true">Disabled</a>-->
-<!--                </li>-->
-                {% for category in categories %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'category' category.slug %}">{{ category }}</a>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        <div class="col-lg-8 col-sm-12">
-            {% for subjects in c_subjects %}
-            <div class="card mb-2">
-                <ul class="list-group list-group-flush">
-                    {% for subject in subjects %}
-                    <li class="list-group-item"><a href="{% url 'subject' subject.category.slug subject.slug %}">{{ subject }}</a></li>
-                    {% endfor %}
-                </ul>
-            </div>
-            {% endfor %}
         </div>
     </div>
 </div>

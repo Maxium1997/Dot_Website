@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block subtitle %}
+Organization
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Organization</li>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row justify-content-center">
+        <ul>
+            {% for unit in root_units %}
+                {% include "organization/unit_node.html" with unit=unit %}
+            {% endfor %}
+        </ul>
+
+<div class="mb-3">
+    <a href="{% url 'download_unit_template' %}" class="btn btn-success">
+        <i class="fas fa-file-download"></i> 下載匯入範本
+    </a>
+</div>
+<div class="mb-3">
+    <a href="{% url 'upload_units' %}" class="btn btn-primary">
+        <i class="fas fa-file-download"></i> 上傳檔案匯入
+    </a>
+</div>
+<!--        <div class="col-lg-3 col-md-4 col-sm-6" onclick="window.location.href=''">-->
+<!--            <div class="card text-bg-info mb-3 text-center">-->
+<!--            <div class="card-header"></div>-->
+<!--                <div class="card-body">-->
+<!--                    <h1 class="card-title">{{ unit }}</h1>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+    </div>
+</div>
+{% endblock %}

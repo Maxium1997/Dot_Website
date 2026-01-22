@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block subtitle %}
+Coast Guard Mart
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}">Coast Guard Mart</a></li>
+<li class="breadcrumb-item active" aria-current="page">身份認證</li>
+{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-5">
+                    <h3 class="fw-bold mb-4 text-center">身分認證</h3>
+
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} small">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="POST" id="claimForm">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">第一層</label>
+                            <select id="level1" class="form-select" required>
+                                <option value="">-- 請選擇 --</option>
+                                {% for u in top_units %}
+                                    <option value="{{ u.id }}">{{ u.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% for i in "2345" %}
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">第{{ i }}層</label>
+                            <select id="level{{ i }}" {% if i == "5" %}name="unit"{% endif %} class="form-select" disabled required>
+                                <option value="">-- 請先選擇上一層 --</option>
+                            </select>
+                        </div>
+                        {% endfor %}
+
+                        <hr class="my-4">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">身分證字號 (前四碼明碼)</label>
+                            <input type="text" id="idDisplayInput" class="form-control" placeholder="A123456789" maxlength="10" required autocomplete="off">
+                            <input type="hidden" name="id_number" id="realIdInput">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">生日</label>
+                            <input type="date" name="birthday" class="form-control" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-3 mt-3 shadow-sm">
+                            核對並領取福利金
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /** 1. 五層連動邏輯 */
+    const baseApiUrl = "{% url 'coast_guard_mart:api_get_subordinates' 0 %}";
+    const TOTAL_LEVELS = 5;
+
+    async function handleLevelChange(currentLevel) {
+    const currentSelect = document.getElementById(`level${currentLevel}`);
+    const nextLevel = currentLevel + 1;
+    const parentId = currentSelect.value;
+
+    // 1. 瀑布式清空後續所有選單
+    for (let i = nextLevel; i <= TOTAL_LEVELS; i++) {
+        const target = document.getElementById(`level${i}`);
+        target.innerHTML = `<option value="">-- 請先選擇上一層 --</option>`;
+        target.disabled = true;
+    }
+
+    if (!parentId) return;
+
+    // 2. 如果已經是最後一層，不需要再抓下級
+    if (currentLevel === TOTAL_LEVELS) return;
+
+    const nextSelect = document.getElementById(`level${nextLevel}`);
+    nextSelect.innerHTML = `<option value="">-- 載入中... --</option>`;
+
+    try {
+        const response = await fetch(baseApiUrl.replace('0', parentId));
+        const data = await response.json();
+
+        if (data.results && data.results.length > 0) {
+            // 有下級單位：正常填充
+            nextSelect.innerHTML = `<option value="">-- 請選擇 --</option>`;
+            data.results.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                opt.textContent = item.name;
+                nextSelect.appendChild(opt);
+            });
+            nextSelect.disabled = false;
+        } else {
+            // --- 關鍵修正點 ---
+            // 如果沒有下級單位，直接把當前的 parentId 填充到後續所有層級
+            // 並讓 level5 變成可選狀態，確保 name="unit" 能送出值
+            for (let i = nextLevel; i <= TOTAL_LEVELS; i++) {
+                const target = document.getElementById(`level${i}`);
+                target.innerHTML = `<option value="${parentId}" selected>此單位為最終層級</option>`;
+                target.disabled = false; // 必須取消 disabled 才能送出資料
+            }
+        }
+    } catch (error) {
+        console.error('API Error:', error);
+    }
+}
+
+    /** 2. 身分證遮罩邏輯 */
+    document.addEventListener('DOMContentLoaded', function() {
+        // 綁定連動事件
+        for (let i = 1; i < TOTAL_LEVELS; i++) {
+            const el = document.getElementById(`level${i}`);
+            if (el) el.addEventListener('change', () => handleLevelChange(i));
+        }
+
+        const displayInput = document.getElementById('idDisplayInput');
+        const realInput = document.getElementById('realIdInput');
+        let rawValue = "";
+
+        displayInput.addEventListener('input', function(e) {
+            let currentInput = e.target.value.toUpperCase();
+
+            // 重新計算真實內容
+            if (currentInput.length < rawValue.length) {
+                rawValue = rawValue.substring(0, currentInput.length);
+            } else {
+                let lastChar = currentInput.slice(-1);
+                if (/[A-Z0-9]/.test(lastChar) && rawValue.length < 10) {
+                    rawValue += lastChar;
+                }
+            }
+
+            realInput.value = rawValue;
+
+            // 格式化顯示：前四碼保留，其餘星號
+            if (rawValue.length > 4) {
+                displayInput.value = rawValue.substring(0, 4) + "*".repeat(rawValue.length - 4);
+            } else {
+                displayInput.value = rawValue;
+            }
+        });
+
+        // 提交驗證
+        document.getElementById('claimForm').addEventListener('submit', function(e) {
+            if (realInput.value.length !== 10) {
+                e.preventDefault();
+                alert("請輸入完整的 10 碼身分證字號");
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="container mt-5" style="max-width: 500px;">
+    <div class="card border-primary shadow">
+        <div class="card-header bg-primary text-white text-center">
+            <h5 class="mb-0">訂單領貨核銷確認</h5>
+        </div>
+        <div class="card-body">
+            <ul class="list-group list-group-flush mb-4">
+                <li class="list-group-item"><strong>訂單編號：</strong> {{ tx.order_id }}</li>
+                <li class="list-group-item"><strong>訂購人：</strong> {{ tx.credit_card.user.username }}</li>
+                <li class="list-group-item"><strong>訂單內容：</strong><br>{{ tx.description|linebreaksbr }}</li>
+            </ul>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-box-seam me-2"></i>確認發放，完成訂單
+                    </button>
+                    <a href="{% url 'coast_guard_mart:staff_order_dashboard' %}" class="btn btn-light">取消返回</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

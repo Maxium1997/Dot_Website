@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="container mt-4" style="max-width: 650px;">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white"><h5>新增白名單人員 (階層式單位)</h5></div>
+        <div class="card-body">
+            <form method="post" id="whitelistForm">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">姓名</label>
+                    <input type="text" name="name" class="form-control" required>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">身分證字號</label>
+                        <input type="text" name="id_number" class="form-control" placeholder="A123456789" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">生日</label>
+                        <input type="date" name="birthday" class="form-control" required>
+                    </div>
+                </div>
+
+                <hr>
+                <label class="form-label fw-bold"><i class="bi bi-diagram-3 me-2"></i>設定所屬單位</label>
+
+                <div id="unit-selectors-container">
+                    <select class="form-select mb-2 unit-selector" data-level="1">
+                        <option value="">-- 選擇第一層單位 --</option>
+                        {% for u in top_units %}
+                        <option value="{{ u.id }}">{{ u.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <input type="hidden" name="unit_id" id="final_unit_id">
+
+                <div class="mt-4 d-flex justify-content-between">
+                    <a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}" class="btn btn-light">返回清單</a>
+                    <button type="submit" class="btn btn-primary px-4">確認新增</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('unit-selector')) {
+        const parentId = e.target.value;
+        const currentLevel = parseInt(e.target.dataset.level);
+        const container = document.getElementById('unit-selectors-container');
+
+        // 1. 移除當前層級之後的所有選單
+        const allSelectors = container.querySelectorAll('.unit-selector');
+        allSelectors.forEach(sel => {
+            if (parseInt(sel.dataset.level) > currentLevel) {
+                sel.remove();
+            }
+        });
+
+        // 2. 更新隱藏欄位的值
+        document.getElementById('final_unit_id').value = parentId;
+
+        // 3. 如果有選擇值，嘗試抓取下一層
+        if (parentId) {
+            fetch(`/coast_guard_mart/api/sub-units/?parent_id=${parentId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.results.length > 0) {
+                        const nextLevel = currentLevel + 1;
+                        const newSelect = document.createElement('select');
+                        newSelect.className = 'form-select mb-2 unit-selector';
+                        newSelect.dataset.level = nextLevel;
+                        newSelect.innerHTML = `<option value="">-- 選擇第 ${nextLevel} 層單位 --</option>`;
+
+                        data.results.forEach(item => {
+                            newSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+                        });
+
+                        container.appendChild(newSelect);
+                        // 產生新選單後，清空隱藏欄位，直到使用者選了最新的一層
+                        document.getElementById('final_unit_id').value = "";
+                    }
+                });
+        }
+    }
+});
+
+// 表單送出前檢查
+document.getElementById('whitelistForm').onsubmit = function() {
+    if (!document.getElementById('final_unit_id').value) {
+        alert('請選擇到最底層的單位資訊！');
+        return false;
+    }
+};
+</script>
+{% endblock %}

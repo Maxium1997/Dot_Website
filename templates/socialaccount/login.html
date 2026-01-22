@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body %}
+<div class="container text-center mt-5">
+    <h2>社群登入確認</h2>
+    <p>確認要使用 LINE 帳號登入 <strong>{{ site.name }}</strong> 嗎？</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-lg" style="background-color: #00B900; color: white;">
+            確認並前往 LINE 授權
+        </button>
+        <button type="button" class="btn btn-lg" onclick="window.history.back()">
+            取消
+        </button>
+    </form>
+</div>
+{% endblock %}

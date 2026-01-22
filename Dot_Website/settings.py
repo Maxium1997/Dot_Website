@@ -21,6 +21,7 @@ CHANNEL_ACCESS_TOKEN = os.getenv('CHANNEL_ACCESS_TOKEN')
 # SECURITY WARNING: keep the secret key used in production secret!
 LINE_CHANNEL_ACCESS_TOKEN = 'U0esetPM19lakdWnPp5Phl69QRAgJHTG3xGVQKxsCnZbvaY/eufsaznFlIxw/7v8MtnLFLZozKoAW5dbHBKQPClBo1bweFpjrc9pjEU7U3yY/KPMKX6uqqVdDbRfbstOoHAzT1dKPqKIwlFVp70hgQdB04t89/1O/w1cDnyilFU='
 LINE_CHANNEL_SECRET = '9d27db238ac8cd06aa7c835929d6a634'
+LINE_BASE_URL = "https://5a8ff96f4253.ngrok-free.app"
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -35,9 +36,10 @@ SECRET_KEY = 'django-insecure-%bvp7yd^&^5aktfosx-pekg5^e&k1yn^x$a=!96@0_keu$h3as
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*',
+                 '.ngrok-free.app']
 
-CSRF_TRUSTED_ORIGINS = ['https://b46d-2403-c300-c10c-fd41-a014-3f0b-f4db-ddaf.ngrok-free.app']
+CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.app']
 
 # Application definition
 
@@ -48,6 +50,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',  # 新增：allauth 需要這個
+    'import_export',
+    'qrcode',
+
+    # allauth 核心
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+
+    # LINE 提供者
+    'allauth.socialaccount.providers.line',
+
     'ckeditor',
     'googleapiclient',
     'registration',
@@ -55,12 +69,29 @@ INSTALLED_APPS = [
     'organization',
     'business',
     'market_place',
-    'learning_tree',
+    'coast_guard_mart',
+    'playground',
     # line
     'line_bot',
 ]
+SITE_ID = 1
 
+# 指定自定義的 User Model
 AUTH_USER_MODEL = 'registration.Member'
+
+# allauth 相關設定
+ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = True
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    # 'allauth.account.authentication.AuthenticationBackend',
+
+    # 修正後的 allauth 後端路徑（注意：中間是 .account.auth_backends）
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
@@ -71,6 +102,9 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+
+    'allauth.account.middleware.AccountMiddleware',     # 新增這行for all-auth
+
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -164,4 +198,25 @@ CKEDITOR_CONFIGS = {
     },
 }
 
+# 暫時註解掉
+SOCIALACCOUNT_PROVIDERS = {
+    'line': {
+        'SCOPE': ['profile', 'openid'],    # 確保有這行
+    }
+}
+
+# 帳號行為設定
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'    # 支援帳號或 Email 登入
+# ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_REQUIRED = False   # 測試，所以暫時先將此行設為'False'
+SOCIALACCOUNT_AUTO_SIGNUP = True    # LINE 登入後自動建立帳號，不跳轉額外註冊表單
+
 YOUTUBE_DATA_API_KEY = 'AIzaSyDERE1CVNA1eftej708jxhi1Xr9OYx5ccE'
+
+# 強制 Django 辨識 ngrok 的 https 轉發
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+
+# 確保產生的網址都是 https
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'

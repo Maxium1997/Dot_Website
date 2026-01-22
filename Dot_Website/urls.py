@@ -20,13 +20,20 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('accounts/', include("django.contrib.auth.urls")),
+
+    # 優先處理 allauth (LINE 登入相關)
+    path('accounts/', include('allauth.urls')),
+
+    # 處理自定義的 signup 和 logout
     path('accounts/', include('registration.urls')),
+
+    # 處理 Django 內建登入 (如果 registration 沒寫 login，就由這裡提供)
+    path('accounts/', include("django.contrib.auth.urls")),
     path('', include('website.urls')),
     path('', include('organization.urls')),
     path('', include('business.urls')),
     path('', include('market_place.urls')),
-    path('', include('learning_tree.urls')),
     path('', include('playground.urls')),
+    path('coast_guard_mart/', include('coast_guard_mart.urls')),
     path('line_bot/', include('line_bot.urls')),
 ]+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

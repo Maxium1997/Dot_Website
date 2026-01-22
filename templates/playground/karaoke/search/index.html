@@ -25,7 +25,6 @@ Playground
                     </div>
                     <p>
                         <button type="submit" name="submit" value="search" class="btn btn-primary my-2">YouTube Search</button>
-                        <button type="submit" name="submit" value="lucky" class="btn btn-secondary my-2">I'm Feeling Lucky</button>
                     </p>
                 </form>
             </div>
@@ -39,7 +38,7 @@ Playground
             <img src="{{ video.thumbnail }}" class="card-img-top" alt="...">
             <div class="card-body">
                 <h6 class="card-title">{{ video.title }}</h6>
-                <a href="{{ video.url }}" class="btn btn-primary">View</a>
+                <button type="button" class="btn btn-primary" onclick="window.open('{{ video.url }}', '_blank')">View</button>
                 <small class="text-muted">{{ video.duration }} mins</small>
             </div>
         </div>

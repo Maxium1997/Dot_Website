@@ -31,7 +31,7 @@ Playground
             </button>
         </div>
         <div class="col-lg-6 col-sm-12">
-            <button class="card mb-2 border-0" onclick="window.location.href='{% url 'line_bot_add_friend' %}'">
+            <button class="card mb-2 border-0" onclick="window.location.href='{% url 'line_bot:line_bot_add_friend' %}'">
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
                         <div class="container-fluid d-flex">
@@ -41,6 +41,24 @@ Playground
                                 </div>
                                 <div class="col-6 d-flex align-items-center">
                                     <h5 style="margin: 0;">LINE Bot</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </button>
+        </div>
+        <div class="col-lg-6 col-sm-12">
+            <button class="card mb-2 border-0" onclick="window.location.href='{% url 'url_to_qr_code' %}'">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <div class="container-fluid d-flex">
+                            <div class="row">
+                                <div class="col-6">
+                                    <img src="{% static 'pic/playground/qr-code.png' %}" width="100%">
+                                </div>
+                                <div class="col-6 d-flex align-items-center">
+                                    <h5 style="margin: 0;">URL to QR code</h5>
                                 </div>
                             </div>
                         </div>

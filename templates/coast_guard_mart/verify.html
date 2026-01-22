@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+
+
+
+{% block body %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">領取年度福利點數</h4>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted small text-center mb-4">請填寫個人資訊進行實名核對，核對成功後即可領取點數卡（NT$ 3,000）</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">身分證字號</label>
+                            <input type="text" name="id_number" class="form-control form-control-lg" placeholder="請輸入 A123456789" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">出生日期</label>
+                            <input type="date" name="birthday" class="form-control form-control-lg" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg w-100">核對並領取</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

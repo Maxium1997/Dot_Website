@@ -12,33 +12,6 @@ Business
 {% block body %}
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-lg-3 col-md-4 col-sm-6" onclick="window.location.href='{% url 'mobile_storage_equipments' %}'">
-            <div class="card text-bg-primary mb-3 text-center">
-            <div class="card-header">可攜式資訊媒體</div>
-                <div class="card-body">
-                    <h1 class="card-title">{{ mobile_storage_equipment_nums }}</h1>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-md-4 col-sm-6" onclick="window.location.href='{% url 'mobile_devices' %}'">
-            <div class="card text-bg-secondary mb-3 text-center">
-            <div class="card-header">行動裝置</div>
-                <div class="card-body">
-                    <h1 class="card-title">{{ mobile_device_nums }}</h1>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-md-4 col-sm-6" onclick="window.location.href='{% url 'certificate_applications' %}'">
-            <div class="card text-bg-warning mb-3 text-center">
-            <div class="card-header">憑證申請單</div>
-                <div class="card-body">
-                    <h1 class="card-title">{{ certificate_application_nums }}</h1>
-                </div>
-            </div>
-        </div>
-
         <div class="col-lg-3 col-md-4 col-sm-6" onclick="window.location.href='{% url 'ocean_stations' %}'">
             <div class="card text-bg-info mb-3 text-center">
             <div class="card-header">海洋驛站</div>

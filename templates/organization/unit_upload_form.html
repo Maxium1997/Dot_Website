@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block subtitle %}
+Organization
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Organization</li>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row justify-content-center">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="form-group">
+            <label>選擇填好的單位 Excel 檔：</label>
+            <input type="file" name="excel_file" class="form-control" accept=".xlsx">
+          </div>
+          <button type="submit" class="btn btn-primary">開始匯入</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

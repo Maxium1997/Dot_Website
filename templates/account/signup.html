@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load socialaccount %} {% block subtitle %}註冊帳號{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Signup</li>
+{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm p-4">
+                <h2 class="text-center mb-4">建立新帳號</h2>
+
+<!--                <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">-->
+<!--                    {% csrf_token %}-->
+<!--                    {{ form.as_p }}-->
+
+<!--                    {% if redirect_field_value %}-->
+<!--                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />-->
+<!--                    {% endif %}-->
+
+<!--                    <button class="btn btn-primary w-100" type="submit">註冊</button>-->
+<!--                </form>-->
+
+<!--                <div class="hr-text my-3" style="display: flex; align-items: center; text-align: center;">-->
+<!--                    <div style="flex-grow: 1; height: 1px; background: #ddd;"></div>-->
+<!--                    <span style="padding: 0 10px; color: #888; font-size: 0.9rem;">或使用社群帳號註冊</span>-->
+<!--                    <div style="flex-grow: 1; height: 1px; background: #ddd;"></div>-->
+<!--                </div>-->
+
+                <a href="{% provider_login_url 'line' %}" class="btn w-100" style="background-color: #00B900; color: white; font-weight: bold;">
+                    <i class="fab fa-line me-2"></i> 使用 LINE 帳號註冊
+                </a>
+
+                <div class="mt-4 text-center">
+                    <small>已經有帳號了？ <a href="{% url 'account_login' %}">立即登入</a></small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

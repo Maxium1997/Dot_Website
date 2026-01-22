@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="container mt-4" style="max-width: 700px;">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}">白名單管理</a></li>
+            <li class="breadcrumb-item active">批次匯入</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-file-earmark-excel me-2"></i>Excel 批次匯入人員</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <h6><i class="bi bi-info-circle me-2"></i>Excel 格式說明：</h6>
+                <p class="small mb-0">請確保您的 Excel 包含以下欄位名稱（首列）：</p>
+                <ul class="small">
+                    <li><strong>姓名</strong> (例: 王小明)</li>
+                    <li><strong>身分證字號</strong> (例: A123456789)</li>
+                    <li><strong>生日</strong> (例: 1990-01-01)</li>
+                    <li><strong>單位ID</strong> (請參考單位對照表，例: 5)</li>
+                </ul>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" class="mt-4">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="form-label fw-bold">選擇 Excel 檔案 (.xlsx / .xls)</label>
+                    <input type="file" name="excel_file" class="form-control" accept=".xlsx, .xls" required>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-upload me-2"></i>開始匯入資料
+                    </button>
+                    <a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}" class="btn btn-light">取消返回</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

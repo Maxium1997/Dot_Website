@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+
+
+{% block body %}
+<div class="container py-5 text-center">
+    <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+    <h2 class="mt-4 fw-bold">訂單提交成功！</h2>
+    <p class="text-muted">訂單編號：{{ order_no }}</p>
+    <p>您已成功使用福利金完成支付。</p>
+    <div class="mt-5">
+        <a href="{% url 'coast_guard_mart:product_list' %}" class="btn btn-dark px-4">繼續逛逛</a>
+    </div>
+</div>
+{% endblock %}

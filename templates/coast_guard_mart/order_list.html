@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block subtitle %}
+Coast Guard Mart
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}">Coast Guard Mart</a></li>
+<li class="breadcrumb-item active" aria-current="page">消費紀錄</li>
+{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-receipt"></i> 消費紀錄 (點數扣抵)</h2>
+        <a href="{% url 'coast_guard_mart:product_list' %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-arrow-left"></i> 回商店
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">交易時間</th>
+                            <th>訂單編號</th>
+                            <th>狀態</th>
+                            <th>金額</th>
+                            <th class="text-center pe-4">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tx in transactions %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="small fw-bold text-dark">{{ tx.timestamp|date:"Y/m/d" }}</div>
+                                <div class="text-muted small">{{ tx.timestamp|date:"H:i" }}</div>
+                            </td>
+                            <td>
+                                <a href="{% url 'coast_guard_mart:order_detail' tx.order_id %}" class="text-decoration-none">
+                                    <span class="badge bg-light text-primary border border-primary">{{ tx.order_id }}</span>
+                                </a>
+                            </td>
+                            <td>
+                                {# 根據模型狀態顯示標籤 #}
+                                {% if tx.status == 'PREPARING' %}
+                                    <span class="badge bg-warning text-dark">備貨中</span>
+                                {% elif tx.status == 'COMPLETED' %}
+                                    <span class="badge bg-success">已完成</span>
+                                {% elif tx.status == 'CANCELLED' %}
+                                    <span class="badge bg-secondary">已取消</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="fw-bold text-danger">- NT$ {{ tx.amount|floatformat:0 }}</span>
+                            </td>
+                            <td class="text-center pe-4">
+                                <div class="btn-group">
+                                    <a href="{% url 'coast_guard_mart:order_detail' tx.order_id %}" class="btn btn-sm btn-outline-primary">詳情</a>
+
+                                    {# 只有在「備貨中」狀態才可以讓使用者自行取消 #}
+                                    {% if tx.status == 'PREPARING' %}
+                                    <form action="{% url 'coast_guard_mart:cancel_order' tx.order_id %}" method="POST"
+                                          onsubmit="return confirm('確定要取消此訂單並退回點數嗎？');" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger ms-1">取消</button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-info-circle mb-2 d-block" style="font-size: 2rem;"></i>
+                                目前尚無任何消費紀錄。
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if user.credits.first %}
+    <div class="mt-4 p-3 bg-light rounded d-flex justify-content-end align-items-center border">
+        <span class="text-muted me-3">目前剩餘可用額度：</span>
+        <span class="h4 mb-0 text-primary fw-bold">NT$ {{ user.credits.first.balance|floatformat:0 }}</span>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

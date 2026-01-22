@@ -5,7 +5,6 @@ from django.contrib.admin.models import LogEntry, CHANGE
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
 
-from organization.definitions import CBUnit, CPC4UnitVer2, ArmyCommission
 from .definitions import ItemStatus, OrderStatus
 
 # Create your models here.

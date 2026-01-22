@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block subtitle %}管理員儀表板{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}">Coast Guard Mart</a></li>
+<li class="breadcrumb-item active" aria-current="page">Order Dashboard</li>
+{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-speedometer2"></i> 訂單管理儀表板</h2>
+        <div>
+            <a href="{% url 'coast_guard_mart:staff_inventory_summary' %}" class="btn btn-success fw-bold me-2">
+                <i class="bi bi-clipboard-check"></i> 查看備貨清單
+            </a>
+            <a href="{% url 'coast_guard_mart:export_inventory_excel' %}" class="btn btn-outline-dark">
+                <i class="bi bi-file-earmark-excel"></i> 匯出統計
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="opacity-75">總訂單數</h6>
+                    <h3>{{ total_orders }} 筆</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="opacity-75">備貨訂單</h6>
+                    <h3>{{ preparing_orders }} 筆</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-danger text-white shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="opacity-75">已取消訂單</h6>
+                    <h3>{{ cancelled_orders }} 筆</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-list-stars me-2"></i>所有交易紀錄</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">使用者</th>
+                        <th>交易時間</th>
+                        <th>訂單編號</th>
+                        <th>金額</th>
+                        <th>狀態</th>
+                        <th class="text-end pe-4">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in transactions %}
+                    <tr>
+                        <td class="ps-4">
+                            <strong>{{ tx.credit_card.user.username }}</strong>
+                            <div class="small text-muted"></div>
+                        </td>
+                        <td>
+                            <div class="small">{{ tx.timestamp|date:"Y-m-d" }}</div>
+                            <div class="text-muted small">{{ tx.timestamp|date:"H:i" }}</div>
+                        </td>
+                        <td><code>{{ tx.order_id }}</code></td>
+                        <td class="fw-bold text-primary">NT$ {{ tx.amount|floatformat:0 }}</td>
+                        <td>
+                            {# 根據 Model 中的 Status 判斷顏色 #}
+                            {% if tx.status == 'PREPARING' %}
+                                <span class="badge bg-warning text-dark">備貨中</span>
+                            {% elif tx.status == 'COMPLETED' %}
+                                <span class="badge bg-success">已完成</span>
+                            {% elif tx.status == 'CANCELLED' %}
+                                <span class="badge bg-danger">已取消</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ tx.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-group">
+                                <a href="{% url 'coast_guard_mart:order_detail' tx.order_id %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-search"></i> 明細
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox d-block mb-2" style="font-size: 2rem;"></i>
+                            目前尚無任何交易紀錄。
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

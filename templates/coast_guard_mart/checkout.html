@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block subtitle %}
+Coast Guard Mart
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}">Coast Guard Mart</a></li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:cart_detail' %}">我的購物車</a></li>
+<li class="breadcrumb-item active" aria-current="page">結帳確認</li>
+{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white text-center py-3">
+                    <h4 class="mb-0">結帳確認</h4>
+                </div>
+                <div class="card-body p-4">
+                    <h5 class="fw-bold border-bottom pb-2">訂單清單</h5>
+                    {% for item in checkout_items %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{{ item.name }} ({{ item.spec }}) x {{ item.qty }}</span>
+                        <span class="fw-bold">NT$ {{ item.subtotal|floatformat:0 }}</span>
+                    </div>
+                    {% endfor %}
+
+                    <hr>
+                    <div class="d-flex justify-content-between mb-4">
+                        <span class="h5">本次應付總額</span>
+                        <span class="h5 text-danger fw-bold">NT$ {{ total_price|floatformat:0 }}</span>
+                    </div>
+
+                    <div class="p-3 bg-light rounded mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>當前點數餘額：</span>
+                            <span>NT$ {{ credit_card.balance|floatformat:0 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-top pt-1 text-primary fw-bold">
+                            <span>扣除後預計餘額：</span>
+                            <span>NT$ {{ remaining_balance|floatformat:0 }}</span>
+                        </div>
+                    </div>
+
+                    {% if credit_card.balance >= total_price %}
+                    <form method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary btn-lg w-100 py-3 shadow">
+                            <i class="bi bi-wallet2 me-2"></i> 確認扣點結帳
+                        </button>
+                    </form>
+                    {% else %}
+                    <div class="alert alert-danger text-center mb-0">
+                        <i class="bi bi-exclamation-octagon"></i> 點數不足。
+                    </div>
+                    <a href="{% url 'coast_guard_mart:cart_detail' %}" class="btn btn-outline-secondary w-100 mt-2">返回購物車</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
