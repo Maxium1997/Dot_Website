@@ -20,9 +20,9 @@ load_dotenv(encoding="utf-8")
 CHANNEL_SECRET = os.getenv('CHANNEL_SECRET')
 CHANNEL_ACCESS_TOKEN = os.getenv('CHANNEL_ACCESS_TOKEN')
 # SECURITY WARNING: keep the secret key used in production secret!
-LINE_CHANNEL_ACCESS_TOKEN = 'U0esetPM19lakdWnPp5Phl69QRAgJHTG3xGVQKxsCnZbvaY/eufsaznFlIxw/7v8MtnLFLZozKoAW5dbHBKQPClBo1bweFpjrc9pjEU7U3yY/KPMKX6uqqVdDbRfbstOoHAzT1dKPqKIwlFVp70hgQdB04t89/1O/w1cDnyilFU='
-LINE_CHANNEL_SECRET = '9d27db238ac8cd06aa7c835929d6a634'
 LINE_BASE_URL = "https://5a8ff96f4253.ngrok-free.app"
+LINE_CHANNEL_ACCESS_TOKEN = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
+LINE_CHANNEL_SECRET = os.getenv('LINE_CHANNEL_SECRET')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -36,13 +36,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-%bvp7yd^&^5aktfosx-pekg5^e&k1yn^x$a=!96@0_keu$h3as')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = True
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = True
+# DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['*',
+                 '.ngrok-free.app',
                  '.railway.app',
-                 'DotWebsiteOfficial.pythonanywhere.com',
-                 '.ngrok-free.app']
+                 'DotWebsiteOfficial.pythonanywhere.com']
 
 CSRF_TRUSTED_ORIGINS = ['https://DotWebsiteOfficial.pythonanywhere.com',
                         'https://*.ngrok-free.app']
@@ -142,7 +142,9 @@ WSGI_APPLICATION = 'Dot_Website.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
+        # 優先讀取環境變數 DATABASE_URL
+        # 如果讀不到，則自動使用本機的 SQLite
+        default=os.getenv('DATABASE_URL', f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
         conn_max_age=600
     )
 }
@@ -218,7 +220,7 @@ ACCOUNT_AUTHENTICATION_METHOD = 'username_email'    # 支援帳號或 Email 登�
 ACCOUNT_EMAIL_REQUIRED = False   # 測試，所以暫時先將此行設為'False'
 SOCIALACCOUNT_AUTO_SIGNUP = True    # LINE 登入後自動建立帳號，不跳轉額外註冊表單
 
-YOUTUBE_DATA_API_KEY = 'AIzaSyDERE1CVNA1eftej708jxhi1Xr9OYx5ccE'
+YOUTUBE_DATA_API_KEY = os.getenv('YOUTUBE_DATA_API_KEY')
 
 # 強制 Django 辨識 ngrok 的 https 轉發
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
