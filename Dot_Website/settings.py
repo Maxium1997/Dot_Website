@@ -32,12 +32,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-%bvp7yd^&^5aktfosx-pekg5^e&k1yn^x$a=!96@0_keu$h3as'
+# SECRET_KEY = 'django-insecure-%bvp7yd^&^5aktfosx-pekg5^e&k1yn^x$a=!96@0_keu$h3as'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-%bvp7yd^&^5aktfosx-pekg5^e&k1yn^x$a=!96@0_keu$h3as')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['*',
+                 '.railway.app',
                  'DotWebsiteOfficial.pythonanywhere.com',
                  '.ngrok-free.app']
 
@@ -138,10 +141,11 @@ WSGI_APPLICATION = 'Dot_Website.wsgi.application'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+        ssl_require=True if os.getenv('DATABASE_URL') else False
+    )
 }
 
 
@@ -224,3 +228,6 @@ USE_X_FORWARDED_PORT = True
 
 # 確保產生的網址都是 https
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+
+# 讓 WhiteNoise 在建置時自動壓縮靜態檔案
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
