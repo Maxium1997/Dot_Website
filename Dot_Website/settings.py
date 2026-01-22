@@ -44,8 +44,9 @@ ALLOWED_HOSTS = ['*',
                  '.railway.app',
                  'DotWebsiteOfficial.pythonanywhere.com']
 
-CSRF_TRUSTED_ORIGINS = ['https://DotWebsiteOfficial.pythonanywhere.com',
-                        'https://*.ngrok-free.app']
+CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.app',
+                        'https://DotWebsiteOfficial.pythonanywhere.com',
+                        'https://*.railway.app']
 
 # Application definition
 
