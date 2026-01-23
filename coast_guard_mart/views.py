@@ -10,7 +10,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from collections import defaultdict
 from django.urls import reverse
-import re
+import re, io
 import pandas as pd
 import qrcode
 
@@ -781,23 +781,82 @@ def staff_whitelist_export(request):
 @staff_member_required
 def staff_whitelist_import(request):
     if request.method == 'POST' and request.FILES.get('excel_file'):
+        file = request.FILES['excel_file']
+
         try:
-            df = pd.read_excel(request.FILES['excel_file'])
+            df = pd.read_excel(file)
+
+            # 更新必要欄位檢查
+            required_columns = ['姓名', '身分證字號', '生日', '單位代碼']  # 將單位ID改為代碼
+            for col in required_columns:
+                if col not in df.columns:
+                    raise ValueError(f"Excel 缺少必要欄位：「{col}」")
+
+            df = df.dropna(how='all')
+            success_count = 0
+
             with transaction.atomic():
-                for _, row in df.iterrows():
+                for index, row in df.iterrows():
+                    # 取得單位代碼並查詢 Unit 物件
+                    unit_code = str(row['單位代碼']).strip()
+                    try:
+                        # 根據 en_name 尋找單位
+                        unit_obj = Unit.objects.get(en_name=unit_code)
+                    except Unit.DoesNotExist:
+                        raise ValueError(f"第 {index + 2} 列錯誤：找不到單位代碼為「{unit_code}」的單位。")
+
+                    id_num = str(row['身分證字號']).strip().upper()
+                    birthday = pd.to_datetime(row['生日']).date()
+
                     WhitelistMember.objects.update_or_create(
-                        id_number=str(row['身分證字號']).strip().upper(),
+                        id_number=id_num,
                         defaults={
+                            'unit': unit_obj,  # 直接傳入物件
                             'name': str(row['姓名']).strip(),
-                            'birthday': pd.to_datetime(row['生日']).date(),
-                            'unit_id': int(row['單位ID'])
+                            'birthday': birthday,
                         }
                     )
-            messages.success(request, "Excel 批次匯入完成。")
+                    success_count += 1
+
+            messages.success(request, f"匯入成功！共新增/更新 {success_count} 筆資料。")
+            return redirect('coast_guard_mart:staff_whitelist_manager')
+
         except Exception as e:
-            messages.error(request, f"匯入失敗，請確認欄位名稱與格式：{e}")
-        return redirect('coast_guard_mart:staff_whitelist_manager')
+            messages.error(request, f"匯入失敗：{str(e)}")
+
     return render(request, 'coast_guard_mart/staff/whitelist_import.html')
+
+
+# 4-1. 提供批次匯入Excel範例檔
+@staff_member_required
+def download_whitelist_template(request):
+    # 1. 範例資料 (使用 en_name 作為代碼)
+    data = [
+        {'姓名': '王小明', '身分證字號': 'A123456789', '生日': '1990-01-01', '單位代碼': 'CGA_HQS'},
+        {'姓名': '李美華', '身分證字號': 'B223456789', '生日': '1985-05-20', '單位代碼': 'S_BRANCH'}
+    ]
+    df_sample = pd.DataFrame(data)
+
+    # 2. 製作單位對照表 (從資料庫抓取所有 Unit)
+    units = Unit.objects.all().order_by('en_name')
+    unit_lookup_data = [
+        {'單位中文名稱': u.full_path, '單位代碼 (en_name)': u.en_name}
+        for u in units if u.en_name  # 只列出有設定英文名稱的單位
+    ]
+    df_units = pd.DataFrame(unit_lookup_data)
+
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df_sample.to_excel(writer, index=False, sheet_name='匯入名單填寫')
+        df_units.to_excel(writer, index=False, sheet_name='單位代碼對照表')
+
+    output.seek(0)
+    response = HttpResponse(
+        output.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="whitelist_import_sample.xlsx"'
+    return response
 
 
 # 5. 刪除人員

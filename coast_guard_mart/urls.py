@@ -45,6 +45,7 @@ urlpatterns = [
                 path('remove/', views.staff_whitelist_delete, name='staff_whitelist_delete'),
                 path('import/', views.staff_whitelist_import, name='staff_whitelist_import'),
                 path('export/', views.staff_whitelist_export, name='staff_whitelist_export'),
+                path('template/', views.download_whitelist_template, name='staff_whitelist_template_download'),
             ])),
         ])),
 

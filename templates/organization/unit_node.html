@@ -1,13 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<body>
-<li>
-    <strong onclick="window.location.href=''">{{ unit.name }}</strong>
-    <span style="color: #666;">(主管: {{ unit.director }})</span>
+<li class="org-unit-item">
+    <div class="unit-card">
+        <span class="unit-name" onclick="window.location.href='#'">{{ unit.name }}</span>
+        <span class="unit-info">主管: {{ unit.director|default:"-" }}</span>
+    </div>
 
     {% with children=unit.get_all_subordinates_direct %}
         {% if children %}
-            <ul style="margin-left: 20px; list-style-type: circle;">
+            <ul class="sub-units">
                 {% for child in children %}
                     {% include "organization/unit_node.html" with unit=child %}
                 {% endfor %}
@@ -15,5 +14,3 @@
         {% endif %}
     {% endwith %}
 </li>
-</body>
-</html>

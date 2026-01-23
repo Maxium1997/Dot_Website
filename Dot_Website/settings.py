@@ -214,6 +214,7 @@ SOCIALACCOUNT_PROVIDERS = {
         'SCOPE': ['profile', 'openid'],    # 確保有這行
     }
 }
+SOCIALACCOUNT_ADAPTER = 'registration.adapter.MySocialAccountAdapter'
 
 # 帳號行為設定
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'    # 支援帳號或 Email 登入

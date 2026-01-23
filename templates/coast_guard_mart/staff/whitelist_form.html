@@ -1,4 +1,15 @@
 {% extends "base.html" %}
+
+{% block subtitle %}
+Coast Guard Mart
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}">Coast Guard Mart</a></li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}">White List Manager</a></li>
+<li class="breadcrumb-item active" aria-current="page">White List Add</li>
+{% endblock %}
+
 {% block body %}
 <div class="container mt-4" style="max-width: 650px;">
     <div class="card shadow">

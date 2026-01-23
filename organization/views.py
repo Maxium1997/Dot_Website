@@ -17,13 +17,12 @@ from .models import Unit
 # Create your views here.
 class OrganizationView(ListView):
     model = Unit
-    template_name = 'organization/index.html'  # 請確認此檔案存在於 templates 資料夾
-    context_object_name = 'root_units'  # 這裡改名為 root_units 比較清楚
+    template_name = 'organization/index.html'
+    context_object_name = 'root_units'
 
     def get_queryset(self):
-        # 找出所有沒有上級單位的頂層單位
-        # 因為是 GenericForeignKey，我們檢查 superior_object_id 是否為空
-        return Unit.objects.filter(superior_object_id__isnull=True).select_related('superior_content_type')
+        # 找出所有頂層單位 (Superior ID 為空)
+        return Unit.objects.filter(superior_object_id__isnull=True)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

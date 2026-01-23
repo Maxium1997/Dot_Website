@@ -1,44 +1,66 @@
 {% extends "base.html" %}
+
+{% block subtitle %}
+Coast Guard Mart
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}">Coast Guard Mart</a></li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}">White List Manager</a></li>
+<li class="breadcrumb-item active" aria-current="page">Excel Import</li>
+{% endblock %}
+
 {% block body %}
 <div class="container mt-4" style="max-width: 700px;">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}">白名單管理</a></li>
-            <li class="breadcrumb-item active">批次匯入</li>
-        </ol>
-    </nav>
-
     <div class="card shadow">
         <div class="card-header bg-success text-white">
             <h5 class="mb-0"><i class="bi bi-file-earmark-excel me-2"></i>Excel 批次匯入人員</h5>
         </div>
         <div class="card-body">
             <div class="alert alert-info">
-                <h6><i class="bi bi-info-circle me-2"></i>Excel 格式說明：</h6>
-                <p class="small mb-0">請確保您的 Excel 包含以下欄位名稱（首列）：</p>
-                <ul class="small">
-                    <li><strong>姓名</strong> (例: 王小明)</li>
-                    <li><strong>身分證字號</strong> (例: A123456789)</li>
-                    <li><strong>生日</strong> (例: 1990-01-01)</li>
-                    <li><strong>單位ID</strong> (請參考單位對照表，例: 5)</li>
-                </ul>
+            <h6><i class="bi bi-info-circle me-2"></i>Excel 格式說明：</h6>
+            <p class="small mb-2">請確保您的 Excel 包含以下欄位名稱：</p>
+            <ul class="small">
+                <li><strong>姓名</strong></li>
+                <li><strong>身分證字號</strong></li>
+                <li><strong>生日</strong> (格式例: 1990-01-01)</li>
+                <li><strong>單位代碼</strong> (請填寫單位的英文名稱，例: <code>CGA_HQS</code>)</li>
+            </ul>
+            <div class="mt-2 p-2 border border-info rounded bg-white">
+                <p class="small mb-1 text-primary fw-bold">💡 提示：</p>
+                <p class="small mb-0">不知道代碼？請下載範本並查看「單位代碼對照表」工作表。</p>
             </div>
+            <hr>
+            <a href="{% url 'coast_guard_mart:staff_whitelist_template_download' %}" class="btn btn-sm btn-outline-info w-100">
+                <i class="bi bi-download me-1"></i>下載 Excel 範本與代照表
+            </a>
+        </div>
 
-            <form method="post" enctype="multipart/form-data" class="mt-4">
-                {% csrf_token %}
-                <div class="mb-4">
-                    <label class="form-label fw-bold">選擇 Excel 檔案 (.xlsx / .xls)</label>
-                    <input type="file" name="excel_file" class="form-control" accept=".xlsx, .xls" required>
-                </div>
-                
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-upload me-2"></i>開始匯入資料
-                    </button>
-                    <a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}" class="btn btn-light">取消返回</a>
-                </div>
-            </form>
+            <div class="container mt-4" style="max-width: 700px;">
+                <form method="post" enctype="multipart/form-data" class="mt-4" id="importForm">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">選擇 Excel 檔案 (.xlsx / .xls)</label>
+                        <input type="file" name="excel_file" class="form-control" accept=".xlsx, .xls" required>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success" id="submitBtn">
+                            <i class="bi bi-upload me-2"></i>開始匯入資料
+                        </button>
+                        <a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}" class="btn btn-light">取消返回</a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.getElementById('importForm').onsubmit = function() {
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>處理中，請稍候...';
+    };
+</script>
 {% endblock %}
