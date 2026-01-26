@@ -7,6 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models import Sum, Q
 from django.utils import timezone
+from allauth.socialaccount.models import SocialAccount
 from datetime import datetime, timedelta
 from collections import defaultdict
 from django.urls import reverse
@@ -14,7 +15,8 @@ import re, io
 import pandas as pd
 import qrcode
 
-from .models import Product, Category, WhitelistMember, MemberCredit, ProductVariant, CreditTransaction
+from .models import Category, Product, ProductAccessory, ProductVariant, \
+    WhitelistMember, MemberCredit, CreditTransaction
 from Dot_Website.utils import send_line_notification
 
 from io import BytesIO
@@ -27,24 +29,21 @@ from organization.models import Unit
 
 def product_list(request, category_slug=None):
     category = None
-    # 1. 只顯示公開的分類
     categories = Category.objects.filter(is_public=True)
 
-    # 2. 基礎產品查詢：必須是顯示狀態，且所屬分類也必須是公開的
     products = Product.objects.filter(
         is_display=True,
         category__is_public=True
     ).select_related('category').prefetch_related('variants').order_by('-price')
 
     if category_slug:
-        # 3. 確保點進去的分類也是公開的
         category = get_object_or_404(categories, slug=category_slug)
         products = products.filter(category=category)
 
     context = {
         'category': category,
         'categories': categories,
-        'products': products
+        'products': products,
     }
     return render(request, 'coast_guard_mart/product_list.html', context)
 
@@ -76,40 +75,40 @@ def product_detail(request, pk):
 
 
 # 驗證使用者是否白名單
-def verify_member(request):
-    if request.method == 'POST':
-        input_id = request.POST.get('id_number').strip().upper()
-        input_birthday = request.POST.get('birthday')   # 格式: YYYY-MM-DD
-
-        # 1. 檢查白名單是否存在且未被領取
-        member = WhitelistMember.objects.filter(
-            id_number=input_id,
-            birthday=input_birthday
-        ).first()
-
-        if member:
-            if member.is_claimed:
-                messages.error(request, "此身分資料已被其他帳號綁定。")
-            else:
-                # 2. 進行綁定並發卡
-                member.is_claimed = True
-                member.claimed_by = request.user
-                member.save()
-
-                # 建立當年度點數卡
-                MemberCredit.objects.create(
-                    user=request.user,
-                    fiscal_year=timezone.now().year,
-                    start_date=timezone.now(),
-                    end_date=timezone.now() + timedelta(days=60),
-                    balance=3000.00
-                )
-                messages.success(request, "身分核對成功！3000元點數卡已存入您的帳戶。")
-                return redirect('coast_guard_mart:product_list')
-        else:
-            messages.error(request, "核對失敗，請確認身分證字號與生日是否正確，或聯繫管理員。")
-
-    return render(request, 'coast_guard_mart/verify.html')
+# def verify_member(request):
+#     if request.method == 'POST':
+#         input_id = request.POST.get('id_number').strip().upper()
+#         input_birthday = request.POST.get('birthday')   # 格式: YYYY-MM-DD
+#
+#         # 1. 檢查白名單是否存在且未被領取
+#         member = WhitelistMember.objects.filter(
+#             id_number=input_id,
+#             birthday=input_birthday
+#         ).first()
+#
+#         if member:
+#             if member.is_claimed:
+#                 messages.error(request, "此身分資料已被其他帳號綁定。")
+#             else:
+#                 # 2. 進行綁定並發卡
+#                 member.is_claimed = True
+#                 member.claimed_by = request.user
+#                 member.save()
+#
+#                 # 建立當年度點數卡
+#                 MemberCredit.objects.create(
+#                     user=request.user,
+#                     fiscal_year=timezone.now().year,
+#                     start_date=timezone.now(),
+#                     end_date=timezone.now() + timedelta(days=60),
+#                     balance=3000.00
+#                 )
+#                 messages.success(request, "身分核對成功！3000元點數卡已存入您的帳戶。")
+#                 return redirect('coast_guard_mart:product_list')
+#         else:
+#             messages.error(request, "核對失敗，請確認身分證字號與生日是否正確，或聯繫管理員。")
+#
+#     return render(request, 'coast_guard_mart/verify.html')
 
 
 # 獲取使用者當前可用的額度
@@ -123,8 +122,8 @@ def get_current_valid_credit(user):
     ).first()   # 取得最新的一張有效卡
 
 
+# 取得該單位直屬的下級單位
 def api_get_subordinates(request, unit_id):
-    # 取得該單位直屬的下級單位
     unit = get_object_or_404(Unit, id=unit_id)
     subordinates = unit.get_all_subordinates_direct()
     data = [
@@ -238,6 +237,7 @@ def claim_credit(request):
     return render(request, 'coast_guard_mart/claim_credit.html', {'top_units': top_units})
 
 
+# 加入商品到購物車
 def add_to_cart(request, variant_id):
     cart = request.session.get('cart', {})
     quantity = int(request.POST.get('quantity', 1))
@@ -254,6 +254,7 @@ def add_to_cart(request, variant_id):
     return redirect('coast_guard_mart:cart_detail')
 
 
+# 加入多項商品到購物車
 def add_to_cart_bulk(request):
     if request.method == 'POST':
         cart = request.session.get('cart', {})
@@ -261,21 +262,34 @@ def add_to_cart_bulk(request):
         main_variant_id = request.POST.get('main_variant')
         quantity = int(request.POST.get('quantity', 1))
 
-        # 取得所有勾選的附屬品並排序（排序確保 Key 的唯一性）
-        accessory_ids = sorted([str(aid) for aid in request.POST.getlist('accessory_variants') if aid])
+        # 1. 取得主商品規格物件，用以回推主產品
+        main_variant = get_object_or_404(ProductVariant.objects.select_related('product'), id=main_variant_id)
+        product = main_variant.product
 
-        # 建立組合 Key，例如 "12_45_46" (12為主商品)
+        # 2. 取得該產品在資料庫中設定的「必選配件數量」
+        required_accessory_count = product.accessory_relations.count()
+
+        # 3. 取得使用者提交的配件（過濾掉空值）
+        raw_accessory_variants = request.POST.getlist('accessory_variants')
+        accessory_ids = sorted([str(aid) for aid in raw_accessory_variants if aid])
+
+        # 4. 核心驗證：如果提交的配件數量不等於要求的數量，代表有漏選
+        if len(accessory_ids) < required_accessory_count:
+            messages.error(request, "請務必選擇所有加購項目的規格！")
+            # 返回原商品頁面
+            return redirect('coast_guard_mart:product_detail', pk=product.pk)
+
+        # 5. 建立組合 Key 並存入購物車
         cart_key = "_".join([str(main_variant_id)] + accessory_ids)
-
-        # 增加數量
         cart[cart_key] = cart.get(cart_key, 0) + quantity
 
         request.session['cart'] = cart
-        messages.success(request, "商品組已加入購物車")
+        messages.success(request, f"【{product.name}】已成功加入購物車")
 
     return redirect('coast_guard_mart:cart_detail')
 
 
+# 移除購物車商品
 def remove_from_cart(request, cart_key):
     cart = request.session.get('cart', {})
     if cart_key in cart:
@@ -285,6 +299,7 @@ def remove_from_cart(request, cart_key):
     return redirect('coast_guard_mart:cart_detail')
 
 
+# 購物車明細
 def cart_detail(request):
     cart = request.session.get('cart', {})
     cart_items = []
@@ -427,6 +442,7 @@ def checkout(request):
     })
 
 
+# 訂單列表
 @login_required
 def order_list(request):
     # 取得該使用者所有的點數卡消費紀錄（從 MemberCredit 關聯過來）
@@ -439,6 +455,7 @@ def order_list(request):
     })
 
 
+# 訂單明細：本人及管理者均可查閱
 @login_required
 def order_detail(request, order_id):
     # 先根據 order_id 抓取訂單，不在此時過濾 user
@@ -452,15 +469,22 @@ def order_detail(request, order_id):
     return render(request, 'coast_guard_mart/order_detail.html', {'tx': tx})
 
 
+# 取消訂單：本人及管理者均可取消訂單
 @login_required
 def cancel_order(request, order_id):
-    # 僅限 POST 且訂單屬於本人
-    tx = get_object_or_404(CreditTransaction, order_id=order_id, credit_card__user=request.user)
+    # 1. 先抓取訂單 (不限本人，管理員也抓得到)
+    tx = get_object_or_404(CreditTransaction, order_id=order_id)
+
+    # 2. 權限判斷：必須是本人或是管理員
+    is_owner = tx.credit_card.user == request.user
+    if not (is_owner or request.user.is_staff):
+        messages.error(request, "您沒有權限執行此操作。")
+        return redirect('coast_guard_mart:order_list')
 
     if request.method != 'POST':
         return redirect('coast_guard_mart:order_list')
 
-    # 檢查狀態是否可取消 (只有備貨中可以取消)
+    # 3. 檢查狀態是否可取消
     if tx.status != CreditTransaction.Status.PREPARING:
         messages.error(request, f"訂單目前的狀態為「{tx.get_status_display()}」，無法取消。")
         return redirect('coast_guard_mart:order_list')
@@ -474,17 +498,39 @@ def cancel_order(request, order_id):
 
             # 更新狀態
             tx.status = CreditTransaction.Status.CANCELLED
+
+            # --- 關鍵修正：在訂單描述中加入備註 ---
+            if not is_owner:
+                # 如果是管理員取消，在原本的商品內容下方追加備註
+                admin_note = f"\n\n⚠️ 【系統備註】本訂單已由管理員 {request.user.username} 取消。"
+                tx.description += admin_note
+
             tx.save()
 
-            # --- 新增 LINE 通知 ---
-            msg = f"⚠️ 訂單已取消通知\n訂單編號：{tx.order_id}\n點數 {tx.amount} 元已退還至您的帳戶。"
-            send_line_notification(request.user, msg)
-            # ---------------------
+            # --- LINE 通知內容 ---
+            msg = (
+                f"⚠️ 訂單已取消通知\n"
+                f"訂單編號：{tx.order_id}\n"
+                f"退還金額：{tx.amount} 元\n"
+                f"取消內容：\n{tx.description}"  # 這裡的 description 已包含剛剛加進去的備註
+            )
 
-            messages.success(request, f"訂單 {tx.order_id} 已成功取消，點數已退還。")
+            if not is_owner:
+                msg += "\n\n如有相關疑問請洽客服諮詢。"
+            else:
+                msg += "\n\n點數已退還至您的帳戶。"
+
+            # 發送給訂單主人
+            send_line_notification(tx.credit_card.user, msg)
+            # ------------------------------------
+
+            messages.success(request, f"訂單 {tx.order_id} 已成功取消。")
+
     except Exception as e:
         messages.error(request, f"取消操作失敗：{str(e)}")
 
+    if request.user.is_staff:
+        return redirect('coast_guard_mart:staff_order_dashboard')
     return redirect('coast_guard_mart:order_list')
 
 
@@ -582,92 +628,160 @@ def generate_order_qrcode(request, order_id):
 
 @user_passes_test(is_staff)
 def staff_verify_order_complete(request, order_id):
+    # 1. 抓取訂單
     tx = get_object_or_404(CreditTransaction, order_id=order_id)
 
     if request.method == 'POST':
+        # 2. 檢查是否處於「備貨中」才可核銷
         if tx.status == CreditTransaction.Status.PREPARING:
-            tx.status = CreditTransaction.Status.COMPLETED  # 假設您模型中有此狀態，或用自定義字串
-            tx.save()
-            messages.success(request, f"訂單 {order_id} 已成功核銷！")
-            return redirect('coast_guard_mart:staff_order_dashboard')
+            try:
+                with transaction.atomic():
+                    # 變更狀態為已完成
+                    tx.status = CreditTransaction.Status.COMPLETED
+
+                    # 3. 在訂單內容追加核銷資訊
+                    verify_note = f"\n\n✅ 【系統備註】本訂單已由管理員 {request.user.username} 於 {timezone.now().strftime('%Y-%m-%d %H:%M')} 完成核銷。"
+                    tx.description += verify_note
+                    tx.save()
+
+                    # 4. 發送 LINE 通知給使用者
+                    msg = (
+                        f"✅ 訂單核銷完成通知\n"
+                        f"訂單編號：{tx.order_id}\n\n"
+                        f"您的商品已成功核銷領取！\n"
+                        f"核銷人員：{request.user.username}\n"
+                        f"核銷時間：{timezone.now().strftime('%Y-%m-%d %H:%M')}\n\n"
+                        f"感謝您的購買，祝您使用愉快。"
+                    )
+                    send_line_notification(tx.credit_card.user, msg)
+
+                messages.success(request, f"訂單 {order_id} 已成功核銷！")
+                return redirect('coast_guard_mart:staff_order_dashboard')
+
+            except Exception as e:
+                messages.error(request, f"核銷操作失敗：{str(e)}")
         else:
             messages.warning(request, "此訂單狀態已變更，無法重複核銷。")
 
     return render(request, 'coast_guard_mart/staff/verify_order_complete.html', {'tx': tx})
 
 
+def clean_spec(spec_string):
+    """清理規格字串：移除 /，無顏色時僅顯示尺寸"""
+    if not spec_string: return ""
+    # 統一將 None 替換為空字串，方便後續判斷
+    spec_string = spec_string.replace('None', '').strip()
+
+    if '/' in spec_string:
+        parts = spec_string.split('/')
+        color = parts[0].strip()
+        size = parts[1].strip()
+        # 如果顏色部分是空白，只回傳尺寸；否則以空格取代斜線
+        if not color or color in ['無', '無顏色']:
+            return size
+        return f"{color} {size}"
+    return spec_string
+
+
 @user_passes_test(is_staff)
 def export_inventory_excel(request):
-    # 1. 準備表頭：所有產品規格
-    all_variants = ProductVariant.objects.select_related('product').order_by('product__name', 'color', 'size')
-    # 建立一個清單存儲標準化的名稱規格，用於比對
-    variant_headers = [f"{v.product.name} ({v.color}/{v.size})" for v in all_variants]
+    # 1. 修正過濾條件：使用模型中定義的 Status.PREPARING
+    # 這樣可以確保不論資料庫存的是 'PREPARING' 還是 '備貨中' 都能正確抓取
+    active_tx = CreditTransaction.objects.filter(
+        status=CreditTransaction.Status.PREPARING
+    ).select_related('credit_card__user__whitelist_info__unit')
 
-    # 2. 準備使用者清單
-    active_tx = CreditTransaction.objects.exclude(description__contains="【已取消】").select_related('credit_card__user')
-    users_list = sorted(list(set(tx.credit_card.user for tx in active_tx)), key=lambda u: u.username)
+    # 取得所有顯示中的產品
+    display_products = Product.objects.filter(is_active=True, is_display=True)
 
     wb = Workbook()
     ws = wb.active
-    ws.title = "訂購明細矩陣"
+    ws.title = "備貨清單"
 
-    # 設定樣式
+    # --- 樣式與表頭設定 ---
     header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
-    header_font = Font(color="FFFFFF", bold=True)
+    acc_fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
+    white_font = Font(color="FFFFFF", bold=True)
+    center_align = Alignment(horizontal="center", vertical="center", wrap_text=True)
 
-    # 3. 寫入第一列表頭
-    headers = ["使用者"] + variant_headers
-    for col_num, header_title in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col_num, value=header_title)
+    base_headers = ["單位", "使用者名稱", "訂單編號", "數量"]
+    for i, text in enumerate(base_headers, 1):
+        cell = ws.cell(row=1, column=i, value=text)
         cell.fill = header_fill
-        cell.font = header_font
-        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        cell.font = white_font
+        cell.alignment = center_align
+        ws.merge_cells(start_row=1, start_column=i, end_row=2, end_column=i)
+        ws.column_dimensions[get_column_letter(i)].width = 25 if i == 1 else 15
 
-        # 修正：使用匯入的 get_column_letter(col_num)
-        column_letter = get_column_letter(col_num)
-        ws.column_dimensions[column_letter].width = 20  # 設定固定寬度或根據內容調整
+    # 動態表頭 (從 E 欄開始)
+    header_map = {}
+    current_col = 5
+    for prod in display_products:
+        start_col = current_col
+        # 主規格
+        ws.cell(row=1, column=current_col, value=prod.name).fill = header_fill
+        ws.cell(row=1, column=current_col).font = white_font
+        ws.cell(row=1, column=current_col).alignment = center_align
+        ws.cell(row=2, column=current_col, value="主規格").alignment = center_align
+        header_map[(prod.name, "MAIN")] = current_col
+        current_col += 1
+        # 配件
+        for rel in prod.accessory_relations.all():
+            ws.cell(row=1, column=current_col, value=prod.name).fill = header_fill
+            ws.cell(row=1, column=current_col).font = white_font
+            ws.cell(row=1, column=current_col).alignment = center_align
+            cell_acc_sub = ws.cell(row=2, column=current_col, value=rel.accessory_item.name)
+            cell_acc_sub.alignment = center_align
+            cell_acc_sub.fill = acc_fill
+            header_map[(prod.name, rel.accessory_item.name)] = current_col
+            current_col += 1
+        if current_col - 1 > start_col:
+            ws.merge_cells(start_row=1, start_column=start_col, end_row=1, end_column=current_col - 1)
 
-    # 4. 填入數據
-    row_num = 2
-    # 修正後的正則表達式，對應我們先前在 checkout 存入的 [含配件: ...] 格式
+    # 2. 填入數據
+    row_num = 3
     pattern = r"•\s+(.+?)\s+-\s+(.+?)\s+x\s+(\d+)"
 
-    for user in users_list:
-        ws.cell(row=row_num, column=1, value=user.username)
+    for tx in active_tx:
+        user = tx.credit_card.user
+        unit_path = user.whitelist_info.unit.full_path if hasattr(user,
+                                                                  'whitelist_info') and user.whitelist_info.unit else ""
 
-        user_tx = active_tx.filter(credit_card__user=user)
-        user_orders = defaultdict(int)
+        items = re.findall(pattern, tx.description)
+        for main_name, full_spec, qty in items:
+            ws.cell(row=row_num, column=1, value=unit_path).alignment = Alignment(wrap_text=True)
+            ws.cell(row=row_num, column=2, value=user.username).alignment = center_align
+            ws.cell(row=row_num, column=3, value=tx.order_id).alignment = center_align
+            ws.cell(row=row_num, column=4, value=int(qty)).alignment = center_align
 
-        for tx in user_tx:
-            rows = re.findall(pattern, tx.description)
-            for name, full_spec, qty in rows:
-                qty = int(qty)
+            # 主規格清理與填入
+            main_spec_raw = re.sub(r"\[含配件:.*?\]", "", full_spec).strip()
+            main_spec_clean = clean_spec(main_spec_raw)
+            main_col_idx = header_map.get((main_name, "MAIN"))
+            if main_col_idx:
+                ws.cell(row=row_num, column=main_col_idx, value=main_spec_clean).alignment = center_align
 
-                # 解析主商品規格 (移除 [含配件...])
-                clean_main_spec = re.sub(r"\[含配件:.*?\]", "", full_spec).strip()
-                main_key = f"{name} ({clean_main_spec})"
-                user_orders[main_key] += qty
+            # 配件清理與填入
+            acc_match = re.search(r"\[含配件:\s*(.+?)\]", full_spec)
+            if acc_match:
+                acc_entries = acc_match.group(1).split(' + ')
+                for entry in acc_entries:
+                    try:
+                        acc_item_name = entry.split(' (')[0].strip()
+                        acc_spec_raw = re.search(r"\((.*?)\)", entry).group(1)
+                        acc_spec_clean = clean_spec(acc_spec_raw)
+                        acc_col_idx = header_map.get((main_name, acc_item_name))
+                        if acc_col_idx:
+                            ws.cell(row=row_num, column=acc_col_idx, value=acc_spec_clean).alignment = center_align
+                    except:
+                        continue
+            row_num += 1
 
-                # 解析配件規格
-                acc_match = re.search(r"\[含配件:\s*(.+?)\]", full_spec)
-                if acc_match:
-                    # 使用 ' + ' 分割
-                    for acc_entry in acc_match.group(1).split(' + '):
-                        user_orders[acc_entry] += qty
+    ws.freeze_panes = "E3"
 
-        # 比對並填入數量
-        for col_num, v_name in enumerate(variant_headers, 2):
-            count = user_orders.get(v_name, 0)
-            if count > 0:
-                cell = ws.cell(row=row_num, column=col_num, value=count)
-                cell.alignment = Alignment(horizontal="center")
-
-        row_num += 1
-
-    # 5. 回傳 Excel 檔案
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     curr_time = timezone.now().strftime("%Y%m%d_%H%M")
-    response['Content-Disposition'] = f'attachment; filename=CoastGuard_Orders_{curr_time}.xlsx'
+    response['Content-Disposition'] = f'attachment; filename=Preparing_Orders_{curr_time}.xlsx'
     wb.save(response)
     return response
 
@@ -695,7 +809,7 @@ def api_get_sub_units(request):
     return JsonResponse({'results': data})
 
 
-# 1. 白名單管理主頁
+# 白名單管理主頁
 @staff_member_required
 def staff_whitelist_manager(request):
     query = request.GET.get('q', '').strip()
@@ -714,7 +828,7 @@ def staff_whitelist_manager(request):
     })
 
 
-# 2. 階層式新增
+# 新增白名單人員
 @staff_member_required
 def staff_whitelist_add(request):
     if request.method == 'POST':
@@ -740,7 +854,7 @@ def staff_whitelist_add(request):
     return render(request, 'coast_guard_mart/staff/whitelist_form.html', {'top_units': top_units})
 
 
-# 3. 匯出 Excel (含完整路徑名稱)
+# 匯出白名單 Excel (含完整組織路徑名稱)
 @staff_member_required
 def staff_whitelist_export(request):
     members = WhitelistMember.objects.select_related('unit', 'claimed_by').all()
@@ -777,7 +891,7 @@ def staff_whitelist_export(request):
     return response
 
 
-# 4. 批次匯入
+# 批次匯入白名單
 @staff_member_required
 def staff_whitelist_import(request):
     if request.method == 'POST' and request.FILES.get('excel_file'):
@@ -827,7 +941,7 @@ def staff_whitelist_import(request):
     return render(request, 'coast_guard_mart/staff/whitelist_import.html')
 
 
-# 4-1. 提供批次匯入Excel範例檔
+# 提供批次匯入 Excel 範例檔
 @staff_member_required
 def download_whitelist_template(request):
     # 1. 範例資料 (使用 en_name 作為代碼)
@@ -859,7 +973,7 @@ def download_whitelist_template(request):
     return response
 
 
-# 5. 刪除人員
+# 刪除白名單人員
 @staff_member_required
 def staff_whitelist_delete(request):
     if request.method == 'POST':

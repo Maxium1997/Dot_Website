@@ -1,6 +1,16 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Login</li>
+{% endblock %}
+
+{% load socialaccount %}
+
+{% block subtitle %}
+登入
+{% endblock %}
+
 {% block body %}
 <div class="container text-center mt-5">
     <h2>社群登入確認</h2>

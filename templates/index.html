@@ -13,34 +13,34 @@ Dot Website
             <div class="fs-2 text-secondary">In <span class="fs-1 text-dark">Life</span>.</div>
         </div>
         <div class="col-md-6 col-sm-12">
-            <img src="{% static 'pic/self-learning.png' %}" width="80%">
+            <img src="{% static 'pic/Dot Website(no slogan).png' %}" width="80%">
         </div>
     </div>
 
     <div class="row">
         <div class="col-md-4 col-6">
-            <a href="">
-                <img src="{% static 'pic/check-list.png' %}" width="80%">
+            <a href="{% url 'coast_guard_mart:product_list' %}">
+                <img src="{% static 'pic/shopping_cart.png' %}" width="80%">
             </a>
-            <h3>Work Sheet(Developing...)</h3>
+            <h3>Coast Guard Mart</h3>
         </div>
-        <div class="col-md-4 col-6">
-            <a href="{% url 'market_place' %}">
-                <img src="{% static 'pic/ecommerce.png' %}" width="80%">
-            </a>
-            <h3>Market Place</h3>
-        </div>
+<!--        <div class="col-md-4 col-6">-->
+<!--            <a href="">-->
+<!--                <img src="{% static 'pic/check-list.png' %}" width="80%">-->
+<!--            </a>-->
+<!--            <h3>Work Sheet(Developing...)</h3>-->
+<!--        </div>-->
+<!--        <div class="col-md-4 col-6">-->
+<!--            <a href="{% url 'market_place' %}">-->
+<!--                <img src="{% static 'pic/ecommerce.png' %}" width="80%">-->
+<!--            </a>-->
+<!--            <h3>Market Place</h3>-->
+<!--        </div>-->
         <div class="col-md-4 col-6">
             <a href="{% url 'business' %}">
                 <img src="{% static 'pic/business-idea.png' %}" width="80%">
             </a>
             <h3>Business</h3>
-        </div>
-        <div class="col-md-4 col-6">
-            <a href="{% url 'coast_guard_mart:product_list' %}">
-                <img src="{% static 'pic/shopping_cart.png' %}" width="80%">
-            </a>
-            <h3>Coast Guard Mart</h3>
         </div>
         <div class="col-md-4 col-6">
             <a href="{% url 'playground' %}">

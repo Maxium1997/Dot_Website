@@ -1,6 +1,7 @@
 from django.contrib import admin
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
+from .models import MemberCredit, CreditTransaction
 from .models import WhitelistMember
 from .models import Category, Product, ProductVariant, ProductAccessory, ProductImage
 
@@ -44,20 +45,16 @@ class ProductAdmin(admin.ModelAdmin):
 class WhitelistMemberResource(resources.ModelResource):
     class Meta:
         model = WhitelistMember
-        fields = ('id', 'name', 'id_number', 'birthday') # 與 Excel 欄位對應
+        fields = ('id', 'name', 'id_number', 'birthday')    # 與 Excel 欄位對應
         import_id_fields = ('id_number',)   # 以身分證作為唯一判斷基準
 
 
 @admin.register(WhitelistMember)
 class WhitelistMemberAdmin(ImportExportModelAdmin):
     resource_class = WhitelistMemberResource
-    list_display = ['name', 'id_number', 'birthday', 'is_claimed', 'claimed_by']
-    search_fields = ['name', 'id_number']
+    list_display = ['name', 'is_claimed', 'claimed_by']
+    search_fields = ['name']
     list_filter = ['is_claimed']
-
-
-from django.contrib import admin
-from .models import MemberCredit, CreditTransaction
 
 
 # 讓消費紀錄以列表形式出現在點數卡下方

@@ -7,11 +7,12 @@
 {% include 'header.html' %}
 
 <title>
-    {% block title %}
     {% block subtitle %}
-    {% endblock %}・Dot Website
     {% endblock %}
+    {% block title %}
+    {% endblock %}・Dot Website
 </title>
+
 
 <body style="background-color: #F8F8FF;">
 
@@ -24,6 +25,7 @@
                 {% endblock %}
             </ol>
         </nav>
+        {% include 'messages.html' %}
     </div>
 </div>
 
@@ -33,6 +35,5 @@
 {% endblock %}
 </body>
 
-{% include 'messages.html' %}
 {% include 'footer.html' %}
 </html>

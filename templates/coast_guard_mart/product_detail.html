@@ -138,14 +138,13 @@ Coast Guard Mart
 
                     {% if accessories %}
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">加購項目</label>
+                        <label class="form-label small fw-bold text-primary">必選加購項目</label>
                         {% for relation in accessories %}
-                        <div class="border rounded p-2 mb-2 bg-white shadow-sm">
-                            <div class="small fw-bold mb-1">{{ relation.accessory_item.name }}</div>
-                            <select name="accessory_variants" class="form-select form-select-sm">
-                                <option value="">不加購</option>
-                                {% for av in relation.accessory_item.variants.all %}
-                                <option value="{{ av.id }}">{{ av.size }} (+${{ av.price }})</option>
+                        <div class="border rounded p-2 mb-2 bg-white shadow-sm border-warning">
+                            <div class="small fw-bold mb-1">{{ relation.accessory_item.name }} <span class="text-danger">*</span></div>
+                            <select name="accessory_variants" class="form-select" required>
+                                <option value="">-- 請選擇規格 --</option> {% for av in relation.accessory_item.variants.all %}
+                                    <option value="{{ av.id }}">{{ av.size }}</option>
                                 {% endfor %}
                             </select>
                         </div>

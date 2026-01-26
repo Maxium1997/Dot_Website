@@ -25,7 +25,7 @@ class Unit(models.Model):
         default=None
     )
     address = models.CharField(max_length=255, blank=True, default=None)
-    landline_phone = models.CharField(max_length=10, blank=True, null=True, default=None)
+    landline_phone = models.CharField(max_length=20, blank=True, null=True, default=None)
     email = models.EmailField(blank=True, null=True, default=None)
 
     superior_content_type = models.ForeignKey(
