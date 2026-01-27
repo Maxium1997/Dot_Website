@@ -1,29 +1,100 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load socialaccount %}
+
+{% block subtitle %}登入{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item active" aria-current="page">Login</li>
 {% endblock %}
 
-{% load socialaccount %}
-
-{% block subtitle %}
-登入
-{% endblock %}
-
 {% block body %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm p-4 text-center">
-                <h2>會員登入</h2>
+<style>
+    /* 登入容器優化 */
+    .login-glass-card {
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 24px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+        padding: 3rem 2rem;
+        transition: transform 0.3s ease;
+    }
 
-                <div>
-                    <img src="{% static 'icons/line.png' %}" width="60" onclick="window.location.href='{% provider_login_url 'line' process='login' %}'">
+    /* 標題漸層效果 */
+    .login-title {
+        font-weight: 800;
+        background: linear-gradient(135deg, #2c3e50, #6c757d);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 2rem;
+    }
+
+    /* LINE 登入按鈕優化 */
+    .line-login-btn {
+        background-color: #00c300;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 12px 30px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        box-shadow: 0 4px 15px rgba(0, 195, 0, 0.3);
+        cursor: pointer;
+    }
+
+    .line-login-btn:hover {
+        background-color: #00b300;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 195, 0, 0.4);
+        color: white;
+    }
+
+    .line-icon {
+        width: 28px;
+        height: 28px;
+    }
+
+    /* 裝飾性的小圓點 */
+    .login-decoration {
+        position: absolute;
+        z-index: -1;
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle, rgba(0, 123, 255, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+</style>
+
+<div class="container" style="margin-top: 5vh; margin-bottom: 10vh;">
+    <div class="row justify-content-center position-relative">
+
+        <div class="login-decoration" style="top: -20px; left: 20%;"></div>
+        <div class="login-decoration" style="bottom: -30px; right: 25%;"></div>
+
+        <div class="col-lg-5 col-md-7 col-sm-10">
+            <div class="login-glass-card text-center" data-aos="zoom-in">
+                <h2 class="login-title">會員登入</h2>
+
+                <p class="text-muted mb-4 small">歡迎回來，請使用通訊軟體快速登入</p>
+
+                <div class="d-grid gap-2 col-10 mx-auto">
+                    <button class="line-login-btn" onclick="window.location.href='{% provider_login_url 'line' process='login' %}'">
+                        <img src="{% static 'icons/line.png' %}" class="line-icon" alt="LINE">
+                        使用 LINE 帳號登入
+                    </button>
                 </div>
 
-                <div class="mt-3">
-                    <small>還沒有帳號了？ <a href="{% url 'account_signup' %}">註冊新帳號</a></small>
+                <div class="mt-5 pt-4 border-top" style="border-color: rgba(0,0,0,0.05) !important;">
+                    <p class="mb-0 text-muted small">
+                        還沒有帳號嗎？
+                        <a href="{% url 'account_signup' %}" class="text-primary fw-bold text-decoration-none ms-1">註冊新帳號</a>
+                    </p>
                 </div>
             </div>
         </div>

@@ -1,113 +1,217 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block subtitle %}管理員儀表板{% endblock %}
+{% block subtitle %}管理員儀表板 - Coast Guard Mart{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}">Coast Guard Mart</a></li>
-<li class="breadcrumb-item active" aria-current="page">Order Dashboard</li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}" class="text-decoration-none text-muted">Coast Guard Mart</a></li>
+<li class="breadcrumb-item active" aria-current="page">管理儀表板</li>
 {% endblock %}
 
 {% block body %}
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-speedometer2"></i> 訂單管理儀表板</h2>
+<style>
+    /* 統一玻璃擬態全局組件 */
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+    }
+
+    /* 數據卡片增強 */
+    .stat-card { border-radius: 20px; border: none !important; }
+    .stat-icon { position: absolute; right: 20px; bottom: 10px; font-size: 3rem; opacity: 0.15; }
+
+    /* 表格樣式 */
+    .table thead th {
+        background: rgba(0, 0, 0, 0.02);
+        color: #6c757d;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+    }
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+
+    /* 響應式：手機版收合樣式 */
+    @media (max-width: 767.98px) {
+        .mobile-clickable { cursor: pointer; }
+        .mobile-detail-row { display: none; background: #fdfdfd; }
+        .mobile-detail-inner {
+            padding: 15px;
+            border-left: 4px solid #0d6efd;
+            margin: 10px;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+        }
+        .hide-on-mobile { display: none !important; }
+    }
+
+    /* 響應式：電腦版取消收合效果 */
+    @media (min-width: 768px) {
+        .mobile-detail-row { display: none !important; } /* 電腦版絕對不顯示收合層 */
+        .desktop-action-cell { display: table-cell !important; }
+    }
+</style>
+
+<div class="container mt-4 mb-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
         <div>
-            <a href="{% url 'coast_guard_mart:staff_inventory_summary' %}" class="btn btn-success fw-bold me-2">
-                <i class="bi bi-clipboard-check"></i> 查看備貨清單
+            <h2 class="fw-bold mb-1"><i class="bi bi-speedometer2 me-2"></i>管理員儀表板</h2>
+            <p class="text-muted small mb-0">監控系統訂單狀態與導出統計數據</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'coast_guard_mart:staff_inventory_summary' %}" class="btn btn-dark rounded-pill px-3 fw-bold shadow-sm">
+                <i class="bi bi-clipboard-check me-1"></i> 備貨清單
             </a>
-            <a href="{% url 'coast_guard_mart:export_inventory_excel' %}" class="btn btn-outline-dark">
-                <i class="bi bi-file-earmark-excel"></i> 匯出統計
+            <a href="{% url 'coast_guard_mart:export_inventory_excel' %}" class="btn btn-outline-dark rounded-pill px-3">
+                <i class="bi bi-file-earmark-excel me-1"></i> 匯出統計
             </a>
         </div>
     </div>
 
-    <div class="row mb-4">
+    <div class="row g-3 mb-4">
         <div class="col-md-4">
-            <div class="card bg-primary text-white shadow-sm border-0">
-                <div class="card-body">
-                    <h6 class="opacity-75">總訂單數</h6>
-                    <h3>{{ total_orders }} 筆</h3>
+            <div class="card glass-panel stat-card bg-primary text-white h-100" style="background: linear-gradient(135deg, #0d6efd, #0a58ca) !important;">
+                <div class="card-body p-4 position-relative">
+                    <h6 class="text-uppercase opacity-75 small fw-bold">總訂單數</h6>
+                    <h2 class="fw-bold mb-0">{{ total_orders }} <small class="fs-6">筆</small></h2>
+                    <i class="bi bi-receipt stat-icon"></i>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card bg-warning text-white shadow-sm border-0">
-                <div class="card-body">
-                    <h6 class="opacity-75">備貨訂單</h6>
-                    <h3>{{ preparing_orders }} 筆</h3>
+            <div class="card glass-panel stat-card bg-warning text-dark h-100" style="background: linear-gradient(135deg, #ffc107, #ffca2c) !important;">
+                <div class="card-body p-4 position-relative">
+                    <h6 class="text-uppercase opacity-75 small fw-bold">待處理備貨</h6>
+                    <h2 class="fw-bold mb-0">{{ preparing_orders }} <small class="fs-6">筆</small></h2>
+                    <i class="bi bi-hourglass-split stat-icon"></i>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card bg-danger text-white shadow-sm border-0">
-                <div class="card-body">
-                    <h6 class="opacity-75">已取消訂單</h6>
-                    <h3>{{ cancelled_orders }} 筆</h3>
+            <div class="card glass-panel stat-card bg-light text-muted h-100">
+                <div class="card-body p-4 position-relative">
+                    <h6 class="text-uppercase opacity-75 small fw-bold">已取消紀錄</h6>
+                    <h2 class="fw-bold mb-0">{{ cancelled_orders }} <small class="fs-6">筆</small></h2>
+                    <i class="bi bi-x-circle stat-icon"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-white py-3">
-            <h5 class="mb-0 fw-bold"><i class="bi bi-list-stars me-2"></i>所有交易紀錄</h5>
-        </div>
-        <div class="table-responsive">
+    <div class="glass-panel overflow-hidden shadow-sm">
+        <div class="table-responsive" style="overflow-x: visible;">
             <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
+                <thead>
                     <tr>
-                        <th class="ps-4">使用者</th>
-                        <th>交易時間</th>
+                        <th class="ps-4 hide-on-mobile">使用者</th>
+                        <th class="hide-on-mobile">交易時間</th>
                         <th>訂單編號</th>
                         <th>金額</th>
                         <th>狀態</th>
-                        <th class="text-end pe-4">操作</th>
+                        <th class="text-end pe-4 desktop-action-cell d-none">操作</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for tx in transactions %}
-                    <tr>
-                        <td class="ps-4">
-                            <strong>{{ tx.credit_card.user.username }}</strong>
-                            <div class="small text-muted"></div>
+                    <tr class="mobile-clickable" onclick="handleRowClick('{{ tx.order_id }}')">
+                        <td class="ps-4 hide-on-mobile">
+                            <div class="fw-bold text-dark">{{ tx.credit_card.user.username }}</div>
                         </td>
-                        <td>
-                            <div class="small">{{ tx.timestamp|date:"Y-m-d" }}</div>
-                            <div class="text-muted small">{{ tx.timestamp|date:"H:i" }}</div>
+                        <td class="hide-on-mobile">
+                            <div class="small">{{ tx.timestamp|date:"Y/m/d H:i" }}</div>
                         </td>
-                        <td><code>{{ tx.order_id }}</code></td>
-                        <td class="fw-bold text-primary">NT$ {{ tx.amount|floatformat:0 }}</td>
+                        <td class="ps-4 ps-md-2">
+                            <i class="bi bi-chevron-down d-md-none me-1 small text-muted"></i>
+                            <code class="text-dark">#{{ tx.order_id }}</code>
+                        </td>
+                        <td><span class="fw-bold text-primary">NT$ {{ tx.amount|floatformat:0 }}</span></td>
                         <td>
-                            {# 根據 Model 中的 Status 判斷顏色 #}
                             {% if tx.status == 'PREPARING' %}
-                                <span class="badge bg-warning text-dark">備貨中</span>
+                                <span class="status-badge bg-warning text-dark bg-opacity-75">備貨中</span>
                             {% elif tx.status == 'COMPLETED' %}
-                                <span class="badge bg-success">已完成</span>
+                                <span class="status-badge bg-success text-white">已完成</span>
                             {% elif tx.status == 'CANCELLED' %}
-                                <span class="badge bg-danger">已取消</span>
-                            {% else %}
-                                <span class="badge bg-secondary">{{ tx.get_status_display }}</span>
+                                <span class="status-badge bg-light text-muted border">已取消</span>
                             {% endif %}
                         </td>
-                        <td class="text-end pe-4">
-                            <div class="btn-group">
-                                <a href="{% url 'coast_guard_mart:order_detail' tx.order_id %}" class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-search"></i> 明細
-                                </a>
+                        <td class="text-end pe-4 desktop-action-cell d-none">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{% url 'coast_guard_mart:order_detail' tx.order_id %}" class="btn btn-sm btn-outline-dark rounded-pill">明細</a>
+                                {% if tx.status == 'PREPARING' %}
+                                <form action="{% url 'coast_guard_mart:cancel_order' tx.order_id %}" method="POST" onsubmit="return confirm('確定取消？');" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">取消</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr class="mobile-detail-row" id="mobile-detail-{{ tx.order_id }}">
+                        <td colspan="3" class="p-0">
+                            <div class="mobile-detail-inner">
+                                <div class="row g-2">
+                                    <div class="col">
+                                        <div class="small text-muted">使用者</div>
+                                        <div class="small fw-bold">{{ tx.credit_card.user.username }}</div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="small text-muted">下單時間</div>
+                                        <div class="small fw-bold">{{ tx.timestamp|date:"m/d H:i" }}</div>
+                                    </div>
+                                    <div class="col-12 d-flex gap-2 mt-2">
+                                        <a href="{% url 'coast_guard_mart:order_detail' tx.order_id %}" class="btn btn-sm btn-dark flex-fill py-2">查看明細</a>
+                                        {% if tx.status == 'PREPARING' %}
+                                        <form action="{% url 'coast_guard_mart:cancel_order' tx.order_id %}" method="POST" class="flex-fill">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-danger w-100 py-2">取消訂單</button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </div>
                         </td>
                     </tr>
                     {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center py-5 text-muted">
-                            <i class="bi bi-inbox d-block mb-2" style="font-size: 2rem;"></i>
-                            目前尚無任何交易紀錄。
-                        </td>
-                    </tr>
+                    <tr><td colspan="6" class="text-center py-5">目前尚無紀錄</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+<script>
+    function handleRowClick(orderId) {
+        // 僅在視窗寬度小於 768px 時執行收合邏輯
+        if (window.innerWidth < 768) {
+            const detailRow = document.getElementById(`mobile-detail-${orderId}`);
+            if (detailRow.style.display === "table-row") {
+                detailRow.style.display = "none";
+            } else {
+                detailRow.style.display = "table-row";
+            }
+        }
+    }
+
+    // 視窗大小改變時，自動重置顯示狀態，避免電腦版出現殘留收合
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= 768) {
+            document.querySelectorAll('.mobile-detail-row').forEach(el => {
+                el.style.display = 'none';
+            });
+        }
+    });
+</script>
 {% endblock %}

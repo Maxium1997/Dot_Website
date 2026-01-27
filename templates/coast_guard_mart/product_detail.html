@@ -1,165 +1,167 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block subtitle %}
-Coast Guard Mart
-{% endblock %}
+{% block subtitle %}{{ product.name }}{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}">Coast Guard Mart</a></li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}" class="text-decoration-none text-muted">Coast Guard Mart</a></li>
 <li class="breadcrumb-item active" aria-current="page">{{ product.category.name }}</li>
 {% endblock %}
 
 {% block body %}
 <style>
-    /* 確保圖片容器在電腦版有足夠高度，且圖片完整不被裁切 */
+    /* 統一玻璃擬態全局組件 */
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 16px; /* 與 List 頁面對齊 */
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+    }
+
+    /* 詳情頁專用大容器圓角保持 24px 以容納內容 */
+    .detail-card-main {
+        border-radius: 24px;
+        padding: 20px;
+    }
+
+    .product-carousel-wrapper {
+        border-radius: 20px;
+        overflow: hidden;
+        background: #fdfdfd;
+        border: 1px solid rgba(0,0,0,0.03);
+    }
+
     .product-main-img {
         width: 100%;
-        max-height: 80vh; /* 限制最大高度為螢幕的 80%，避免過長 */
-        object-fit: contain; /* 關鍵：完整顯示整張圖，不裁切 */
-        background-color: #f8f9fa; /* 若圖片比例不合，填補淡灰色背景 */
+        height: auto;
+        max-height: 65vh;
+        object-fit: contain;
     }
 
-    /* 手機版微調 */
-    @media (max-width: 768px) {
-        .product-main-img {
-            max-height: 50vh;
-        }
+    .product-title {
+        font-weight: 800;
+        background: linear-gradient(135deg, #212529, #6c757d);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
 
-    .alert {
-        border: none;
-        border-left: 5px solid;
+    .accessory-item {
+        border-left: 4px solid #ffc107 !important;
+        background: rgba(255, 249, 230, 0.5) !important;
+        border-radius: 12px;
     }
-    .alert-info {
-        border-left-color: #0dcaf0;
-        background-color: #f0faff;
+
+    .btn-add-cart {
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        background: #212529;
+        color: white;
     }
-    .alert-warning {
-        border-left-color: #ffc107;
-        background-color: #fff9e6;
+    .btn-add-cart:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
+
+    .alert { border: none; }
 </style>
 
-<div class="container mt-4">
+<div class="container mt-4 mb-5">
     <div class="row">
-        {% if user.is_authenticated %}
-            <div class="alert {% if user.credits.all %}alert-info{% else %}alert-warning{% endif %} d-flex justify-content-between align-items-center shadow-sm mb-4">
-                <div>
-                    {% with current_credit=user.credits.first %}
-                        {% if current_credit %}
-                            <i class="bi bi-wallet2 me-2"></i>
-                            <strong>您的年度福利金餘額：</strong>
-                            <span class="fs-5 text-primary fw-bold">NT$ {{ current_credit.balance|floatformat:0 }}</span>
-                            <small class="text-muted ms-2">(有效期至: {{ current_credit.end_date|date:"Y/m/d" }})</small>
-                        {% else %}
-                            <i class="bi bi-gift me-2"></i>
-                            <strong>您尚未領取本年度 NT$ 3,000 福利金！</strong>
-                        {% endif %}
-                    {% endwith %}
-                </div>
-
-                {% if not user.credits.all %}
-                    <a href="{% url 'coast_guard_mart:claim_credit' %}" class="btn btn-warning fw-bold shadow-sm">
-                        立即核對並領取
-                    </a>
-                {% endif %}
-            </div>
-        {% else %}
-            <div class="alert alert-secondary mb-4">
-                <i class="bi bi-info-circle me-2"></i> 登入後即可領取並使用年度福利金。
-            </div>
-        {% endif %}
-    </div>
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <a href="{% url 'coast_guard_mart:product_list' %}" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-arrow-left"></i> 回商店
-        </a>
-    </div>
-</div>
-
-<div class="container-fluid py-4">
-    <div class="row">
-
-
-
-        <div class="col-md-9 mb-4">
-            <div id="productCarousel" class="carousel slide border rounded bg-light" data-bs-ride="carousel">
-                <div class="carousel-inner">
-                    {% if product.image %}
-                    <div class="carousel-item active text-center">
-                        <img src="{{ product.image.url }}" class="product-main-img" alt="{{ product.name }}">
+        <div class="col-12 mb-3">
+            {% if user.is_authenticated %}
+                <div class="alert glass-panel d-flex justify-content-between align-items-center p-3 mb-0"
+                     style="border-left: 6px solid {% if user.credits.all %}#0dcaf0{% else %}#ffc107{% endif %};">
+                    <div class="small">
+                        {% with current_credit=user.credits.first %}
+                            <i class="bi {% if current_credit %}bi-wallet2 text-info{% else %}bi-gift text-warning{% endif %} me-2"></i>
+                            <strong>年度福利金：</strong>
+                            {% if current_credit %}
+                                <span class="text-dark fw-bold">NT$ {{ current_credit.balance|floatformat:0 }}</span>
+                                <span class="text-muted d-none d-md-inline ms-1">(至 {{ current_credit.end_date|date:"Y/m/d" }})</span>
+                            {% else %}
+                                <span class="text-secondary">您尚未領取本年度 NT$ 3,000 福利金！</span>
+                            {% endif %}
+                        {% endwith %}
                     </div>
+                    {% if not user.credits.all %}
+                        <a href="{% url 'coast_guard_mart:claim_credit' %}" class="btn btn-sm btn-warning rounded-pill px-3 fw-bold shadow-sm">立即領取</a>
+                    {% else %}
+                        <a href="{% url 'coast_guard_mart:product_list' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">回商店</a>
                     {% endif %}
-
-                    {% for img in product.images.all %}
-                    <div class="carousel-item {% if not product.image and forloop.first %}active{% endif %} text-center">
-                        <img src="{{ img.image.url }}" class="product-main-img" alt="{{ product.name }}">
-                    </div>
-                    {% endfor %}
                 </div>
+            {% else %}
+                <div class="alert glass-panel d-flex justify-content-between align-items-center p-3 mb-0"
+                     style="border-left: 6px solid #6c757d;">
+                    <div class="small">
+                        <i class="bi bi-person-lock text-secondary me-2"></i>
+                        <strong class="text-dark">登入領取 NT$ 3,000 年度福利金</strong>
+                        <span class="text-muted d-none d-sm-inline ms-1">，現買現抵！</span>
+                    </div>
+                    <a href="{% url 'login' %}" class="btn btn-sm btn-dark rounded-pill px-3 fw-bold">立即登入</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 
-                {% if product.images.all %}
-                <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon bg-dark rounded-circle" aria-hidden="true"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon bg-dark rounded-circle" aria-hidden="true"></span>
-                </button>
-                {% endif %}
+    <div class="row g-4">
+        <div class="col-lg-7 col-md-6">
+            <div class="glass-panel detail-card-main h-100 p-2">
+                <div id="productCarousel" class="carousel slide product-carousel-wrapper" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        {% if product.image %}<div class="carousel-item active text-center"><img src="{{ product.image.url }}" class="product-main-img"></div>{% endif %}
+                        {% for img in product.images.all %}<div class="carousel-item text-center"><img src="{{ img.image.url }}" class="product-main-img"></div>{% endfor %}
+                    </div>
+                    {% if product.images.all %}
+                    <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev"><span class="carousel-control-prev-icon bg-dark rounded-circle"></span></button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next"><span class="carousel-control-next-icon bg-dark rounded-circle"></span></button>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
-        <div class="col-md-3">
-            <div class="sticky-top" style="top: 20px;">
-                <h2 class="fw-bold h4">{{ product.name }}</h2>
-                <div class="text-danger h5 mb-3">
-                    NT$ {{ product.variants.first.price|default:"--" }}
-                </div>
-
-                <hr>
-
-                <form action="{% url 'coast_guard_mart:add_to_cart_bulk' %}" method="POST">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">顏色 / 尺寸</label>
-                        <select name="main_variant" class="form-select form-select-sm" required>
-                            <option value="">請選擇</option>
-                            {% for v in product.variants.all %}
-                            <option value="{{ v.id }}">{{ v.color }} - {{ v.size }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">數量</label>
-                        <input type="number" name="quantity" value="1" min="1" class="form-control form-control-sm" style="width: 80px;">
-                    </div>
-
-                    {% if accessories %}
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-primary">必選加購項目</label>
-                        {% for relation in accessories %}
-                        <div class="border rounded p-2 mb-2 bg-white shadow-sm border-warning">
-                            <div class="small fw-bold mb-1">{{ relation.accessory_item.name }} <span class="text-danger">*</span></div>
-                            <select name="accessory_variants" class="form-select" required>
-                                <option value="">-- 請選擇規格 --</option> {% for av in relation.accessory_item.variants.all %}
-                                    <option value="{{ av.id }}">{{ av.size }}</option>
-                                {% endfor %}
+        <div class="col-lg-5 col-md-6">
+            <div class="glass-panel detail-card-main h-100 d-flex flex-column">
+                <div class="mb-auto">
+                    <span class="badge bg-light text-secondary mb-2 fw-normal border">{{ product.category.name }}</span>
+                    <h1 class="product-title h3 mb-2">{{ product.name }}</h1>
+                    <div class="h4 text-primary fw-bold mb-4">NT$ {{ product.variants.first.price|floatformat:0 }}</div>
+                    <hr class="opacity-10">
+                    <form action="{% url 'coast_guard_mart:add_to_cart_bulk' %}" method="POST">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted text-uppercase">規格選擇</label>
+                            <select name="main_variant" class="form-select border-0 bg-light rounded-3" required>
+                                <option value="">請選擇 顏色 / 尺寸</option>
+                                {% for v in product.variants.all %}<option value="{{ v.id }}">{{ v.color }} - {{ v.size }}</option>{% endfor %}
                             </select>
                         </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-
-                    <button type="submit" class="btn btn-dark w-100 py-2">
-                        <i class="bi bi-cart-plus"></i> 加入購物車
-                    </button>
-                </form>
-
-                <div class="mt-4 small text-muted">
-                    <h6 class="fw-bold small text-dark">產品描述：</h6>
-                    {{ product.description|safe }}
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted text-uppercase">購買數量</label>
+                            <input type="number" name="quantity" value="1" min="1" class="form-control border-0 bg-light text-center rounded-3" style="width: 100px;">
+                        </div>
+                        {% if accessories %}
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-warning text-uppercase"><i class="bi bi-star-fill me-1"></i> 必選加購項目</label>
+                            {% for relation in accessories %}
+                            <div class="glass-panel accessory-item p-3 mb-2 shadow-none border-0">
+                                <div class="small fw-bold mb-2">{{ relation.accessory_item.name }}</div>
+                                <select name="accessory_variants" class="form-select form-select-sm border-0" required>
+                                    <option value="">-- 請選擇規格 --</option>
+                                    {% for av in relation.accessory_item.variants.all %}<option value="{{ av.id }}">{{ av.size }} (NT$ {{ av.price|floatformat:0 }})</option>{% endfor %}
+                                </select>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <button type="submit" class="btn btn-add-cart w-100 py-3 mb-3"><i class="bi bi-cart-plus me-2"></i> 加入購物車</button>
+                    </form>
+                </div>
+                <div class="mt-2">
+                    <button class="btn btn-link btn-sm text-decoration-none text-muted p-0" type="button" data-bs-toggle="collapse" data-bs-target="#descCollapse">產品描述 <i class="bi bi-chevron-down"></i></button>
+                    <div class="collapse show mt-2" id="descCollapse"><div class="small text-muted">{{ product.description|safe }}</div></div>
                 </div>
             </div>
         </div>

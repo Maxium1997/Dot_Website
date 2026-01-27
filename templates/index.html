@@ -6,48 +6,164 @@ Dot Website
 {% endblock %}
 
 {% block body %}
-<div class="container text-center">
-    <div class="row align-items-center">
-        <div class="col-md-6 col-sm-12">
-            <div class="fs-2 text-secondary">Seek a bit of <span class="fs-1 text-dark">Joy</span>,</div>
-            <div class="fs-2 text-secondary">In <span class="fs-1 text-dark">Life</span>.</div>
-        </div>
-        <div class="col-md-6 col-sm-12">
-            <img src="{% static 'pic/Dot Website(no slogan).png' %}" width="80%">
-        </div>
-    </div>
+<div class="container-fluid p-0">
+    <style>
+    .hero-section {
+        position: relative;
+        overflow: hidden;
+        background-color: transparent;
+        padding: 40px 0; /* 手機版間距 */
+    }
 
-    <div class="row">
-        <div class="col-md-4 col-6">
-            <a href="{% url 'coast_guard_mart:product_list' %}">
-                <img src="{% static 'pic/shopping_cart.png' %}" width="80%">
-            </a>
-            <h3>Coast Guard Mart</h3>
-        </div>
-<!--        <div class="col-md-4 col-6">-->
-<!--            <a href="">-->
-<!--                <img src="{% static 'pic/check-list.png' %}" width="80%">-->
-<!--            </a>-->
-<!--            <h3>Work Sheet(Developing...)</h3>-->
-<!--        </div>-->
-<!--        <div class="col-md-4 col-6">-->
-<!--            <a href="{% url 'market_place' %}">-->
-<!--                <img src="{% static 'pic/ecommerce.png' %}" width="80%">-->
-<!--            </a>-->
-<!--            <h3>Market Place</h3>-->
-<!--        </div>-->
-        <div class="col-md-4 col-6">
-            <a href="{% url 'business' %}">
-                <img src="{% static 'pic/business-idea.png' %}" width="80%">
-            </a>
-            <h3>Business</h3>
-        </div>
-        <div class="col-md-4 col-6">
-            <a href="{% url 'playground' %}">
-                <img src="{% static 'pic/playground.png' %}" width="80%">
-            </a>
-            <h3>Playground</h3>
+    @media (min-width: 768px) {
+        .hero-section { padding: 100px 0; }
+    }
+
+    .hero-title {
+        /* 稍微縮小一點基礎字級，讓大 Logo 有更多空間 */
+        font-size: calc(1.5rem + 1.2vw);
+        line-height: 1.2;
+    }
+
+    .text-gradient {
+        background: linear-gradient(135deg, #2c3e50, #bdc3c7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
+    }
+
+    .hero-img-container {
+        position: relative;
+        display: inline-block;
+        z-index: 1;
+        width: 100%; /* 確保容器撐滿欄位 */
+    }
+
+    .hero-img-static {
+        /* 調大 Logo 尺寸限制 */
+        max-width: 450px;
+        width: 100%;
+        filter: drop-shadow(0 15px 35px rgba(0,0,0,0.06));
+    }
+
+    @media (max-width: 767px) {
+        .hero-img-static { max-width: 240px; } /* 手機版也同步放大一點點 */
+        .hero-subtitle { font-size: 0.9rem; }
+    }
+    </style>
+
+    <div class="hero-section">
+        <div class="container position-relative">
+            <div class="row align-items-center justify-content-center">
+
+                <div class="col-md-5 text-md-end text-center mb-5 mb-md-0" data-aos="fade-right">
+                    <h1 class="hero-title fw-light text-secondary mb-0">
+                        Seek a bit of
+                        <span class="text-dark d-block d-md-inline text-gradient">Joy</span>,
+                    </h1>
+                    <h1 class="hero-title fw-light text-secondary">
+                        In <span class="text-dark text-gradient">Life</span>.
+                    </h1>
+                    <p class="hero-subtitle lead text-muted mt-3 mx-auto ms-md-auto me-md-0" style="max-width: 300px;">
+                        探索生活中的樂趣。
+                    </p>
+                </div>
+
+                <div class="col-md-7 text-md-start text-center" data-aos="fade-left">
+                    <div class="hero-img-container ps-md-4"> <img src="{% static 'pic/index/Dot Website(no slogan).png' %}"
+                             class="hero-img-static"
+                             alt="Logo">
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
+</div>
+
+
+<div class="container-fluid p-0">
+    <style>
+    /* 圖片懸停放大效果 */
+    .hover-zoom {
+        overflow: hidden;
+        border-radius: 15px;
+    }
+    .hover-zoom img {
+        transition: transform 0.5s ease;
+    }
+    .hover-zoom:hover img {
+        transform: scale(1.05);
+    }
+    /* 漸層按鈕 */
+    .btn-custom {
+        border-radius: 50px;
+        transition: all 0.3s;
+        padding: 10px 30px;
+        font-weight: 600;
+    }
+    .btn-custom:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    /* 背景色交替 */
+    .bg-light-alt {
+        background-color: #f8f9fa;
+    }
+</style>
+
+    <section class="py-5 bg-light-alt">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-7 mb-4 mb-md-0" data-aos="fade-up">
+                    <div class="hover-zoom shadow">
+                        <img src="{% static 'pic/index/clothing-store.jpg' %}" class="img-fluid" alt="Mart">
+                    </div>
+                </div>
+                <div class="col-md-5 ps-md-5" data-aos="fade-left">
+                    <span class="badge bg-primary mb-2">Shopping</span>
+                    <h2 class="fw-bold display-6">Coast Guard Mart</h2>
+                    <p class="text-muted fs-5 my-4">專為海巡署同仁打造的數位化服裝訂購平台。</p>
+                    <a href="{% url 'coast_guard_mart:product_list' %}" class="btn btn-dark btn-custom">Explore Store</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-5">
+        <div class="container">
+            <div class="row align-items-center flex-md-row-reverse">
+                <div class="col-md-7 mb-4 mb-md-0" data-aos="fade-up">
+                    <div class="hover-zoom shadow">
+                        <img src="{% static 'pic/index/carousel.jpg' %}" class="img-fluid" alt="Playground">
+                    </div>
+                </div>
+                <div class="col-md-5 pe-md-5 text-md-end" data-aos="fade-right">
+                    <span class="badge bg-success mb-2">Entertainment</span>
+                    <h2 class="fw-bold display-6">Playground</h2>
+                    <p class="text-muted fs-5 my-4">發揮創意、探索各類小遊戲與創意。</p>
+                    <a href="{% url 'playground' %}" class="btn btn-dark btn-custom">Start Playing</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-5 bg-light-alt">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-7 mb-4 mb-md-0" data-aos="fade-up">
+                    <div class="hover-zoom shadow">
+                        <img src="{% static 'pic/index/badminton_court.jpg' %}" class="img-fluid" alt="Badminton">
+                    </div>
+                </div>
+                <div class="col-md-5 ps-md-5" data-aos="fade-left">
+                    <span class="badge bg-warning text-dark mb-2">Sports</span>
+                    <h2 class="fw-bold display-6">Badminton Court</h2>
+                    <p class="text-muted fs-5 my-4">流汗是最棒的舒壓！輕鬆預約場地，與好友來一場精彩的羽球對決。</p>
+                    <a href="{% url 'badminton_court_management:booking_page' %}" class="btn btn-dark btn-custom">Book Now</a>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
 {% endblock %}

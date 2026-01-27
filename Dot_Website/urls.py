@@ -36,4 +36,5 @@ urlpatterns = [
     path('', include('playground.urls')),
     path('coast_guard_mart/', include('coast_guard_mart.urls')),
     path('line_bot/', include('line_bot.urls')),
+    path('badminton_court_management/', include('badminton_court_management.urls')),
 ]+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

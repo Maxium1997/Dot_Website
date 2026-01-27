@@ -58,8 +58,8 @@ def handle_follow(event):
     welcome_text = (
         "您好！歡迎加入 Dot_Website 官方帳號！🎉\n\n"
         "🔔 功能提示：\n"
-        "1. 輸入「餘額」：查詢當年度福利金。\n"
-        "2. 輸入「訂單」：查看最近消費紀錄。\n\n"
+        "1. 輸入「年度點數」：查詢當年度服裝籌補點數。\n"
+        "2. 輸入「下訂訂單」：查看下訂紀錄。\n\n"
         "⚠️ 請務必先在網站透過「LINE 登入」完成帳號綁定，才能使用查詢功能喔！"
     )
     line_bot_api.reply_message(
@@ -78,8 +78,8 @@ def handle_message(event):
     base_url = getattr(settings, 'LINE_BASE_URL', '')
     reply_content = None  # 用來存放最終要回傳的訊息物件
 
-    # 邏輯 A：餘額查詢
-    if user_text in ["餘額", "查詢餘額", "點數"]:
+    # 邏輯 A：服裝籌補點數查詢
+    if user_text in ["年度點數", "籌補點數", "查詢籌補點數"]:
         social_acc = SocialAccount.objects.filter(provider='line', uid=line_uid).first()
         if social_acc:
             user = social_acc.user
@@ -95,31 +95,31 @@ def handle_message(event):
             reply_content = TextSendMessage(text="⚠️ 系統查無您的綁定資訊。\n請先至網站使用 LINE 登入完成帳號連結。")
 
     # 邏輯 B：訂單查詢 (使用 ButtonsTemplate)
-    elif user_text in ["訂單", "訂單查詢"]:
+    elif user_text in ["籌補訂單", "籌補訂單查詢"]:
         social_acc = SocialAccount.objects.filter(provider='line', uid=line_uid).first()
         if social_acc:
             last_tx = CreditTransaction.objects.filter(credit_card__user=social_acc.user).order_by('-timestamp').first()
             if last_tx:
                 # 建立按鈕選單，使用拼接後的完整網址
                 reply_content = TemplateSendMessage(
-                    alt_text='您的訂單狀態',
+                    alt_text='您的籌補訂單狀態',
                     template=ButtonsTemplate(
-                        title='訂單狀態查詢',
-                        text=f'最末筆訂單：{last_tx.order_id}\n狀態：{last_tx.get_status_display()}',
+                        title='籌補訂單狀態查詢',
+                        text=f'最末筆籌補訂單：{last_tx.order_id}\n狀態：{last_tx.get_status_display()}',
                         actions=[
                             URITemplateAction(
-                                label='查看該訂單詳情',
+                                label='查看該籌補訂單詳情',
                                 uri=f'{base_url}/coast_guard_mart/order/{last_tx.order_id}/'
                             ),
                             URITemplateAction(
-                                label='查看所有訂單',
+                                label='查看所有籌補訂單',
                                 uri=f'{base_url}/coast_guard_mart/my-orders/'
                             )
                         ]
                     )
                 )
             else:
-                reply_content = TextSendMessage(text=f"您目前沒有消費紀錄。\n商城首頁：{base_url}/coast_guard_mart/")
+                reply_content = TextSendMessage(text=f"您目前沒有籌補訂單。\n商城首頁：{base_url}/coast_guard_mart/")
         else:
             reply_content = TextSendMessage(text="⚠️ 請先至網站完成 LINE 登入綁定帳號。")
 
@@ -129,8 +129,9 @@ def handle_message(event):
 
     # 邏輯 D：其他/預設回覆
     else:
-        reply_content = TextSendMessage(text=f"收到訊息：『{user_text}』\n您可以嘗試輸入「餘額」或「訂單」來查詢相關資訊。")
+        reply_content = TextSendMessage(text=f"收到訊息：『{user_text}』\n您可以嘗試輸入「年度點數」或「籌補訂單」來查詢相關資訊。")
 
     # 統一回覆出口：一個 reply_token 只能呼叫一次
     if reply_content:
         line_bot_api.reply_message(event.reply_token, reply_content)
+

@@ -1,64 +1,134 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block subtitle %}
-Coast Guard Mart
-{% endblock %}
+{% block subtitle %}結帳確認{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}">Coast Guard Mart</a></li>
-<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:cart_detail' %}">我的購物車</a></li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}" class="text-decoration-none text-muted">Coast Guard Mart</a></li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:cart_detail' %}" class="text-decoration-none text-muted">我的購物車</a></li>
 <li class="breadcrumb-item active" aria-current="page">結帳確認</li>
 {% endblock %}
 
 {% block body %}
+<style>
+    /* 玻璃擬態容器 */
+    .checkout-glass-card {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 28px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    /* 頂部標題區 */
+    .checkout-header {
+        background: linear-gradient(135deg, #2c3e50, #000);
+        color: white;
+        padding: 2rem 1rem;
+    }
+
+    /* 餘額計算面板 */
+    .balance-panel {
+        background: rgba(0, 123, 255, 0.05);
+        border: 1px dashed rgba(0, 123, 255, 0.2);
+        border-radius: 16px;
+    }
+
+    /* 產品條目細節 */
+    .checkout-item-row {
+        font-size: 0.95rem;
+        color: #444;
+    }
+
+    /* 按鈕美化 */
+    .btn-payment {
+        border-radius: 50px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .btn-payment:hover:not(:disabled) {
+        transform: scale(1.02);
+        box-shadow: 0 10px 25px rgba(13, 110, 253, 0.3);
+    }
+</style>
+
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header bg-dark text-white text-center py-3">
-                    <h4 class="mb-0">結帳確認</h4>
+        <div class="col-lg-6 col-md-8 col-sm-12">
+
+            <div class="checkout-glass-card" data-aos="fade-up">
+                <div class="checkout-header text-center">
+                    <i class="bi bi-shield-lock-fill fs-1 mb-2"></i>
+                    <h3 class="fw-bold mb-0">結帳確認</h3>
+                    <p class="small opacity-75 mb-0">安全加密傳輸中，請核對您的訂單資訊</p>
                 </div>
-                <div class="card-body p-4">
-                    <h5 class="fw-bold border-bottom pb-2">訂單清單</h5>
-                    {% for item in checkout_items %}
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>{{ item.name }} ({{ item.spec }}) x {{ item.qty }}</span>
-                        <span class="fw-bold">NT$ {{ item.subtotal|floatformat:0 }}</span>
-                    </div>
-                    {% endfor %}
 
-                    <hr>
-                    <div class="d-flex justify-content-between mb-4">
-                        <span class="h5">本次應付總額</span>
-                        <span class="h5 text-danger fw-bold">NT$ {{ total_price|floatformat:0 }}</span>
-                    </div>
-
-                    <div class="p-3 bg-light rounded mb-4">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span>當前點數餘額：</span>
-                            <span>NT$ {{ credit_card.balance|floatformat:0 }}</span>
+                <div class="card-body p-4 p-md-5">
+                    <h6 class="text-uppercase fw-bold text-muted small mb-3" style="letter-spacing: 2px;">訂單清單</h6>
+                    <div class="mb-4">
+                        {% for item in checkout_items %}
+                        <div class="d-flex justify-content-between align-items-center mb-3 checkout-item-row">
+                            <div class="pe-3">
+                                <div class="fw-bold">{{ item.name }}</div>
+                                <div class="small text-muted">規格: {{ item.spec }} | 數量: {{ item.qty }}</div>
+                            </div>
+                            <div class="fw-bold text-nowrap">NT$ {{ item.subtotal|floatformat:0 }}</div>
                         </div>
-                        <div class="d-flex justify-content-between border-top pt-1 text-primary fw-bold">
-                            <span>扣除後預計餘額：</span>
-                            <span>NT$ {{ remaining_balance|floatformat:0 }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <hr class="my-4 opacity-10">
+
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="h5 fw-bold mb-0">本次應付總額</span>
+                        <span class="h3 fw-bold text-danger mb-0">NT$ {{ total_price|floatformat:0 }}</span>
+                    </div>
+
+                    <div class="balance-panel p-4 mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-secondary small">當前福利金餘額</span>
+                            <span class="fw-bold text-dark">NT$ {{ credit_card.balance|floatformat:0 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between pt-2 border-top border-primary border-opacity-10">
+                            <span class="text-primary fw-bold">扣除後預計餘額</span>
+                            <span class="h5 fw-bold text-primary mb-0">NT$ {{ remaining_balance|floatformat:0 }}</span>
                         </div>
                     </div>
 
                     {% if credit_card.balance >= total_price %}
                     <form method="POST">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-primary btn-lg w-100 py-3 shadow">
+                        <button type="submit" class="btn btn-primary btn-lg w-100 py-3 btn-payment shadow">
                             <i class="bi bi-wallet2 me-2"></i> 確認扣點結帳
                         </button>
                     </form>
+                    <p class="text-center text-muted small mt-3 mb-0">
+                        點擊後將立即從您的福利金帳戶扣除點數
+                    </p>
                     {% else %}
-                    <div class="alert alert-danger text-center mb-0">
-                        <i class="bi bi-exclamation-octagon"></i> 點數不足。
+                    <div class="alert alert-danger border-0 rounded-4 d-flex align-items-center p-3 mb-3">
+                        <i class="bi bi-exclamation-octagon-fill fs-4 me-3"></i>
+                        <div>
+                            <div class="fw-bold">福利金點數不足</div>
+                            <div class="small">餘額無法支付本次訂單，請調整購物車內容。</div>
+                        </div>
                     </div>
-                    <a href="{% url 'coast_guard_mart:cart_detail' %}" class="btn btn-outline-secondary w-100 mt-2">返回購物車</a>
+                    <a href="{% url 'coast_guard_mart:cart_detail' %}" class="btn btn-outline-secondary btn-payment w-100 py-2">
+                        返回購物車修改
+                    </a>
                     {% endif %}
                 </div>
             </div>
+
+            <div class="text-center mt-4">
+                <a href="{% url 'coast_guard_mart:cart_detail' %}" class="text-decoration-none text-muted small">
+                    <i class="bi bi-arrow-left"></i> 放棄結帳，返回購物車
+                </a>
+            </div>
+
         </div>
     </div>
 </div>

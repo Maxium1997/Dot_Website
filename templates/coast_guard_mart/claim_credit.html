@@ -1,33 +1,109 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block subtitle %}
-Coast Guard Mart
-{% endblock %}
+{% block subtitle %}身分認證 - Coast Guard Mart{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}">Coast Guard Mart</a></li>
-<li class="breadcrumb-item active" aria-current="page">身份認證</li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}" class="text-decoration-none text-muted">Coast Guard Mart</a></li>
+<li class="breadcrumb-item active" aria-current="page">身分認證</li>
 {% endblock %}
 
 {% block body %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-5">
-            <div class="card border-0 shadow-lg">
-                <div class="card-body p-5">
-                    <h3 class="fw-bold mb-4 text-center">身分認證</h3>
+<style>
+    /* 統一玻璃擬態全局組件 */
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+    }
+
+    .claim-card-main {
+        border-radius: 24px;
+        padding: 30px;
+    }
+
+    .form-label {
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-select, .form-control {
+        border: 1px solid rgba(0,0,0,0.05);
+        background-color: rgba(0,0,0,0.02);
+        border-radius: 12px;
+        padding: 10px 15px;
+    }
+
+    .form-select:focus, .form-control:focus {
+        background-color: #fff;
+        border-color: #0dcaf0;
+        box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.1);
+    }
+
+    .unit-step-label {
+        width: 24px;
+        height: 24px;
+        background: #212529;
+        color: white;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        margin-right: 8px;
+    }
+
+    .btn-claim {
+        border-radius: 50px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #212529, #495057);
+        color: white;
+        border: none;
+    }
+    .btn-claim:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        color: white;
+    }
+
+    .alert { border: none; border-radius: 12px; }
+</style>
+
+<div class="container mt-4 mb-5">
+    <div class="row">
+        <div class="col-12 mb-3">
+            <div class="alert glass-panel d-flex align-items-center p-3 mb-0" style="border-left: 6px solid #ffc107;">
+                <i class="bi bi-shield-lock text-warning fs-4 me-3"></i>
+                <div>
+                    <strong class="text-dark d-block">年度福利金申領認證</strong>
+                    <span class="text-muted small">請輸入您的所屬單位與個人資料以核對福利金發放資格。</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" id="claimForm">
+        {% csrf_token %}
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="glass-panel claim-card-main h-100">
+                    <h5 class="fw-bold mb-4 text-dark"><i class="bi bi-geo-alt me-2 text-primary"></i>1. 選擇所屬單位</h5>
 
                     {% if messages %}
                         {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} small">{{ message }}</div>
+                            <div class="alert alert-{{ message.tags }} small mb-4">{{ message }}</div>
                         {% endfor %}
                     {% endif %}
 
-                    <form method="POST" id="claimForm">
-                        {% csrf_token %}
-
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">第一層</label>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold"><span class="unit-step-label">1</span>第一層單位</label>
                             <select id="level1" class="form-select" required>
                                 <option value="">-- 請選擇 --</option>
                                 {% for u in top_units %}
@@ -35,95 +111,97 @@ Coast Guard Mart
                                 {% endfor %}
                             </select>
                         </div>
+
                         {% for i in "2345" %}
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">第{{ i }}層</label>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold"><span class="unit-step-label">{{ i }}</span>第{{ i }}層單位</label>
                             <select id="level{{ i }}" {% if i == "5" %}name="unit"{% endif %} class="form-select" disabled required>
                                 <option value="">-- 請先選擇上一層 --</option>
                             </select>
                         </div>
                         {% endfor %}
+                    </div>
+                    <p class="text-muted small mt-2"><i class="bi bi-info-circle me-1"></i>請依序選擇至最終層級單位</p>
+                </div>
+            </div>
 
-                        <hr class="my-4">
+            <div class="col-lg-5">
+                <div class="glass-panel claim-card-main h-100 d-flex flex-column">
+                    <h5 class="fw-bold mb-4 text-dark"><i class="bi bi-person-check me-2 text-primary"></i>2. 驗證個人資料</h5>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">身分證字號 (前四碼明碼)</label>
-                            <input type="text" id="idDisplayInput" class="form-control" placeholder="A123456789" maxlength="10" required autocomplete="off">
-                            <input type="hidden" name="id_number" id="realIdInput">
-                        </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">身分證字號 (前四碼明碼)</label>
+                        <input type="text" id="idDisplayInput" class="form-control form-control-lg" placeholder="A123456789" maxlength="10" required autocomplete="off">
+                        <input type="hidden" name="id_number" id="realIdInput">
+                        <div class="form-text mt-2 small">輸入時會自動遮罩後六碼，確保資訊安全。</div>
+                    </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">生日</label>
-                            <input type="date" name="birthday" class="form-control" required>
-                        </div>
+                    <div class="mb-5">
+                        <label class="form-label fw-bold">出生日期</label>
+                        <input type="date" name="birthday" class="form-control form-control-lg" required>
+                    </div>
 
-                        <button type="submit" class="btn btn-primary w-100 py-3 mt-3 shadow-sm">
-                            核對並領取福利金
+                    <div class="mt-auto">
+                        <button type="submit" class="btn btn-claim w-100 py-3 shadow-sm">
+                            <i class="bi bi-check2-circle me-2"></i>核對並領取福利金
                         </button>
-                    </form>
+                        <a href="{% url 'coast_guard_mart:product_list' %}" class="btn btn-link w-100 text-decoration-none text-muted small mt-2">暫不領取，先回商店</a>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </form>
 </div>
 
 <script>
-    /** 1. 五層連動邏輯 */
+    /** 1. 五層連動邏輯 (延用原始邏輯並保持相容性) */
     const baseApiUrl = "{% url 'coast_guard_mart:api_get_subordinates' 0 %}";
     const TOTAL_LEVELS = 5;
 
     async function handleLevelChange(currentLevel) {
-    const currentSelect = document.getElementById(`level${currentLevel}`);
-    const nextLevel = currentLevel + 1;
-    const parentId = currentSelect.value;
+        const currentSelect = document.getElementById(`level${currentLevel}`);
+        const nextLevel = currentLevel + 1;
+        const parentId = currentSelect.value;
 
-    // 1. 瀑布式清空後續所有選單
-    for (let i = nextLevel; i <= TOTAL_LEVELS; i++) {
-        const target = document.getElementById(`level${i}`);
-        target.innerHTML = `<option value="">-- 請先選擇上一層 --</option>`;
-        target.disabled = true;
-    }
-
-    if (!parentId) return;
-
-    // 2. 如果已經是最後一層，不需要再抓下級
-    if (currentLevel === TOTAL_LEVELS) return;
-
-    const nextSelect = document.getElementById(`level${nextLevel}`);
-    nextSelect.innerHTML = `<option value="">-- 載入中... --</option>`;
-
-    try {
-        const response = await fetch(baseApiUrl.replace('0', parentId));
-        const data = await response.json();
-
-        if (data.results && data.results.length > 0) {
-            // 有下級單位：正常填充
-            nextSelect.innerHTML = `<option value="">-- 請選擇 --</option>`;
-            data.results.forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = item.id;
-                opt.textContent = item.name;
-                nextSelect.appendChild(opt);
-            });
-            nextSelect.disabled = false;
-        } else {
-            // --- 關鍵修正點 ---
-            // 如果沒有下級單位，直接把當前的 parentId 填充到後續所有層級
-            // 並讓 level5 變成可選狀態，確保 name="unit" 能送出值
-            for (let i = nextLevel; i <= TOTAL_LEVELS; i++) {
-                const target = document.getElementById(`level${i}`);
-                target.innerHTML = `<option value="${parentId}" selected>此單位為最終層級</option>`;
-                target.disabled = false; // 必須取消 disabled 才能送出資料
-            }
+        for (let i = nextLevel; i <= TOTAL_LEVELS; i++) {
+            const target = document.getElementById(`level${i}`);
+            target.innerHTML = `<option value="">-- 請先選擇上一層 --</option>`;
+            target.disabled = true;
         }
-    } catch (error) {
-        console.error('API Error:', error);
-    }
-}
 
-    /** 2. 身分證遮罩邏輯 */
+        if (!parentId) return;
+        if (currentLevel === TOTAL_LEVELS) return;
+
+        const nextSelect = document.getElementById(`level${nextLevel}`);
+        nextSelect.innerHTML = `<option value="">-- 載入中... --</option>`;
+
+        try {
+            const response = await fetch(baseApiUrl.replace('0', parentId));
+            const data = await response.json();
+
+            if (data.results && data.results.length > 0) {
+                nextSelect.innerHTML = `<option value="">-- 請選擇 --</option>`;
+                data.results.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.id;
+                    opt.textContent = item.name;
+                    nextSelect.appendChild(opt);
+                });
+                nextSelect.disabled = false;
+            } else {
+                for (let i = nextLevel; i <= TOTAL_LEVELS; i++) {
+                    const target = document.getElementById(`level${i}`);
+                    target.innerHTML = `<option value="${parentId}" selected>此單位為最終層級</option>`;
+                    target.disabled = false;
+                }
+            }
+        } catch (error) {
+            console.error('API Error:', error);
+        }
+    }
+
+    /** 2. 身分證遮罩與事件綁定 */
     document.addEventListener('DOMContentLoaded', function() {
-        // 綁定連動事件
         for (let i = 1; i < TOTAL_LEVELS; i++) {
             const el = document.getElementById(`level${i}`);
             if (el) el.addEventListener('change', () => handleLevelChange(i));
@@ -135,8 +213,6 @@ Coast Guard Mart
 
         displayInput.addEventListener('input', function(e) {
             let currentInput = e.target.value.toUpperCase();
-
-            // 重新計算真實內容
             if (currentInput.length < rawValue.length) {
                 rawValue = rawValue.substring(0, currentInput.length);
             } else {
@@ -145,10 +221,7 @@ Coast Guard Mart
                     rawValue += lastChar;
                 }
             }
-
             realInput.value = rawValue;
-
-            // 格式化顯示：前四碼保留，其餘星號
             if (rawValue.length > 4) {
                 displayInput.value = rawValue.substring(0, 4) + "*".repeat(rawValue.length - 4);
             } else {
@@ -156,7 +229,6 @@ Coast Guard Mart
             }
         });
 
-        // 提交驗證
         document.getElementById('claimForm').addEventListener('submit', function(e) {
             if (realInput.value.length !== 10) {
                 e.preventDefault();

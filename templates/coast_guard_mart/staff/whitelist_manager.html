@@ -1,93 +1,227 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block subtitle %}
-Coast Guard Mart
-{% endblock %}
+{% block subtitle %}白名單管理 - Coast Guard Mart{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}">Coast Guard Mart</a></li>
-<li class="breadcrumb-item active" aria-current="page">White List Manager</li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}" class="text-decoration-none text-muted">Coast Guard Mart</a></li>
+<li class="breadcrumb-item active" aria-current="page">白名單管理</li>
 {% endblock %}
 
 {% block body %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3><i class="bi bi-people-fill me-2"></i>白名單管理</h3>
-        <div>
-            <a href="{% url 'coast_guard_mart:staff_whitelist_export' %}" class="btn btn-outline-primary me-2">
-                <i class="bi bi-file-earmark-arrow-up"></i> 匯出 Excel
-            </a>
+<style>
+    /* 玻璃擬態全局組件 */
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+    }
 
-            <a href="{% url 'coast_guard_mart:staff_whitelist_import' %}" class="btn btn-outline-success me-2">
-                <i class="bi bi-file-earmark-arrow-down"></i> 批次匯入
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+
+    /* 身分證顯示切換 */
+    .id-number-cell { font-family: 'Courier New', Courier, monospace; letter-spacing: 1px; }
+    .toggle-eye { cursor: pointer; color: #0d6efd; transition: 0.2s; }
+    .toggle-eye:hover { color: #0a58ca; }
+
+    /* 響應式佈局邏輯 */
+    @media (min-width: 992px) {
+        /* 電腦版：強制隱藏手機收合列，防止撐開空間 */
+        .mobile-detail-row { display: none !important; }
+    }
+
+    @media (max-width: 991.98px) {
+        .mobile-clickable { cursor: pointer; }
+        .mobile-detail-inner {
+            padding: 15px;
+            border-left: 4px solid #0dcaf0;
+            margin: 10px;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+        }
+        .hide-on-mobile { display: none !important; }
+    }
+</style>
+
+<div class="container mt-4 mb-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3 px-1">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="bi bi-people-fill me-2"></i>白名單管理</h2>
+            <p class="text-muted small mb-0">管理符合福利金領取資格的人員名冊</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'coast_guard_mart:staff_whitelist_export' %}" class="btn btn-outline-primary rounded-pill px-3 btn-sm">
+                <i class="bi bi-file-earmark-arrow-up me-1"></i>匯出
             </a>
-            <a href="{% url 'coast_guard_mart:staff_whitelist_add' %}" class="btn btn-primary">新增人員</a>
+            <a href="{% url 'coast_guard_mart:staff_whitelist_import' %}" class="btn btn-outline-success rounded-pill px-3 btn-sm">
+                <i class="bi bi-file-earmark-arrow-down me-1"></i>批次匯入
+            </a>
+            <a href="{% url 'coast_guard_mart:staff_whitelist_add' %}" class="btn btn-primary rounded-pill px-3 btn-sm fw-bold">
+                <i class="bi bi-plus-lg me-1"></i>新增人員
+            </a>
         </div>
     </div>
 
-    <form method="get" class="mb-3">
-        <div class="input-group">
-            <input type="text" name="q" class="form-control" placeholder="搜尋姓名、身分證或單位..." value="{{ query }}">
-            <button class="btn btn-dark" type="submit">搜尋</button>
+    <form method="get" class="mb-4 px-1">
+        <div class="input-group glass-panel p-1">
+            <input type="text" name="q" class="form-control border-0 bg-transparent ps-3"
+                   placeholder="搜尋姓名、身分證或單位..." value="{{ query }}">
+            <button class="btn btn-dark rounded-pill px-4" type="submit">搜尋</button>
         </div>
     </form>
 
-    <div class="card shadow-sm">
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>姓名</th>
-                    <th>身分證</th>
-                    <th>生日</th>
-                    <th>所屬單位</th>
-                    <th>綁定帳號</th> <th>狀態</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for m in whitelist %}
-                <tr>
-                    <td>{{ m.name }}</td>
-                    <td><code>{{ m.id_number }}</code></td>
-                    <td>{{ m.birthday|date:"Y-m-d" }}</td>
-                    <td class="small">
-                        <div class="text-dark fw-bold">{{ m.unit.name }}</div>
-                        <div class="text-muted" style="font-size: 0.7rem;">{{ m.unit.full_path }}</div>
-                    </td>
-                    <td>
-                        {% if m.claimed_by %}
-                            <span class="text-primary fw-bold">
-                                <i class="bi bi-person-check-fill me-1"></i>{{ m.claimed_by.username }}
+    <div class="glass-panel overflow-hidden shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr class="table-light">
+                        <th class="ps-4">姓名</th>
+                        <th class="hide-on-mobile">身分證</th>
+                        <th class="hide-on-mobile">生日</th>
+                        <th>所屬單位</th>
+                        <th class="hide-on-mobile">綁定帳號</th>
+                        <th>狀態</th>
+                        <th class="text-end pe-4 hide-on-mobile">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in whitelist %}
+                    <tr class="mobile-clickable" onclick="handleRowClick('{{ m.id }}')">
+                        <td class="ps-4 py-3">
+                            <div class="fw-bold text-dark d-flex align-items-center">
+                                <i class="bi bi-chevron-down d-lg-none me-2 small text-muted"></i>
+                                {{ m.name }}
+                            </div>
+                        </td>
+                        <td class="hide-on-mobile">
+                            <span class="id-number-cell" id="id-text-{{ m.id }}" data-full="{{ m.id_number }}">
+                                {{ m.id_number|slice:":4" }}******
                             </span>
-                            {% if m.claimed_by.get_full_name %}
-                                <small class="text-muted">({{ m.claimed_by.get_full_name }})</small>
+                            <i class="bi bi-eye-slash toggle-eye ms-2" onclick="toggleIdVisibility(event, '{{ m.id }}')"></i>
+                        </td>
+                        <td class="hide-on-mobile small">{{ m.birthday|date:"Y-m-d" }}</td>
+                        <td class="small">
+                            <div class="text-dark fw-bold">{{ m.unit.name }}</div>
+                            <div class="text-muted d-none d-md-block" style="font-size: 0.7rem;">{{ m.unit.full_path }}</div>
+                        </td>
+                        <td class="hide-on-mobile">
+                            {% if m.claimed_by %}
+                                <span class="badge bg-primary bg-opacity-10 text-primary fw-normal">
+                                    <i class="bi bi-person-check me-1"></i>{{ m.claimed_by.username }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted small">---</span>
                             {% endif %}
-                        {% else %}
-                            <span class="text-muted italic">---</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if m.is_claimed %}
-                            <span class="badge bg-success">已領取</span>
-                        {% else %}
-                            <span class="badge bg-warning text-dark">未領取</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <form action="{% url 'coast_guard_mart:staff_whitelist_delete' %}" method="post" onsubmit="return confirm('確定要移除此人員嗎？');" style="display:inline;">
-                            {% csrf_token %}
-                            <input type="hidden" name="member_id" value="{{ m.id }}">
-                            <button type="submit" class="btn btn-sm btn-outline-danger">移除</button>
-                        </form>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="6" class="text-center py-4">查無資料</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                        <td>
+                            {% if m.is_claimed %}
+                                <span class="status-badge bg-success text-white">已領取</span>
+                            {% else %}
+                                <span class="status-badge bg-warning text-dark">未領取</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4 hide-on-mobile">
+                            <form action="{% url 'coast_guard_mart:staff_whitelist_delete' %}" method="post"
+                                  onsubmit="return confirm('確定要移除此人員嗎？');" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="member_id" value="{{ m.id }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">移除</button>
+                            </form>
+                        </td>
+                    </tr>
+
+                    <tr class="mobile-detail-row" id="mobile-detail-{{ m.id }}" style="display: none;">
+                        <td colspan="7" class="p-0 border-0">
+                            <div class="mobile-detail-inner">
+                                <div class="row g-3 small">
+                                    <div class="col-6">
+                                        <div class="text-muted">身分證字號</div>
+                                        <div class="fw-bold">
+                                            <span id="id-text-{{ m.id }}-mob" data-full="{{ m.id_number }}">{{ m.id_number|slice:":4" }}******</span>
+                                            <i class="bi bi-eye-slash toggle-eye ms-1" onclick="toggleIdVisibility(event, '{{ m.id }}-mob')"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted">出生日期</div>
+                                        <div class="fw-bold">{{ m.birthday|date:"Y-m-d" }}</div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="text-muted">綁定帳號</div>
+                                        <div class="fw-bold">{% if m.claimed_by %}{{ m.claimed_by.username }}{% else %}尚未綁定{% endif %}</div>
+                                    </div>
+                                    <div class="col-12 mt-2">
+                                        <form action="{% url 'coast_guard_mart:staff_whitelist_delete' %}" method="post" class="w-100">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="member_id" value="{{ m.id }}">
+                                            <button type="submit" class="btn btn-sm btn-danger w-100 rounded-pill py-2">
+                                                <i class="bi bi-trash me-1"></i>移除此人員
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center py-5 text-muted">查無白名單資料</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
-</div>
+
+<script>
+    /** 1. 身分證明碼/遮罩切換 */
+    function toggleIdVisibility(event, idSuffix) {
+        event.stopPropagation(); // 防止點擊眼睛時觸發手機版收合
+        const textEl = document.getElementById(`id-text-${idSuffix}`);
+        const eyeIcon = event.target;
+        const fullId = textEl.getAttribute('data-full');
+        const maskedId = fullId.substring(0, 4) + "******";
+
+        if (textEl.textContent.includes('*')) {
+            textEl.textContent = fullId;
+            eyeIcon.classList.replace('bi-eye-slash', 'bi-eye');
+        } else {
+            textEl.textContent = maskedId;
+            eyeIcon.classList.replace('bi-eye', 'bi-eye-slash');
+        }
+    }
+
+    /** 2. 手機版收合控制 */
+    function handleRowClick(id) {
+        // 如果是電腦版 (寬度 >= 992)，不執行收合動作
+        if (window.innerWidth >= 992) return;
+
+        const detailRow = document.getElementById(`mobile-detail-${id}`);
+        const isVisible = detailRow.style.display === "table-row";
+
+        // 關閉所有其他已開啟的收合列
+        document.querySelectorAll('.mobile-detail-row').forEach(row => row.style.display = 'none');
+
+        // 切換當前狀態
+        detailRow.style.display = isVisible ? "none" : "table-row";
+    }
+
+    /** 3. 視窗調整偵測 */
+    window.addEventListener('resize', () => {
+        if (window.innerWidth >= 992) {
+            // 當回到電腦版時，確保所有收合列都是隱藏狀態
+            document.querySelectorAll('.mobile-detail-row').forEach(row => {
+                row.style.display = 'none';
+            });
+        }
+    });
+</script>
 {% endblock %}

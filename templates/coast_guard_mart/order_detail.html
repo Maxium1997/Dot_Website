@@ -1,112 +1,199 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block subtitle %}
-Coast Guard Mart
-{% endblock %}
+{% block subtitle %}訂單詳情 - {{ tx.order_id }}{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}">Coast Guard Mart</a></li>
-<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:order_list' %}">消費紀錄</a></li>
-<li class="breadcrumb-item active" aria-current="page">訂單詳情 - {{ tx.order_id }}</li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}" class="text-decoration-none text-muted">Coast Guard Mart</a></li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:order_list' %}" class="text-decoration-none text-muted">消費紀錄</a></li>
+<li class="breadcrumb-item active" aria-current="page">訂單詳情</li>
 {% endblock %}
 
 {% block body %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3 border-bottom">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-bold"><i class="bi bi-receipt me-2"></i>訂單編號：{{ tx.order_id }}</h5>
+<style>
+    /* 統一玻璃擬態全局組件 */
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+    }
 
-                        {# 根據狀態顯示不同的 Badge #}
-                        {% if tx.status == 'PREPARING' %}
-                            <span class="badge bg-warning text-dark px-3 py-2"><i class="bi bi-box-seam me-1"></i>備貨中</span>
-                        {% elif tx.status == 'COMPLETED' %}
-                            <span class="badge bg-success px-3 py-2"><i class="bi bi-check-circle me-1"></i>交易完成</span>
-                        {% elif tx.status == 'CANCELLED' %}
-                            <span class="badge bg-secondary px-3 py-2"><i class="bi bi-x-circle me-1"></i>訂單已取消</span>
-                        {% endif %}
+    .detail-card-main {
+        border-radius: 24px;
+        overflow: hidden;
+    }
+
+    /* 狀態標籤優化：增加 nowrap 防止跳行 */
+    .status-badge {
+        padding: 4px 10px; /* 稍微縮小手機版的內距 */
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        white-space: nowrap; /* 關鍵：強制不換行 */
+        display: inline-block;
+    }
+
+    /* 針對小螢幕微調表格間距 */
+    @media (max-width: 576px) {
+        .table td, .table th {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+            font-size: 0.85rem; /* 整體字級稍微縮小 */
+        }
+    }
+
+    /* 訂單內容區塊 */
+    .order-content-box {
+        background: rgba(0, 0, 0, 0.02);
+        border-radius: 16px;
+        line-height: 1.8;
+        font-size: 0.95rem;
+    }
+
+    /* QR Code 區域 */
+    .qrcode-wrapper {
+        background: white;
+        border-radius: 20px;
+        padding: 20px;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .text-gradient {
+        background: linear-gradient(135deg, #212529, #6c757d);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .alert { border: none; }
+</style>
+
+<div class="container mt-4 mb-5">
+    <div class="row">
+        <div class="col-12 mb-3">
+            {% if user.is_authenticated %}
+                <div class="alert glass-panel d-flex justify-content-between align-items-center p-3 mb-0"
+                     style="border-left: 6px solid #0dcaf0;">
+                    <div class="small">
+                        {% with current_credit=user.credits.first %}
+                            <i class="bi bi-wallet2 text-info me-2"></i>
+                            <strong>年度福利金：</strong>
+                            <span class="text-dark fw-bold">NT$ {{ current_credit.balance|floatformat:0 }}</span>
+                            <span class="text-muted d-none d-md-inline ms-1">(至 {{ current_credit.end_date|date:"Y/m/d" }})</span>
+                        {% endwith %}
                     </div>
-                </div>
-
-                <div class="card-body">
-                    <div class="row mb-4 bg-light mx-0 py-3 rounded">
-                        <div class="col-sm-6">
-                            <p class="text-muted small mb-1">下單時間</p>
-                            <p class="fw-bold mb-0">{{ tx.timestamp|date:"Y-m-d H:i:s" }}</p>
-                        </div>
-                        <div class="col-sm-6 text-sm-end mt-3 mt-sm-0">
-                            <p class="text-muted small mb-1">使用額度</p>
-                            <p class="h4 text-danger fw-bold mb-0">NT$ {{ tx.amount|floatformat:0 }}</p>
-                        </div>
-                    </div>
-
-                    <h6 class="fw-bold mb-3"><i class="bi bi-bag-check me-2"></i>訂購商品內容</h6>
-                    <div class="border rounded p-4 mb-4 bg-white">
-                        {# 使用 linebreaksbr 保持原本 checkout 存入的換行格式 #}
-                        <div class="order-content" style="line-height: 2;">
-                            {{ tx.description|linebreaksbr }}
-                        </div>
-                    </div>
-
-                    {% if tx.status == 'COMPLETED' %}
-                    <div class="alert alert-success border-0 small">
-                        <i class="bi bi-info-circle me-1"></i> 此訂單已完成出貨，如有任何問題請聯繫管理員。
-                    </div>
-                    {% elif tx.status == 'CANCELLED' %}
-                    <div class="alert alert-light border small text-muted">
-                        <i class="bi bi-info-circle me-1"></i> 此訂單已於 {{ tx.updated_at|date:"Y-m-d H:i" }} 取消，點數已全額退回您的帳戶。
-                    </div>
-                    {% endif %}
-                </div>
-
-                <div class="card-footer bg-white text-center py-4 border-top-0">
-                    <div class="d-grid gap-2 d-md-block">
-                        <a href="{% url 'coast_guard_mart:order_list' %}" class="btn btn-secondary shadow-sm">
-                            <i class="bi bi-arrow-left"></i> 返回消費紀錄
-                        </a>
-                        {% if user.is_staff %}
-                        <a href="{% url 'coast_guard_mart:staff_order_dashboard' %}" class="btn btn-danger shadow-sm">
-                            <i class="bi bi-shield-lock"></i> 返回訂單管理儀表板
-                        </a>
-                        {% endif %}
-
-                        {# 只有備貨中狀態顯示取消按鈕 #}
-                        {% if tx.status == 'PREPARING' %}
-                        <form action="{% url 'coast_guard_mart:cancel_order' tx.order_id %}" method="POST"
-                              onsubmit="return confirm('確定要取消此訂單並退回點數嗎？');" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger px-4">
-                                <i class="bi bi-trash"></i> 取消此訂單
-                            </button>
-                        </form>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="text-center my-4 p-3 border rounded bg-light">
-            <h6><i class="bi bi-qr-code-scan me-2"></i>領貨核銷 QR Code</h6>
-            {% if tx.status == "PREPARING" %}
-                <img src="{% url 'coast_guard_mart:generate_order_qrcode' tx.order_id %}"
-                     alt="Order QR Code" class="img-fluid" style="max-width: 200px;">
-                <p class="small text-muted mt-2">請於領取商品時出示此碼給工作人員掃描</p>
-            {% else %}
-                <div class="py-4 text-secondary">
-                    <i class="bi bi-check-circle-fill display-4"></i>
-                    <p>訂單已核銷完成</p>
+                    <a href="{% url 'coast_guard_mart:order_list' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">回清單</a>
                 </div>
             {% endif %}
         </div>
     </div>
-</div>
 
-<style>
-    .order-content {
-        font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        color: #333;
-    }
-</style>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="glass-panel detail-card-main h-100 p-4 p-md-5">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-light">
+                    <div>
+                        <span class="text-muted small d-block">ORDER ID</span>
+                        <h4 class="fw-bold text-dark mb-0">#{{ tx.order_id }}</h4>
+                    </div>
+                    <div>
+                        {% if tx.status == 'PREPARING' %}
+                            <span class="status-badge bg-warning text-dark bg-opacity-75">備貨中</span>
+                        {% elif tx.status == 'COMPLETED' %}
+                            <span class="status-badge bg-success text-white">已完成</span>
+                        {% elif tx.status == 'CANCELLED' %}
+                            <span class="status-badge bg-light text-muted border">已取消</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-sm-6 mb-3 mb-sm-0">
+                        <label class="text-muted small fw-bold text-uppercase mb-1 d-block">下單時間</label>
+                        <p class="text-dark mb-0">{{ tx.timestamp|date:"Y-m-d H:i:s" }}</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="text-muted small fw-bold text-uppercase mb-1 d-block">扣抵總額</label>
+                        <p class="h4 text-primary fw-bold mb-0">NT$ {{ tx.amount|floatformat:0 }}</p>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold mb-3"><i class="bi bi-list-stars me-2 text-primary"></i>訂購商品明細</h6>
+                <div class="order-content-box p-4 mb-4">
+                    <div class="text-dark">
+                        {{ tx.description|linebreaksbr }}
+                    </div>
+                </div>
+
+                {% if tx.status == 'COMPLETED' %}
+                <div class="alert bg-success bg-opacity-10 text-success small d-flex align-items-center">
+                    <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+                    此訂單已完成核銷領貨。
+                </div>
+                {% elif tx.status == 'CANCELLED' %}
+                <div class="alert bg-light text-muted small border d-flex align-items-center">
+                    <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+                    訂單已取消，福利金已退回餘額。
+                </div>
+                {% endif %}
+
+                <div class="justify-content-center d-flex flex-wrap gap-2 mt-4 pt-3 border-top border-light">
+                    <a href="{% url 'coast_guard_mart:order_list' %}" class="btn btn-outline-dark rounded-pill px-4">
+                        <i class="bi bi-arrow-left me-1"></i> 返回紀錄
+                    </a>
+                    {% if tx.status == 'PREPARING' %}
+                    <form action="{% url 'coast_guard_mart:cancel_order' tx.order_id %}" method="POST"
+                          onsubmit="return confirm('確定要取消此訂單嗎？');" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger rounded-pill px-4">取消訂單</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="glass-panel detail-card-main h-100 p-4 text-center d-flex flex-column justify-content-center">
+                <h6 class="fw-bold mb-3 text-dark">領貨核銷憑證</h6>
+
+                {% if tx.status == "PREPARING" %}
+                    <div class="qrcode-wrapper mb-3 shadow-sm mx-auto">
+                        <img src="{% url 'coast_guard_mart:generate_order_qrcode' tx.order_id %}"
+                             alt="QR Code" class="img-fluid" style="max-width: 180px;">
+                    </div>
+                    <p class="text-muted small mb-0">請於取貨時出示此碼<br>由工作人員掃描核銷</p>
+
+                {% elif tx.status == "COMPLETED" %}
+                    <div class="py-5">
+                        <div class="mb-3">
+                            <i class="bi bi-shield-check text-success display-1 opacity-25"></i>
+                        </div>
+                        <h5 class="text-success fw-bold">已完成核銷</h5>
+                        <p class="text-muted small">核銷時間：{{ tx.updated_at|date:"m/d H:i" }}</p>
+                    </div>
+
+                {% elif tx.status == "CANCELLED" %}
+                    <div class="py-5">
+                        <div class="mb-3">
+                            <i class="bi bi-x-circle text-secondary display-1 opacity-25"></i>
+                        </div>
+                        <h5 class="text-secondary fw-bold">訂單已取消</h5>
+                        <p class="text-muted small">取消時間：{{ tx.updated_at|date:"m/d H:i" }}</p>
+                        <p class="text-muted extra-small mt-2">（對應點數已退回帳戶）</p>
+                    </div>
+                {% endif %}
+
+                {% if user.is_staff %}
+                <div class="mt-4 pt-4 border-top border-light">
+                    <a href="{% url 'coast_guard_mart:staff_order_dashboard' %}" class="btn btn-danger btn-sm w-100 rounded-pill py-2">
+                        <i class="bi bi-shield-lock me-1"></i> 管理員訂單儀表板
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -1,184 +1,185 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block subtitle %}
-Coast Guard Mart
-{% endblock %}
+{% block subtitle %}Coast Guard Mart{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item active" aria-current="page">Coast Guard Mart</li>
 {% endblock %}
 
 {% block body %}
+<style>
+    /* 統一玻璃擬態全局組件 */
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+    }
+
+    /* 頂部福利金飾條 */
+    .credit-banner {
+        border-left: 6px solid #0dcaf0;
+        transition: transform 0.3s ease;
+    }
+
+    /* 分類選單 */
+    .category-link {
+        border-radius: 12px !important;
+        border: none !important;
+        margin-bottom: 5px;
+        transition: all 0.3s ease;
+        background: transparent !important;
+        color: #555 !important;
+    }
+    .category-link.active {
+        background: rgba(33, 37, 41, 0.05) !important;
+        color: #000 !important;
+        font-weight: bold;
+        padding-left: 1.5rem;
+    }
+
+    /* 產品卡片 */
+    .product-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 18px;
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+    .product-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        background: #fff;
+    }
+    .product-img-wrapper {
+        aspect-ratio: 1 / 1;
+        overflow: hidden;
+    }
+    .product-img-wrapper img {
+        transition: transform 0.5s ease;
+        object-fit: cover;
+    }
+    .product-card:hover .product-img-wrapper img {
+        transform: scale(1.1);
+    }
+
+    .alert { border: none; }
+    .text-gradient {
+        background: linear-gradient(135deg, #212529, #6c757d);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+</style>
+
 <div class="container mt-4">
     <div class="row">
-        {% if user.is_authenticated %}
-            <div class="alert {% if user.credits.all %}alert-info{% else %}alert-warning{% endif %} d-flex justify-content-between align-items-center shadow-sm mb-4">
-                <div>
-                    {% with current_credit=user.credits.first %}
-                        {% if current_credit %}
-                            <i class="bi bi-wallet2 me-2"></i>
-                            <strong>您的年度福利金餘額：</strong>
-                            <span class="fs-5 text-primary fw-bold">NT$ {{ current_credit.balance|floatformat:0 }}</span>
-                            <small class="text-muted ms-2">(有效期至: {{ current_credit.end_date|date:"Y/m/d" }})</small>
-                        {% else %}
-                            <i class="bi bi-gift me-2"></i>
-                            <strong>您尚未領取本年度 NT$ 3,000 福利金！</strong>
-                        {% endif %}
-                    {% endwith %}
+        <div class="col-12 mb-3">
+            {% if user.is_authenticated %}
+                <div class="alert glass-panel d-flex justify-content-between align-items-center p-3 mb-0"
+                     style="border-left: 6px solid {% if user.credits.all %}#0dcaf0{% else %}#ffc107{% endif %};">
+                    <div class="small">
+                        {% with current_credit=user.credits.first %}
+                            <i class="bi {% if current_credit %}bi-wallet2 text-info{% else %}bi-gift text-warning{% endif %} me-2"></i>
+                            <strong>年度福利金：</strong>
+                            {% if current_credit %}
+                                <span class="text-dark fw-bold">NT$ {{ current_credit.balance|floatformat:0 }}</span>
+                                <span class="text-muted d-none d-md-inline ms-1">(有效期至: {{ current_credit.end_date|date:"Y/m/d" }})</span>
+                            {% else %}
+                                <span class="text-secondary">您尚未領取本年度 NT$ 3,000 福利金！</span>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                    {% if not user.credits.all %}
+                        <a href="{% url 'coast_guard_mart:claim_credit' %}" class="btn btn-sm btn-warning rounded-pill px-3 fw-bold shadow-sm">立即領取</a>
+                    {% endif %}
                 </div>
-
-                {% if not user.credits.all %}
-                    <a href="{% url 'coast_guard_mart:claim_credit' %}" class="btn btn-warning fw-bold shadow-sm">
-                        立即核對並領取
-                    </a>
-                {% endif %}
-            </div>
-        {% else %}
-            <div class="alert alert-secondary mb-4">
-                <i class="bi bi-info-circle me-2"></i> 登入後即可領取並使用年度福利金。
-                <a href="{% url 'login' %}">
-                    點擊立即登入
-                </a>
-            </div>
-        {% endif %}
-
-        {% if not is_line_user %}
-        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm d-flex align-items-center mb-3" role="alert" style="background-color: #d4edda; border-left: 5px solid #28a745 !important; padding-right: 1.25rem;">
-            <div class="mr-3 d-none d-sm-block">
-                <i class="fab fa-line fa-2x" style="color: #00c300; vertical-align: middle;"></i>
-            </div>
-
-            <div class="flex-grow-1">
-                <strong class="d-block" style="color: #155724; font-size: 1rem;">加入 LINE 官方帳號以獲取即時訂單資訊或查詢更多消息！<a href="https://lin.ee/B69Mm7O" target="_blank">點擊立即加入</a></strong>
-            </div>
-
-            <div class="d-flex align-items-center">
-                <button type="button" class="ml-3 close" onclick="this.closest('.alert').remove()" aria-label="Close"
-                    style="position: static; float: none; padding: 0; line-height: 1; color: #155724; text-shadow: none; opacity: 0.4;
-                           border: none; background: transparent; outline: none; box-shadow: none;">
-                    <span aria-hidden="true" style="font-size: 1.5rem; border: none; outline: none;">&times;</span>
-                </button>
-            </div>
-        </div>
-        {% endif %}
-
-       <div class="d-flex justify-content-start mb-3 gap-2">
-            <a href="{% url 'coast_guard_mart:cart_detail' %}" class="btn btn-outline-dark position-relative">
-                <i class="bi bi-cart3"></i> 檢視購物車
-                {% if request.session.cart %}
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                        {{ request.session.cart.keys|length }}
-                        <span class="visually-hidden">商品數量</span>
-                    </span>
-                {% endif %}
-            </a>
-
-            <a href="{% url 'coast_guard_mart:order_list' %}" class="btn btn-outline-info">
-                <i class="bi bi-card-list"></i> 檢視訂單
-            </a>
-
-           {% if user.is_staff %}
-            <a href="{% url 'coast_guard_mart:staff_order_dashboard' %}" class="btn btn-outline-danger shadow-sm">
-                <i class="bi bi-shield-lock"></i> 管理訂單
-            </a>
-
-            <a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}" class="btn btn-outline-danger shadow-sm">
-                <i class="bi bi-shield-lock"></i> 管理白名單
-            </a>
-
+            {% else %}
+                <div class="alert glass-panel d-flex justify-content-between align-items-center p-3 mb-0"
+                     style="border-left: 6px solid #6c757d;">
+                    <div class="small">
+                        <i class="bi bi-person-lock text-secondary me-2"></i>
+                        <strong class="text-dark">登入領取 NT$ 3,000 年度福利金</strong>
+                        <span class="text-muted d-none d-sm-inline ms-1">，現買現抵！</span>
+                    </div>
+                    <a href="{% url 'login' %}" class="btn btn-sm btn-dark rounded-pill px-3 fw-bold">立即登入</a>
+                </div>
             {% endif %}
         </div>
 
-        <div class="col-md-3">
-            <h3>分類</h3>
-            <ul class="list-group">
-                <li class="list-group-item {% if not category %}active{% endif %}">
-                    <a href="{% url 'coast_guard_mart:product_list' %}"
-                       class="text-decoration-none {% if not category %}text-white{% else %}text-dark{% endif %} d-block">
-                       全部
-                    </a>
-                </li>
+        {% if not is_line_user %}
+        <div class="col-12 mb-4">
+            <div class="alert glass-panel d-flex align-items-center p-3 mb-0" style="border-left: 6px solid #28a745;">
+                <i class="fab fa-line fa-lg text-success me-3"></i>
+                <div class="flex-grow-1 small">
+                    <span class="text-dark fw-bold">LINE 官方帳號已上線！</span>
+                    <a href="https://lin.ee/B69Mm7O" class="text-success text-decoration-none ms-2">立即加入 <i class="bi bi-arrow-right"></i></a>
+                </div>
+                <button type="button" class="btn-close" style="font-size: 0.5rem;" onclick="this.closest('.alert').parentElement.remove()"></button>
+            </div>
+        </div>
+        {% endif %}
 
-                {% for c in categories %}
-                <li class="list-group-item {% if category.slug == c.slug %}active{% endif %}">
-                    <a href="{% url 'coast_guard_mart:product_list_by_category' c.slug %}"
-                       class="text-decoration-none {% if category.slug == c.slug %}text-white{% else %}text-dark{% endif %} d-block">
-                        {{ c.name }}
-                    </a>
-                </li>
-                {% endfor %}
-            </ul>
+        <div class="col-12 d-flex flex-wrap gap-2 mb-4">
+            <a href="{% url 'coast_guard_mart:cart_detail' %}" class="btn glass-panel px-3 py-2 text-dark border-0">
+                <i class="bi bi-cart3 me-1"></i> 購物車
+                {% if request.session.cart %}
+                    <span class="badge rounded-pill bg-danger ms-1">{{ request.session.cart.keys|length }}</span>
+                {% endif %}
+            </a>
+            <a href="{% url 'coast_guard_mart:order_list' %}" class="btn glass-panel px-3 py-2 text-dark border-0">
+                <i class="bi bi-card-list me-1"></i> 我的訂單
+            </a>
+
+            {% if user.is_staff %}
+                <div class="vr mx-1 d-none d-md-block opacity-25"></div> <a href="{% url 'coast_guard_mart:staff_order_dashboard' %}" class="btn glass-panel px-3 py-2 text-danger border-0">
+                    <i class="bi bi-shield-lock me-1"></i> 訂單管理
+                </a>
+
+                <a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}" class="btn glass-panel px-3 py-2 text-info border-0">
+                    <i class="bi bi-people me-1"></i> 白名單管理
+                </a>
+            {% endif %}
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="glass-panel p-3">
+                <h6 class="fw-bold mb-3 px-2 text-muted text-uppercase small" style="letter-spacing: 1px;">商品分類</h6>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'coast_guard_mart:product_list' %}" class="list-group-item category-link {% if not category %}active{% endif %}">全部商品</a>
+                    {% for c in categories %}
+                    <a href="{% url 'coast_guard_mart:product_list_by_category' c.slug %}" class="list-group-item category-link {% if category.slug == c.slug %}active{% endif %}">{{ c.name }}</a>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
 
         <div class="col-md-9">
-            <h2>{% if category %}{{ category.name }}{% else %}所有產品{% endif %}</h2>
-            <div class="row">
+            <div class="d-flex justify-content-between align-items-end mb-4 px-1">
+                <h3 class="fw-bold text-gradient mb-0">{% if category %}{{ category.name }}{% else %}所有產品{% endif %}</h3>
+                <span class="text-muted small">共 {{ products|length }} 項</span>
+            </div>
+            <div class="row g-3 g-md-4">
                 {% for product in products %}
-                <div class="col-lg-3 col-md-4 col-6 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        <a href="{% url 'coast_guard_mart:product_detail' product.id %}">
-                            <div class="square-img-container">
-                                <img src="{{ product.image.url }}"
-                                     class="card-img-top card-img-square"
-                                     alt="{{ product.name }}">
-                            </div>
+                <div class="col-lg-3 col-md-4 col-6">
+                    <div class="card product-card h-100 border-0">
+                        <a href="{% url 'coast_guard_mart:product_detail' product.id %}" class="product-img-wrapper">
+                            <img src="{{ product.image.url }}" class="w-100 h-100" alt="{{ product.name }}">
                         </a>
-
-                        <div class="card-body p-2 p-md-3">
-                            <a href="{% url 'coast_guard_mart:product_detail' product.id %}" class="text-decoration-none text-dark">
-                                <h5 class="card-title text-truncate mb-1" style="font-size: 0.9rem; font-weight: bold;">
-                                    {{ product.name }}
-                                </h5>
-                            </a>
-
-                            <p class="card-text text-muted d-none d-md-block">
-                                {{ product.description|striptags|truncatewords:5 }}
-                            </p>
-                            <p class="h6 text-primary mb-0">NT$ {{ product.price }}</p>
-                        </div>
-
-                        <div class="card-footer bg-white border-top-0 p-2">
-                            <a href="{% url 'coast_guard_mart:product_detail' product.id %}"
-                               class="btn btn-sm btn-outline-dark w-100">詳情</a>
+                        <div class="card-body p-3">
+                            <h6 class="card-title text-truncate fw-bold mb-1" style="font-size: 0.9rem;">{{ product.name }}</h6>
+                            <p class="text-primary fw-bold mb-2">NT$ {{ product.price|floatformat:0 }}</p>
+                            <a href="{% url 'coast_guard_mart:product_detail' product.id %}" class="btn btn-sm w-100 rounded-pill btn-outline-dark" style="font-size: 0.75rem;">查看詳情</a>
                         </div>
                     </div>
                 </div>
-                {% empty %}
-                <p>目前沒有產品上架。</p>
                 {% endfor %}
             </div>
         </div>
     </div>
 </div>
-
-<style>
-    /* 強制圖片容器為正方形 */
-    .card-img-square {
-        width: 100%;
-        aspect-ratio: 1 / 1; /* 設定比例為 1:1 */
-        object-fit: cover;   /* 關鍵：自動裁切多餘部分，保持比例不變形 */
-        object-position: center; /* 確保裁切時以中心為主 */
-    }
-
-    /* 額外優化：防止卡片標題過長換行破壞版面 */
-    .text-truncate {
-        display: block;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .alert {
-        border: none;
-        border-left: 5px solid;
-    }
-    .alert-info {
-        border-left-color: #0dcaf0;
-        background-color: #f0faff;
-    }
-    .alert-warning {
-        border-left-color: #ffc107;
-        background-color: #fff9e6;
-    }
-</style>
 {% endblock %}

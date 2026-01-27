@@ -20,9 +20,10 @@ load_dotenv(encoding="utf-8")
 CHANNEL_SECRET = os.getenv('CHANNEL_SECRET')
 CHANNEL_ACCESS_TOKEN = os.getenv('CHANNEL_ACCESS_TOKEN')
 # SECURITY WARNING: keep the secret key used in production secret!
-LINE_BASE_URL = "https://5a8ff96f4253.ngrok-free.app"
+LINE_BASE_URL = "https://dotwebsite.ngrok.io"
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
 LINE_CHANNEL_SECRET = os.getenv('LINE_CHANNEL_SECRET')
+LINE_LIFF_ID = '2008840171-57clEeis'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -81,6 +82,7 @@ INSTALLED_APPS = [
     'playground',
     # line
     'line_bot',
+    'badminton_court_management',
 ]
 SITE_ID = 1
 

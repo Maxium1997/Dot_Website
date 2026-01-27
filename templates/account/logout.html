@@ -1,23 +1,117 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block subtitle %}
-登出
-{% endblock %}
+{% block subtitle %}登出確認 - Coast Guard Mart{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item active" aria-current="page">Registration</li>
+<li class="breadcrumb-item active" aria-current="page">登出確認</li>
 {% endblock %}
 
 {% block body %}
-<div class="container">
+<style>
+    /* 延續 login.html 的玻璃容器風格 */
+    .confirm-glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 24px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+        padding: 4rem 2rem;
+    }
+
+    /* 圖示容器：改為登出風格的柔和紅色 */
+    .icon-box {
+        width: 80px;
+        height: 80px;
+        background: #fff5f5;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        box-shadow: inset 0 2px 5px rgba(220, 53, 69, 0.05);
+        color: #dc3545;
+    }
+
+    /* 標題樣式 */
+    .confirm-title {
+        font-weight: 800;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+
+    /* 登出確認按鈕：紅色警告色 */
+    .btn-logout {
+        background: #dc3545;
+        color: white;
+        border-radius: 50px;
+        padding: 12px 40px;
+        font-weight: 600;
+        border: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2);
+    }
+
+    .btn-logout:hover {
+        background: #bb2d3b;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+        color: white;
+    }
+
+    /* 取消按鈕：對齊 login 的 btn-cancel */
+    .btn-cancel {
+        background: transparent;
+        color: #6c757d;
+        border-radius: 50px;
+        padding: 12px 40px;
+        font-weight: 600;
+        border: 1px solid #dee2e6;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-cancel:hover {
+        background: #f8f9fa;
+        color: #333;
+        border-color: #adb5bd;
+    }
+</style>
+
+<div class="container" style="margin-top: 8vh; margin-bottom: 10vh;">
     <div class="row justify-content-center">
-        <div class="text-center">
-            <h2>Sure to Logout?</h2>
-            <form action="{% url 'logout' %}" method="post">
-            {% csrf_token %}
-                <button type="submit">Log Out</button>
-            </form>
+        <div class="col-lg-6 col-md-8 col-sm-11">
+            <div class="confirm-glass-card text-center" data-aos="fade-up">
+
+                <div class="icon-box">
+                    <i class="bi bi-box-arrow-right fs-1"></i>
+                </div>
+
+                <h2 class="confirm-title">確定要登出嗎？</h2>
+                <p class="text-muted mb-5 px-md-4">
+                    登出後您將需要重新透過 LINE 授權<br>
+                    才能繼續瀏覽個人訂單與領取福利金。
+                </p>
+
+                <form action="{% url 'logout' %}" method="post" class="d-flex flex-column flex-sm-row justify-content-center gap-3">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-logout">
+                        確定登出
+                    </button>
+                    <a href="javascript:history.back()" class="btn btn-cancel justify-content-center">
+                        取消返回
+                    </a>
+                </form>
+
+                <div class="mt-5">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i> 感謝您今天的參與
+                    </small>
+                </div>
+            </div>
         </div>
     </div>
 </div>

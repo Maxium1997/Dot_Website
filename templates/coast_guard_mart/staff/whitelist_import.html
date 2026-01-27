@@ -1,56 +1,142 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block subtitle %}
-Coast Guard Mart
-{% endblock %}
+{% block subtitle %}Excel 批次匯入 - Coast Guard Mart{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}">Coast Guard Mart</a></li>
-<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}">White List Manager</a></li>
-<li class="breadcrumb-item active" aria-current="page">Excel Import</li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}" class="text-decoration-none text-muted">Coast Guard Mart</a></li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}" class="text-decoration-none text-muted">白名單管理</a></li>
+<li class="breadcrumb-item active" aria-current="page">Excel 匯入</li>
 {% endblock %}
 
 {% block body %}
-<div class="container mt-4" style="max-width: 700px;">
-    <div class="card shadow">
-        <div class="card-header bg-success text-white">
-            <h5 class="mb-0"><i class="bi bi-file-earmark-excel me-2"></i>Excel 批次匯入人員</h5>
-        </div>
-        <div class="card-body">
-            <div class="alert alert-info">
-            <h6><i class="bi bi-info-circle me-2"></i>Excel 格式說明：</h6>
-            <p class="small mb-2">請確保您的 Excel 包含以下欄位名稱：</p>
-            <ul class="small">
-                <li><strong>姓名</strong></li>
-                <li><strong>身分證字號</strong></li>
-                <li><strong>生日</strong> (格式例: 1990-01-01)</li>
-                <li><strong>單位代碼</strong> (請填寫單位的英文名稱，例: <code>CGA_HQS</code>)</li>
-            </ul>
-            <div class="mt-2 p-2 border border-info rounded bg-white">
-                <p class="small mb-1 text-primary fw-bold">💡 提示：</p>
-                <p class="small mb-0">不知道代碼？請下載範本並查看「單位代碼對照表」工作表。</p>
-            </div>
-            <hr>
-            <a href="{% url 'coast_guard_mart:staff_whitelist_template_download' %}" class="btn btn-sm btn-outline-info w-100">
-                <i class="bi bi-download me-1"></i>下載 Excel 範本與代照表
-            </a>
-        </div>
+<style>
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
 
-            <div class="container mt-4" style="max-width: 700px;">
-                <form method="post" enctype="multipart/form-data" class="mt-4" id="importForm">
+    .info-box {
+        background: rgba(248, 249, 250, 0.6);
+        border-radius: 18px;
+        border: 1px dashed rgba(0, 0, 0, 0.1);
+        height: 100%;
+    }
+
+    .step-badge {
+        width: 24px;
+        height: 24px;
+        background: #198754;
+        color: white;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+
+    .form-control {
+        border-radius: 12px;
+        padding: 0.75rem;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    /* 電腦版左右分隔線 */
+    @media (min-width: 992px) {
+        .divider-line {
+            border-right: 1px solid rgba(0,0,0,0.05);
+            padding-right: 2.5rem;
+        }
+    }
+</style>
+
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-xl-11">
+            <div class="glass-panel p-4 p-md-5">
+
+                <div class="mb-5 text-center text-md-start">
+                    <h3 class="fw-bold text-dark"><i class="bi bi-file-earmark-excel-fill text-success me-2"></i>批次匯入人員資料</h3>
+                    <p class="text-muted">請上傳包含正確「單位代碼」的 Excel 檔案進行更新</p>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" id="importForm">
                     {% csrf_token %}
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">選擇 Excel 檔案 (.xlsx / .xls)</label>
-                        <input type="file" name="excel_file" class="form-control" accept=".xlsx, .xls" required>
-                    </div>
+                    <div class="row g-5 flex-column-reverse flex-lg-row">
 
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-success" id="submitBtn">
-                            <i class="bi bi-upload me-2"></i>開始匯入資料
-                        </button>
-                        <a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}" class="btn btn-light">取消返回</a>
+                        <div class="col-lg-6 divider-line">
+                            <div class="info-box p-4">
+                                <h6 class="fw-bold mb-4 text-dark"><i class="bi bi-list-check me-2 text-success"></i>匯入前準備事項</h6>
+
+                                <ul class="list-unstyled mb-4">
+                                    <li class="mb-3 d-flex align-items-start">
+                                        <span class="step-badge mt-1 me-2">1</span>
+                                        <div>
+                                            <div class="fw-bold small">必要欄位名稱</div>
+                                            <div class="text-muted extra-small" style="font-size: 0.75rem;">姓名、身分證字號、生日、單位代碼</div>
+                                        </div>
+                                    </li>
+                                    <li class="mb-3 d-flex align-items-start">
+                                        <span class="step-badge mt-1 me-2">2</span>
+                                        <div>
+                                            <div class="fw-bold small">生日日期格式</div>
+                                            <div class="text-muted extra-small" style="font-size: 0.75rem;">建議使用西元年格式，例如：<code>1990-01-01</code></div>
+                                        </div>
+                                    </li>
+                                    <li class="mb-3 d-flex align-items-start">
+                                        <span class="step-badge mt-1 me-2">3</span>
+                                        <div>
+                                            <div class="fw-bold small">對照單位代碼</div>
+                                            <div class="text-muted extra-small" style="font-size: 0.75rem;">請務必填寫英文代碼（如：<code>CGA_HQS</code>）</div>
+                                        </div>
+                                    </li>
+                                </ul>
+
+                                <div class="bg-white p-3 rounded-3 border border-info border-opacity-25 shadow-sm">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-cloud-download text-info me-2"></i>
+                                        <span class="fw-bold small">參考資源</span>
+                                    </div>
+                                    <p class="text-muted extra-small mb-3" style="font-size: 0.7rem;">如果您不清楚單位代碼，請下載範本查看。</p>
+                                    <a href="{% url 'coast_guard_mart:staff_whitelist_template_download' %}" class="btn btn-outline-info btn-sm w-100 rounded-pill">
+                                        下載 Excel 範本與代碼表
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 ps-lg-4">
+                            <div class="h-100 d-flex flex-column justify-content-center">
+                                <h6 class="fw-bold mb-4 text-dark"><i class="bi bi-upload me-2 text-primary"></i>選擇檔案</h6>
+
+                                <div class="mb-4">
+                                    <label class="form-label small fw-bold text-muted">Excel 檔案 (.xlsx / .xls)</label>
+                                    <input type="file" name="excel_file" class="form-control form-control-lg" accept=".xlsx, .xls" required>
+                                    <div class="form-text extra-small mt-2">提示：單次建議匯入不超過 500 筆資料。</div>
+                                </div>
+
+                                <div class="d-grid gap-3">
+                                    <button type="submit" class="btn btn-success py-3 rounded-pill fw-bold shadow-sm" id="submitBtn">
+                                        <i class="bi bi-check-circle-fill me-2"></i>開始匯入資料
+                                    </button>
+                                    <a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}" class="btn btn-light py-2 rounded-pill text-muted small">
+                                        取消返回
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </form>
+
+            </div>
+
+            <div class="text-center mt-4">
+                <small class="text-muted"><i class="bi bi-shield-lock me-1"></i>資料上傳後將進行身分證唯一性校驗，重複人員將自動跳過。</small>
             </div>
         </div>
     </div>
@@ -59,8 +145,16 @@ Coast Guard Mart
 <script>
     document.getElementById('importForm').onsubmit = function() {
         const btn = document.getElementById('submitBtn');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>處理中，請稍候...';
+        const fileInput = document.querySelector('input[type="file"]');
+
+        if (fileInput.files.length > 0) {
+            btn.disabled = true;
+            btn.classList.replace('btn-success', 'btn-secondary');
+            btn.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                系統正在處理中，請勿關閉網頁...
+            `;
+        }
     };
 </script>
 {% endblock %}

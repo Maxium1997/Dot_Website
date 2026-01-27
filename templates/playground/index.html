@@ -10,62 +10,113 @@ Playground
 {% endblock %}
 
 {% block body %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-lg-6 col-sm-12">
-            <button class="card mb-2 border-0" onclick="window.location.href='{% url 'karaoke' %}'">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">
-                        <div class="container-fluid d-flex">
-                            <div class="row">
-                                <div class="col-6">
-                                    <img src="{% static 'pic/playground/karaoke.png' %}" width="100%">
-                                </div>
-                                <div class="col-6 d-flex align-items-center">
-                                    <h5 style="margin: 0;">Karaoke</h5>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </button>
+<style>
+    /* 卡片基礎樣式：強化立體感 */
+    .feature-card {
+        background: rgba(255, 255, 255, 0.85); /* 提高一點點不透明度，讓陰影更紮實 */
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 20px; /* 稍微加大圓角更柔和 */
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        text-decoration: none !important;
+        overflow: hidden;
+        height: 100%;
+
+        /* --- 強化靜態陰影：多層次堆疊讓它有厚度 --- */
+        box-shadow:
+            0 10px 25px rgba(0, 0, 0, 0.08),  /* 主投影：決定卡片高度 */
+            0 4px 10px rgba(0, 0, 0, 0.05),   /* 次投影：增加底部質感 */
+            inset 0 0 0 1px rgba(255, 255, 255, 0.5); /* 內發光邊框：讓邊緣更銳利 */
+    }
+
+    .feature-card:hover {
+        transform: translateY(-12px); /* 向上跳動感更強 */
+        background: #ffffff;
+
+        /* --- 強化懸停陰影：深邃的浮空感 --- */
+        box-shadow:
+            0 30px 60px rgba(0, 0, 0, 0.12),
+            0 10px 20px rgba(0, 0, 0, 0.08);
+        border-color: rgba(255, 255, 255, 1);
+    }
+
+    /* 圖片容器稍微加深一點點壓低視覺，讓上面的文字更突顯 */
+    .card-img-wrapper {
+        width: 100%;
+        height: 160px;
+        overflow: hidden;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+    }
+
+    .card-img-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* 自動裁切填滿 */
+        transition: transform 0.5s ease;
+    }
+
+    .feature-card:hover .card-img-wrapper img {
+        transform: scale(1.1);
+    }
+
+    /* 文字內容 */
+    .card-content {
+        padding: 1.25rem;
+        color: #333;
+    }
+
+    .card-title {
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: #2c3e50;
+    }
+
+    /* 手機版微調 */
+    @media (max-width: 576px) {
+        .card-img-wrapper { height: 120px; }
+    }
+</style>
+
+<div class="container py-4">
+    <div class="row g-4 justify-content-center">
+
+        <div class="col-lg-4 col-md-6 col-sm-12">
+            <a href="{% url 'karaoke' %}" class="card feature-card">
+                <div class="card-img-wrapper">
+                    <img src="{% static 'pic/playground/karaoke.jpg' %}" alt="Karaoke">
+                </div>
+                <div class="card-content text-center">
+                    <h5 class="card-title">Karaoke</h5>
+                    <p class="text-muted small mb-0">線上 KTV，隨時隨地開啟歌唱時光。</p>
+                </div>
+            </a>
         </div>
-        <div class="col-lg-6 col-sm-12">
-            <button class="card mb-2 border-0" onclick="window.location.href='{% url 'line_bot:line_bot_add_friend' %}'">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">
-                        <div class="container-fluid d-flex">
-                            <div class="row">
-                                <div class="col-6">
-                                    <img src="{% static 'pic/playground/robot.png' %}" width="100%">
-                                </div>
-                                <div class="col-6 d-flex align-items-center">
-                                    <h5 style="margin: 0;">LINE Bot</h5>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </button>
+
+        <div class="col-lg-4 col-md-6 col-sm-12">
+            <a href="{% url 'line_bot:line_bot_add_friend' %}" class="card feature-card">
+                <div class="card-img-wrapper">
+                    <img src="{% static 'pic/playground/chat-bot.jpg' %}" alt="LINE Bot">
+                </div>
+                <div class="card-content text-center">
+                    <h5 class="card-title">LINE Bot</h5>
+                    <p class="text-muted small mb-0">智慧型 LINE 機器人，提供即時互動服務。</p>
+                </div>
+            </a>
         </div>
-        <div class="col-lg-6 col-sm-12">
-            <button class="card mb-2 border-0" onclick="window.location.href='{% url 'url_to_qr_code' %}'">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">
-                        <div class="container-fluid d-flex">
-                            <div class="row">
-                                <div class="col-6">
-                                    <img src="{% static 'pic/playground/qr-code.png' %}" width="100%">
-                                </div>
-                                <div class="col-6 d-flex align-items-center">
-                                    <h5 style="margin: 0;">URL to QR code</h5>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </button>
+
+        <div class="col-lg-4 col-md-6 col-sm-12">
+            <a href="{% url 'url_to_qr_code' %}" class="card feature-card">
+                <div class="card-img-wrapper">
+                    <img src="{% static 'pic/playground/scan_qr-code.jpg' %}" alt="QR Code">
+                </div>
+                <div class="card-content text-center">
+                    <h5 class="card-title">URL to QR code</h5>
+                    <p class="text-muted small mb-0">快速轉換網址，生成專屬二維碼。</p>
+                </div>
+            </a>
         </div>
+
     </div>
 </div>
 {% endblock %}

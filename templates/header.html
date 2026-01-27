@@ -1,52 +1,134 @@
 {% load static %}
-<header>
-    <nav class="navbar navbar-expand-lg bg-body-tertiary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'index' %}">DOT</a>
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="bi bi-list-nested"></span>
+<header class="sticky-top">
+    <nav class="navbar navbar-expand-lg">
+        <div class="container py-2">
+            <a class="navbar-brand fw-black" href="{% url 'index' %}" style="letter-spacing: 2px; font-weight: 900; color: #1a1a1a;">
+                DOT<span class="text-primary">.</span>
+            </a>
+
+            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <span class="bi bi-list fs-3"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+            <div class="collapse navbar-collapse" id="navContent">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="#">Home</a>
+                        <a class="nav-link nav-custom-link" href="{% url 'index' %}">HOME</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Link</a>
+                        <a class="nav-link nav-custom-link" href="{% url 'coast_guard_mart:product_list' %}">SHOP</a>
                     </li>
+
+                    {% if request.user.is_superuser %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Member
-                        </a>
-                        <ul class="dropdown-menu">
-                            {% if request.user.is_authenticated %}
-                            <li><a class="dropdown-item" href="#">{{ request.user }}</a></li>
-                            {% if request.user.is_superuser %}
-                            <li><a class="dropdown-item" href="{% url 'organization' %}">organization</a></li>
-                            {% endif %}
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
-                            {% else %}
-                            <li><a class="dropdown-item" href="{% url 'login' %}">Login</a></li>
-                            <li><a class="dropdown-item" href="{% url 'signup' %}">Sign up</a></li>
-                            {% endif %}
+                        <a class="nav-link nav-custom-link dropdown-toggle" href="#" data-bs-toggle="dropdown">ADMIN</a>
+                        <ul class="dropdown-menu dropdown-glass border-0 shadow-lg mt-2">
+                            <li><a class="dropdown-item" href="{% url 'organization' %}">Organization</a></li>
+                            <li><a class="dropdown-item" href="{% url 'coast_guard_mart:staff_whitelist_manager' %}">Whitelist</a></li>
+                            <li><a class="dropdown-item" href="{% url 'coast_guard_mart:staff_order_dashboard' %}">Dashboard</a></li>
                         </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link disabled" aria-disabled="true">Disabled</a>
-                    </li>
+                    {% endif %}
                 </ul>
-                <form class="d-flex" role="search">
-                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                    <button class="btn btn-outline-success" type="submit">Search</button>
-                </form>
+
+                <div class="d-flex align-items-center">
+                    {% if request.user.is_authenticated %}
+                        <div class="dropdown">
+                            <a class="user-pill dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                <span class="small fw-bold">{{ request.user.username }}</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end dropdown-glass border-0 shadow-lg mt-3">
+                                <li><a class="dropdown-item" href="#">Orders</a></li>
+                                <li><a class="dropdown-item" href="#">Settings</a></li>
+                                <li><hr class="dropdown-divider opacity-50"></li>
+                                <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">Logout</a></li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'account_login' %}" class="btn-login-minimal me-3">Login</a>
+                        <a href="{% url 'account_signup' %}" class="btn-signup-dark">Sign Up</a>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </nav>
 </header>
-<style type="text/css">
-    header nav{
-        background-size: 100% auto;
-        background-repeat: no-repeat;
+
+<style>
+    /* 移除所有進場動畫類別相關設定，改用單純的透明度過渡 */
+
+    .navbar {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(20px) saturate(160%);
+        -webkit-backdrop-filter: blur(20px) saturate(160%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .nav-custom-link {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        color: #555 !important;
+        padding: 0.5rem 1.2rem !important;
+        transition: color 0.2s ease-in-out; /* 僅保留色彩過渡 */
+    }
+
+    .nav-custom-link:hover {
+        color: #0d6efd !important;
+    }
+
+    .user-pill {
+        background: rgba(0, 0, 0, 0.04);
+        padding: 6px 18px;
+        border-radius: 50px;
+        text-decoration: none;
+        color: #333;
+        border: 1px solid rgba(0, 0, 0, 0.03);
+        transition: background 0.2s;
+    }
+
+    .user-pill:hover {
+        background: rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-signup-dark {
+        background: #1a1a1a;
+        color: #fff;
+        padding: 7px 20px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-decoration: none;
+        letter-spacing: 0.5px;
+        transition: opacity 0.2s;
+    }
+
+    .btn-signup-dark:hover {
+        opacity: 0.85;
+        color: #fff;
+    }
+
+    .btn-login-minimal {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #666;
+        text-decoration: none;
+    }
+
+    .dropdown-glass {
+        background: rgba(255, 255, 255, 0.9) !important;
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 8px;
+        min-width: 160px;
+        /* 移除原本的滑入動畫，改為靜態呈現 */
+    }
+
+    .dropdown-item {
+        font-size: 0.8rem;
+        font-weight: 500;
+        padding: 7px 12px;
+        border-radius: 6px;
+        transition: background 0.15s;
     }
 </style>

@@ -1,56 +1,134 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block subtitle %}
-Coast Guard Mart
-{% endblock %}
+{% block subtitle %}新增白名單人員 - Coast Guard Mart{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}">Coast Guard Mart</a></li>
-<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}">White List Manager</a></li>
-<li class="breadcrumb-item active" aria-current="page">White List Add</li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}" class="text-decoration-none text-muted">Coast Guard Mart</a></li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}" class="text-decoration-none text-muted">白名單管理</a></li>
+<li class="breadcrumb-item active" aria-current="page">新增人員</li>
 {% endblock %}
 
 {% block body %}
-<div class="container mt-4" style="max-width: 650px;">
-    <div class="card shadow">
-        <div class="card-header bg-primary text-white"><h5>新增白名單人員 (階層式單位)</h5></div>
-        <div class="card-body">
-            <form method="post" id="whitelistForm">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label class="form-label fw-bold">姓名</label>
-                    <input type="text" name="name" class="form-control" required>
+<style>
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 1px solid rgba(0,0,0,0.1);
+        padding: 0.65rem 1rem;
+        background-color: rgba(255,255,255,0.6);
+        font-size: 0.95rem;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #212529;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid rgba(13, 110, 253, 0.1);
+        display: flex;
+        align-items: center;
+    }
+
+    /* 單位選單容器：確保在手機版有足夠高度 */
+    #unit-selectors-container {
+        min-height: 50px;
+        width: 100%;
+    }
+
+    /* 響應式間距優化 */
+    @media (max-width: 991.98px) {
+        .divider-line {
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            padding-bottom: 2rem;
+            margin-bottom: 2rem;
+        }
+    }
+    @media (min-width: 992px) {
+        .divider-line {
+            border-right: 1px solid rgba(0,0,0,0.1);
+            padding-right: 3rem;
+        }
+    }
+</style>
+
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-xl-10">
+            <div class="glass-panel p-4 p-md-5">
+                <div class="mb-4">
+                    <h3 class="fw-bold text-dark mb-1"><i class="bi bi-person-plus-fill me-2"></i>新增人員</h3>
+                    <p class="text-muted small">請依序設定所屬單位並填寫基本資料</p>
                 </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">身分證字號</label>
-                        <input type="text" name="id_number" class="form-control" placeholder="A123456789" required>
+
+                <form method="post" id="whitelistForm">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="col-lg-6 divider-line">
+                            <div class="section-title">
+                                <i class="bi bi-diagram-3-fill me-2 text-primary"></i>1. 設定所屬單位
+                            </div>
+
+                            <div id="unit-selectors-container" class="d-block">
+                                <label class="text-muted small mb-2 fw-bold">單位階層 (由大至小選擇)</label>
+                                <select class="form-select mb-3 unit-selector" data-level="1" required>
+                                    <option value="">-- 選擇第一層單位 --</option>
+                                    {% for u in top_units %}
+                                    <option value="{{ u.id }}">{{ u.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <input type="hidden" name="unit_id" id="final_unit_id">
+
+                            <div class="alert alert-info border-0 small mt-3 bg-opacity-10 py-2">
+                                <i class="bi bi-info-circle-fill me-1"></i> 請務必選到最末層單位。
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 ps-lg-4">
+                            <div class="section-title">
+                                <i class="bi bi-person-badge-fill me-2 text-primary"></i>2. 填寫個人資料
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">姓名</label>
+                                <input type="text" name="name" class="form-control" placeholder="輸入姓名" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">身分證字號</label>
+                                <input type="text" name="id_number" class="form-control" placeholder="A123456789" required
+                                       style="text-transform: uppercase;">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">生日</label>
+                                <input type="date" name="birthday" class="form-control" required>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">生日</label>
-                        <input type="date" name="birthday" class="form-control" required>
+
+                    <div class="mt-5 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                        <a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}" class="btn btn-link text-muted text-decoration-none order-2 order-md-1">
+                            <i class="bi bi-arrow-left me-1"></i> 返回管理列表
+                        </a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm py-2 order-1 order-md-2 w-100 w-md-auto">
+                            確認新增人員
+                        </button>
                     </div>
-                </div>
-
-                <hr>
-                <label class="form-label fw-bold"><i class="bi bi-diagram-3 me-2"></i>設定所屬單位</label>
-
-                <div id="unit-selectors-container">
-                    <select class="form-select mb-2 unit-selector" data-level="1">
-                        <option value="">-- 選擇第一層單位 --</option>
-                        {% for u in top_units %}
-                        <option value="{{ u.id }}">{{ u.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <input type="hidden" name="unit_id" id="final_unit_id">
-
-                <div class="mt-4 d-flex justify-content-between">
-                    <a href="{% url 'coast_guard_mart:staff_whitelist_manager' %}" class="btn btn-light">返回清單</a>
-                    <button type="submit" class="btn btn-primary px-4">確認新增</button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -73,16 +151,18 @@ document.addEventListener('change', function(e) {
         // 2. 更新隱藏欄位的值
         document.getElementById('final_unit_id').value = parentId;
 
-        // 3. 如果有選擇值，嘗試抓取下一層
+        // 3. 如果有選擇值，抓取下一層
         if (parentId) {
             fetch(`/coast_guard_mart/api/sub-units/?parent_id=${parentId}`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.results.length > 0) {
+                    // 如果還有子單位
+                    if (data.results && data.results.length > 0) {
                         const nextLevel = currentLevel + 1;
                         const newSelect = document.createElement('select');
-                        newSelect.className = 'form-select mb-2 unit-selector';
+                        newSelect.className = 'form-select mb-3 unit-selector';
                         newSelect.dataset.level = nextLevel;
+                        newSelect.required = true;
                         newSelect.innerHTML = `<option value="">-- 選擇第 ${nextLevel} 層單位 --</option>`;
 
                         data.results.forEach(item => {
@@ -90,18 +170,20 @@ document.addEventListener('change', function(e) {
                         });
 
                         container.appendChild(newSelect);
-                        // 產生新選單後，清空隱藏欄位，直到使用者選了最新的一層
+                        // 強制清空隱藏 ID，直到選到最新的一層
                         document.getElementById('final_unit_id').value = "";
                     }
-                });
+                })
+                .catch(err => console.error("Error fetching sub-units:", err));
         }
     }
 });
 
-// 表單送出前檢查
+// 送出前二次確認
 document.getElementById('whitelistForm').onsubmit = function() {
-    if (!document.getElementById('final_unit_id').value) {
-        alert('請選擇到最底層的單位資訊！');
+    const finalId = document.getElementById('final_unit_id').value;
+    if (!finalId) {
+        alert('請確實選擇到最底層的單位資訊（例如：某某分遣所）！');
         return false;
     }
 };

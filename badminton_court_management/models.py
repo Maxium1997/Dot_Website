@@ -1,0 +1,81 @@
+from django.db import models
+from django.conf import settings
+from django.core.validators import MinValueValidator
+
+
+# --- 球館與場地管理 ---
+class Gym(models.Model):
+    name = models.CharField(max_length=100, verbose_name="球館名稱")
+    address = models.TextField(verbose_name="地址")
+    phone = models.CharField(max_length=20, verbose_name="聯絡電話")
+
+    def __str__(self):
+        return self.name
+
+
+class Court(models.Model):
+    gym = models.ForeignKey(Gym, on_delete=models.CASCADE, related_name='courts')
+    number = models.CharField(max_length=20, verbose_name="場地編號 (如: A場)")
+    is_active = models.BooleanField(default=True, verbose_name="是否開放")
+    price_per_hour = models.IntegerField(default=500, verbose_name="每小時點數")
+
+    def __str__(self):
+        return f"{self.gym.name} - {self.number}"
+
+
+# --- 會員點數擴充 (按球館區分) ---
+class MemberWallet(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='wallets'  # 改為複數，因為一個 user 有多個錢包
+    )
+    gym = models.ForeignKey(
+        Gym,
+        on_delete=models.CASCADE,
+        related_name='member_wallets'
+    )
+    points = models.PositiveIntegerField(default=0, verbose_name="可用點數")
+
+    class Meta:
+        # 確保「一個使用者」在「一家球館」只有一個錢包紀錄
+        unique_together = ('user', 'gym')
+
+    def __str__(self):
+        return f"{self.user.username} @ {self.gym.name} ({self.points} pts)"
+
+
+# --- 預約系統 ---
+class Booking(models.Model):
+    STATUS_CHOICES = [
+        ('pending', '待付款'),
+        ('confirmed', '預約成功'),
+        ('cancelled', '已取消'),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+    court = models.ForeignKey(Court, on_delete=models.CASCADE)
+    booking_date = models.DateField(verbose_name="預約日期")
+    start_time = models.TimeField(verbose_name="開始時間")
+    end_time = models.TimeField(verbose_name="結束時間")
+
+    total_points = models.IntegerField(verbose_name="扣除點數")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('court', 'booking_date', 'start_time')
+
+    def __str__(self):
+        return f"{self.booking_date} {self.court} ({self.user.username})"
+
+
+# --- 點數流水帳 ---
+class PointLog(models.Model):
+    wallet = models.ForeignKey(MemberWallet, on_delete=models.CASCADE, related_name='logs')
+    amount = models.IntegerField(verbose_name="變動點數")
+    reason = models.CharField(max_length=100, verbose_name="變動原因")
+    created_at = models.DateTimeField(auto_now_add=True)

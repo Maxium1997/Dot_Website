@@ -1,54 +1,113 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block subtitle %}
-Coast Guard Mart
-{% endblock %}
+{% block subtitle %}備貨統計 - Coast Guard Mart{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}">Coast Guard Mart</a></li>
-<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:staff_order_dashboard' %}">Order Dashboard</a></li>
-<li class="breadcrumb-item active" aria-current="page">Inventory Summary</li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:product_list' %}" class="text-decoration-none text-muted">Coast Guard Mart</a></li>
+<li class="breadcrumb-item"><a href="{% url 'coast_guard_mart:staff_order_dashboard' %}" class="text-decoration-none text-muted">訂單儀表板</a></li>
+<li class="breadcrumb-item active" aria-current="page">備貨統計</li>
 {% endblock %}
 
 {% block body %}
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-box-seam me-2"></i>備貨統計清單</h2>
-        <div class="d-print-none">
-            <a href="{% url 'coast_guard_mart:staff_order_dashboard' %}" class="btn btn-outline-secondary me-2">返回儀表板</a>
-                <a href="{% url 'coast_guard_mart:export_inventory_excel' %}" class="btn btn-success me-2">
-                    <i class="bi bi-file-earmark-excel"></i> 匯出 Excel
-                </a>
-                <button onclick="window.print()" class="btn btn-dark">
-                    <i class="bi bi-printer"></i> 列印清單
-                </button>
+<style>
+    /* 玻璃擬態全局組件 */
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    .table thead th {
+        background-color: rgba(0, 0, 0, 0.02);
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .count-badge {
+        min-width: 45px;
+        font-weight: 800;
+        font-family: 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* 針對配件的特別色 */
+    .acc-text { color: #198754; }
+
+    /* 列印優化 */
+    @media print {
+        .d-print-none, .navbar, .breadcrumb, footer, .btn { display: none !important; }
+        .glass-panel {
+            border: 1px solid #000 !important;
+            box-shadow: none !important;
+            background: #fff !important;
+            border-radius: 0 !important;
+        }
+        .container { max-width: 100% !important; width: 100% !important; margin: 0; padding: 0; }
+        .table { width: 100% !important; border-collapse: collapse !important; }
+        .table th, .table td { border: 1px solid #ddd !important; padding: 8px !important; }
+        .badge { border: 1px solid #000 !important; color: #000 !important; background: transparent !important; }
+        h2, h5 { color: #000 !important; }
+    }
+</style>
+
+<div class="container py-4 mb-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3 px-1">
+        <div>
+            <h2 class="fw-bold mb-1 d-flex align-items-center">
+                <i class="bi bi-box-seam-fill text-primary me-2"></i>備貨統計清單
+            </h2>
+            <p class="text-muted small mb-0 d-print-none">統計目前所有待出貨訂單的品項總量，方便快速揀貨。</p>
+        </div>
+
+        <div class="d-print-none d-flex gap-2">
+            <a href="{% url 'coast_guard_mart:staff_order_dashboard' %}" class="btn btn-outline-secondary rounded-pill px-3 btn-sm">
+                返回儀表板
+            </a>
+            <a href="{% url 'coast_guard_mart:export_inventory_excel' %}" class="btn btn-outline-success rounded-pill px-3 btn-sm">
+                <i class="bi bi-file-earmark-excel me-1"></i>匯出 Excel
+            </a>
+            <button onclick="window.print()" class="btn btn-dark rounded-pill px-4 btn-sm fw-bold">
+                <i class="bi bi-printer me-1"></i>列印清單
+            </button>
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm mb-5">
-        <div class="card-header bg-primary text-white py-3">
-            <h5 class="mb-0 fw-bold">1. 主商品需求 (依顏色尺寸)</h5>
+    <div class="glass-panel mb-5">
+        <div class="px-4 py-3 border-bottom d-flex align-items-center justify-content-between bg-primary bg-opacity-10">
+            <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-1-circle-fill me-2"></i>主商品需求 (依顏色尺寸)</h5>
+            <span class="badge bg-primary rounded-pill px-3">{{ main_list|length }} 品項</span>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
+                <thead>
                     <tr>
-                        <th class="ps-4">品項名稱</th>
+                        <th class="ps-4" style="width: 40%;">品項名稱</th>
                         <th>規格 (顏色/尺寸)</th>
-                        <th class="text-center">數量</th>
+                        <th class="text-center" style="width: 15%;">統計數量</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in main_list %} <tr>
+                    {% for item in main_list %}
+                    <tr>
                         <td class="ps-4 fw-bold text-dark">{{ item.name }}</td>
-                        <td>{{ item.spec }}</td>
+                        <td>
+                            <span class="text-muted small">{{ item.spec }}</span>
+                        </td>
                         <td class="text-center">
-                            <span class="badge bg-dark px-3 py-2 fs-6">{{ item.total }}</span>
+                            <span class="badge rounded-pill bg-dark count-badge py-2 px-3 fs-6">{{ item.total }}</span>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="3" class="text-center py-4 text-muted">目前無主商品下單紀錄</td>
+                        <td colspan="3" class="text-center py-5 text-muted italic">
+                            <i class="bi bi-inbox fs-2 d-block mb-2 opacity-25"></i>目前無主商品下單紀錄
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -56,50 +115,50 @@ Coast Guard Mart
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-success text-white py-3">
-            <h5 class="mb-0 fw-bold">2. 附屬品 / 加購項需求 (依規格)</h5>
+    <div class="glass-panel">
+        <div class="px-4 py-3 border-bottom d-flex align-items-center justify-content-between bg-success bg-opacity-10">
+            <h5 class="mb-0 fw-bold text-success"><i class="bi bi-2-circle-fill me-2"></i>附屬品 / 加購項需求</h5>
+            <span class="badge bg-success rounded-pill px-3">{{ acc_list|length }} 品項</span>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
+                <thead>
                     <tr>
-                        <th class="ps-4">配件名稱</th>
-                        <th>規格 (顏色/尺寸)</th> <th class="text-center">總計數量</th>
+                        <th class="ps-4" style="width: 40%;">配件名稱</th>
+                        <th>規格 (顏色/尺寸)</th>
+                        <th class="text-center" style="width: 15%;">總計數量</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in acc_list %} <tr>
-                        <td class="ps-4 fw-bold text-success">{{ item.name }}</td>
+                    {% for item in acc_list %}
+                    <tr>
+                        <td class="ps-4 fw-bold acc-text">{{ item.name }}</td>
                         <td>
                             {% if item.spec != "無規格" %}
-                                <span class="badge bg-light text-dark border">{{ item.spec }}</span>
+                                <span class="badge bg-light text-dark border-secondary border-opacity-25 fw-normal">{{ item.spec }}</span>
                             {% else %}
-                                <span class="text-muted small">標準規格</span>
+                                <span class="text-muted small italic">標準規格</span>
                             {% endif %}
                         </td>
                         <td class="text-center">
-                            <span class="badge bg-success px-3 py-2 fs-6">{{ item.total }}</span>
+                            <span class="badge rounded-pill bg-success count-badge py-2 px-3 fs-6">{{ item.total }}</span>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="3" class="text-center py-4 text-muted">無加購配件紀錄</td>
+                        <td colspan="3" class="text-center py-5 text-muted italic">
+                            <i class="bi bi-inbox fs-2 d-block mb-2 opacity-25"></i>無加購配件紀錄
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
-</div>
 
-<style>
-    /* 列印優化：隱藏不必要的 UI */
-    @media print {
-        .d-print-none, .navbar, .breadcrumb, footer { display: none !important; }
-        .card { border: 1px solid #dee2e6 !important; box-shadow: none !important; }
-        .container { max-width: 100% !important; width: 100% !important; }
-        body { background-color: white !important; }
-    }
-</style>
+    <div class="mt-4 text-center d-none d-print-block">
+        <hr>
+        <p class="small text-muted">製表時間：{% now "Y-m-d H:i" %} | Coast Guard Mart 管理系統</p>
+    </div>
+</div>
 {% endblock %}
