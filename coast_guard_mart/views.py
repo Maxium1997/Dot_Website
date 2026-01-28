@@ -74,43 +74,6 @@ def product_detail(request, pk):
     return render(request, 'coast_guard_mart/product_detail.html', context)
 
 
-# 驗證使用者是否白名單
-# def verify_member(request):
-#     if request.method == 'POST':
-#         input_id = request.POST.get('id_number').strip().upper()
-#         input_birthday = request.POST.get('birthday')   # 格式: YYYY-MM-DD
-#
-#         # 1. 檢查白名單是否存在且未被領取
-#         member = WhitelistMember.objects.filter(
-#             id_number=input_id,
-#             birthday=input_birthday
-#         ).first()
-#
-#         if member:
-#             if member.is_claimed:
-#                 messages.error(request, "此身分資料已被其他帳號綁定。")
-#             else:
-#                 # 2. 進行綁定並發卡
-#                 member.is_claimed = True
-#                 member.claimed_by = request.user
-#                 member.save()
-#
-#                 # 建立當年度點數卡
-#                 MemberCredit.objects.create(
-#                     user=request.user,
-#                     fiscal_year=timezone.now().year,
-#                     start_date=timezone.now(),
-#                     end_date=timezone.now() + timedelta(days=60),
-#                     balance=3000.00
-#                 )
-#                 messages.success(request, "身分核對成功！3000元點數卡已存入您的帳戶。")
-#                 return redirect('coast_guard_mart:product_list')
-#         else:
-#             messages.error(request, "核對失敗，請確認身分證字號與生日是否正確，或聯繫管理員。")
-#
-#     return render(request, 'coast_guard_mart/verify.html')
-
-
 # 獲取使用者當前可用的額度
 def get_current_valid_credit(user):
     now = timezone.now()
@@ -607,11 +570,16 @@ def staff_inventory_summary(request):
 
 
 def generate_order_qrcode(request, order_id):
-    # 建立掃描後要跳轉的完整網址
-    # 確保 'staff_verify_order_complete' 名稱與 urls.py 一致
-    verify_url = request.build_absolute_uri(
-        reverse('coast_guard_mart:staff_verify_order_complete', args=[order_id])
-    )
+    # 1. 取得絕對路徑
+    path = reverse('coast_guard_mart:staff_verify_order_complete', args=[order_id])
+
+    # 2. 手動組合網址，確保使用 https
+    # 這樣可以避免 build_absolute_uri 受到代理伺服器錯誤 Header 的影響
+    domain = request.get_host()
+    verify_url = f"https://{domain}{path}"
+
+    # 偵錯用：如果你在測試環境，可以 print 出來到終端機看網址對不對
+    # print(f"QR Code URL: {verify_url}")
 
     qr = qrcode.QRCode(version=1, box_size=10, border=5)
     qr.add_data(verify_url)
@@ -619,14 +587,13 @@ def generate_order_qrcode(request, order_id):
 
     img = qr.make_image(fill_color="black", back_color="white")
 
-    # 將圖片寫入記憶體
     buffer = BytesIO()
     img.save(buffer, format="PNG")
 
     return HttpResponse(buffer.getvalue(), content_type="image/png")
 
 
-@user_passes_test(is_staff)
+@staff_member_required
 def staff_verify_order_complete(request, order_id):
     # 1. 抓取訂單
     tx = get_object_or_404(CreditTransaction, order_id=order_id)

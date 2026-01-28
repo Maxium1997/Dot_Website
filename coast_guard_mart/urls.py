@@ -27,8 +27,8 @@ urlpatterns = [
             path('<str:order_id>/', views.order_detail, name='order_detail'),
             path('cancel/<str:order_id>/', views.cancel_order, name='cancel_order'),
 
-            path('order/qrcode/<str:order_id>/', views.generate_order_qrcode, name='generate_order_qrcode'),
-            path('order/verify-complete/<str:order_id>/', views.staff_verify_order_complete, name='staff_verify_order_complete'),
+            path('qrcode/<str:order_id>/', views.generate_order_qrcode, name='generate_order_qrcode'),
+            path('verify-complete/<str:order_id>/', views.staff_verify_order_complete, name='staff_verify_order_complete'),
         ])),
 
         path('claim-credit/', views.claim_credit, name='claim_credit'),

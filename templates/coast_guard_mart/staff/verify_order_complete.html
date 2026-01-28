@@ -1,27 +1,62 @@
 {% extends "base.html" %}
+
 {% block body %}
-<div class="container mt-5" style="max-width: 500px;">
-    <div class="card border-primary shadow">
-        <div class="card-header bg-primary text-white text-center">
+<div class="container mt-5" style="max-width: 600px;">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card border-primary shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0">訂單領貨核銷確認</h5>
+            <span class="badge bg-light text-primary">待核銷</span>
         </div>
-        <div class="card-body">
-            <ul class="list-group list-group-flush mb-4">
-                <li class="list-group-item"><strong>訂單編號：</strong> {{ tx.order_id }}</li>
-                <li class="list-group-item"><strong>訂購人：</strong> {{ tx.credit_card.user.username }}</li>
-                <li class="list-group-item"><strong>訂單內容：</strong><br>{{ tx.description|linebreaksbr }}</li>
-            </ul>
-            
-            <form method="post">
+        <div class="card-body p-4">
+            <div class="mb-4">
+                <p class="text-muted mb-2">請務必確認現場已將商品交予使用者後，再點擊確認按鈕。</p>
+                <div class="bg-light p-3 rounded">
+                    <div class="row mb-2">
+                        <div class="col-4 fw-bold text-secondary">訂單編號</div>
+                        <div class="col-8"><code>{{ tx.order_id }}</code></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4 fw-bold text-secondary">訂購者</div>
+                        <div class="col-8">{{ tx.credit_card.user.username }}</div>
+                    </div>
+                    <hr>
+                    <div class="fw-bold text-secondary mb-2">訂單詳細內容</div>
+                    <div class="small p-2 bg-white border rounded">
+                        {{ tx.description|linebreaksbr }}
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" onsubmit="return confirmVerification();">
                 {% csrf_token %}
                 <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-success btn-lg">
-                        <i class="bi bi-box-seam me-2"></i>確認發放，完成訂單
+                    <button type="submit" class="btn btn-success btn-lg shadow-sm">
+                        <i class="bi bi-check-circle-fill me-2"></i>確認發放，完成訂單
                     </button>
-                    <a href="{% url 'coast_guard_mart:staff_order_dashboard' %}" class="btn btn-light">取消返回</a>
+                    <a href="{% url 'coast_guard_mart:staff_order_dashboard' %}" class="btn btn-outline-secondary">
+                        取消返回
+                    </a>
                 </div>
             </form>
         </div>
+        <div class="card-footer text-muted text-center small">
+            核銷後系統將自動發送 LINE 通知給使用者
+        </div>
     </div>
 </div>
+
+<script>
+function confirmVerification() {
+    return confirm("⚠️ 確定要完成此訂單的核銷嗎？\n點擊確認後，訂單狀態將變更為「已完成」且無法退回。");
+}
+</script>
 {% endblock %}
