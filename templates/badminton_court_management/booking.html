@@ -7,11 +7,12 @@
 
 {% block body %}
 <div class="container py-4" style="max-width: 600px;">
-    <div id="user-section" class="card shadow-sm mb-3 d-none border-0">
+    <div id="user-section" class="card shadow-sm mb-3 {% if not user.is_authenticated %}d-none{% endif %} border-0">
         <div class="card-body d-flex align-items-center">
-            <img id="user-img" src="" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+            <img id="user-img" src="{{ user_profile_img|default:'https://cdn-icons-png.flaticon.com/512/149/149071.png' }}"
+                 class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
             <div>
-                <div class="fw-bold"><span id="user-name">載入中...</span></div>
+                <div class="fw-bold"><span id="user-name">{{ user.first_name|default:user.username }}</span></div>
                 <div class="text-primary small">
                     <i class="bi bi-wallet2"></i> 本館餘額：<span id="gym-balance" class="fw-bold">0</span> pts
                 </div>
@@ -37,18 +38,18 @@
     <div id="slots-loader" class="text-center d-none my-5">
         <div class="spinner-border text-primary" role="status"></div>
     </div>
+
     <div id="slots-container" class="row"></div>
 </div>
 
 <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
 
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
 <script>
-    // 1. 全域配置：確保 API 與 LIFF ID 正確
     const LIFF_ID = "{{ liff_id }}";
     const API_BASE = window.location.origin + "/badminton_court_management/api";
 
-    // 2. 初始化日期：鎖定台北時間，避免凌晨時段日期錯誤
     function initDatePicker() {
         const taipeiDate = new Intl.DateTimeFormat('en-CA', {
             timeZone: 'Asia/Taipei',
@@ -57,53 +58,80 @@
 
         const dateInput = document.getElementById('booking-date');
         dateInput.setAttribute('min', taipeiDate);
-
-        // 只有在日期欄位為空時才設定預設值
         if (!dateInput.value) {
             dateInput.value = taipeiDate;
         }
     }
 
-    // 3. 初始化 LIFF
     async function initLiff() {
         initDatePicker();
         console.log("LIFF 開始初始化...");
-        try {
-            if (!LIFF_ID || LIFF_ID === "None" || LIFF_ID === "") {
-                console.warn("未偵測到 LIFF_ID，進入純網頁測試模式");
-                await loadGyms();
-                return;
-            }
 
+        try {
             await liff.init({ liffId: LIFF_ID });
-            if (!liff.isLoggedIn()) {
-                liff.login();
-            } else {
+
+            // 檢查 Django 是否已經登入
+            const isDjangoLoggedIn = "{{ user.is_authenticated|yesno:'true,false' }}" === "true";
+
+            if (liff.isLoggedIn()) {
+                const accessToken = liff.getAccessToken();
+                // 同步 LINE 資訊到 Django
+                await syncUserSession(accessToken);
+
+                // 動態更新最新的 LINE 暱稱與頭像
                 const profile = await liff.getProfile();
                 document.getElementById('user-name').innerText = profile.displayName;
-                document.getElementById('user-img').src = profile.pictureUrl;
+                if (profile.pictureUrl) {
+                    document.getElementById('user-img').src = profile.pictureUrl;
+                }
+                document.getElementById('user-section').classList.remove('d-none');
+                await loadGyms();
+            } else if (!isDjangoLoggedIn) {
+                // 只有當 Django 沒登入，且 LINE 也沒登入時，才執行跳轉
+                console.log("導向 LINE 登入");
+                liff.login();
+            } else {
+                // Django 已登入但在一般瀏覽器環境，直接載入
+                console.log("使用現有 Session 進入");
                 document.getElementById('user-section').classList.remove('d-none');
                 await loadGyms();
             }
         } catch (err) {
-            console.error('LIFF 初始化失敗:', err);
-            await loadGyms(); // 失敗時仍嘗試載入球館供測試
+            console.error('LIFF 初始化異常:', err);
+            await loadGyms();
         }
     }
 
-    // 4. 獲取球館清單
+    async function syncUserSession(token) {
+        try {
+            const csrfToken = document.getElementById('csrf-token').value;
+            const response = await fetch(`${API_BASE}/liff-login/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ access_token: token })
+            });
+
+            const result = await response.json();
+            return result.status === 'success';
+        } catch (e) {
+            console.error("Session 同步失敗:", e);
+            return false;
+        }
+    }
+
     async function loadGyms() {
         try {
             const res = await fetch(`${API_BASE}/get-gyms/`, {
                 headers: { 'ngrok-skip-browser-warning': 'true' }
             });
-            if (!res.ok) throw new Error(`HTTP 錯誤: ${res.status}`);
-
             const gyms = await res.json();
             const select = document.getElementById('gym-select');
             select.innerHTML = '';
 
-            if (gyms.length === 0) {
+            if (!gyms || gyms.length === 0) {
                 select.add(new Option("目前無可用球館", ""));
                 return;
             }
@@ -112,38 +140,30 @@
                 select.add(new Option(gym.name, gym.id));
             });
 
-            // 綁定事件監聽
             select.addEventListener('change', updateGymInfo);
             document.getElementById('booking-date').addEventListener('change', loadSlots);
 
-            // 執行初次加載
             updateGymInfo();
         } catch (e) {
             console.error("載入球館失敗:", e);
-            alert("無法獲取球館清單，請檢查伺服器狀態。");
         }
     }
 
-    // 5. 更新資訊
     async function updateGymInfo() {
         await loadBalance();
         await loadSlots();
     }
 
-    // 6. 載入點數餘額
     async function loadBalance() {
         const gymId = document.getElementById('gym-select').value;
         if (!gymId) return;
         try {
-            const res = await fetch(`${API_BASE}/get-user-balance/?gym_id=${gymId}`, {
-                headers: { 'ngrok-skip-browser-warning': 'true' }
-            });
+            const res = await fetch(`${API_BASE}/get-user-balance/?gym_id=${gymId}`);
             const data = await res.json();
             document.getElementById('gym-balance').innerText = data.points || 0;
-        } catch (e) { console.error("點數載入失敗", e); }
+        } catch (e) { console.error("餘額載入失敗", e); }
     }
 
-    // 7. 載入時段（最關鍵的部分）
     async function loadSlots() {
         const gymId = document.getElementById('gym-select').value;
         const date = document.getElementById('booking-date').value;
@@ -155,16 +175,11 @@
         container.innerHTML = '';
 
         try {
-            const res = await fetch(`${API_BASE}/get-slots/?date=${date}&gym_id=${gymId}`, {
-                headers: { 'ngrok-skip-browser-warning': 'true' }
-            });
-
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || `伺服器錯誤 ${res.status}`);
-            }
-
+            const res = await fetch(`${API_BASE}/get-slots/?date=${date}&gym_id=${gymId}`);
             const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error || "伺服器錯誤");
+
             if (Object.keys(data).length === 0) {
                 container.innerHTML = '<div class="col-12 text-center text-muted py-5">此日期無可用時段。</div>';
                 return;
@@ -192,23 +207,20 @@
                 container.innerHTML += html;
             }
         } catch (err) {
-            console.error("時段載入失敗:", err);
-            container.innerHTML = `<div class="alert alert-danger">載入失敗: ${err.message}</div>`;
+            container.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
         } finally {
             document.getElementById('slots-loader').classList.add('d-none');
         }
     }
 
-    // 8. 預約確認
     function confirmBooking(courtName, time) {
         const date = document.getElementById('booking-date').value;
         const gymName = document.getElementById('gym-select').options[document.getElementById('gym-select').selectedIndex].text;
-        if (confirm(`確定預約：\n📍 ${gymName}\n🏸 ${courtName} 號場\n📅 ${date}\n⏰ ${time}`)) {
+        if (confirm(`確定預約：\n📍 ${gymName}\n🏸 ${courtName}\n📅 ${date}\n⏰ ${time}`)) {
             executeBooking(courtName, date, time);
         }
     }
 
-    // 9. 執行預約
     async function executeBooking(courtName, date, time) {
         const gymId = document.getElementById('gym-select').value;
         const csrfToken = document.getElementById('csrf-token').value;
@@ -218,31 +230,31 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken,
-                    'ngrok-skip-browser-warning': 'true'
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({ gym_id: gymId, court_name: courtName, date: date, start_time: time })
             });
 
             const result = await response.json();
             if (result.status === 'success') {
-                alert('✨ 預約成功！');
+                alert('✨ 預約成功！電子憑證已傳送到您的 LINE。');
                 updateGymInfo();
             } else {
                 alert('❌ 失敗：' + result.msg);
             }
         } catch (err) {
-            alert('預約系統異常，請稍後再試。');
+            alert('系統忙碌中，請稍後再試。');
         }
     }
 
-    // 啟動
     initLiff();
 </script>
 
 <style>
-    body { background-color: #f8f9fa; }
-    .btn-outline-success { color: #198754; border-color: #198754; }
+    body { background-color: #f8f9fa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .btn-outline-success { color: #198754; border-color: #198754; background-color: #fff; }
     .btn-outline-success:hover { background-color: #198754; color: #fff; }
+    .form-select, .form-control { font-size: 14px; }
+    #user-section { background: linear-gradient(to right, #ffffff, #f0f7f4); }
 </style>
 {% endblock %}
