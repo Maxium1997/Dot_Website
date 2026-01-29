@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body %}
+<div class="container py-4" style="max-width: 600px;">
+
+
+    <a href="{% url 'badminton_court_management:booking_page' %}" class="btn btn-link text-decoration-none text-muted p-0">
+            <i class="bi bi-arrow-left me-1"></i> 返回預約頁面
+        </a>
+
+
+    <div class="card shadow-sm border-0 mb-4 bg-dark text-white overflow-hidden" style="border-radius: 16px;">
+        <div class="card-body p-4 position-relative">
+            <div class="position-absolute top-0 end-0 p-3 opacity-25">
+                <i class="bi bi-wallet2" style="font-size: 5rem; transform: rotate(-15deg); display: block;"></i>
+            </div>
+            <div class="small text-uppercase fw-bold opacity-75 mb-1" style="letter-spacing: 1px;">My Wallet</div>
+            <h2 class="fw-black mb-0"><span id="user-points-display">{{ wallet.points|default:0 }}</span> <span class="fs-6 fw-normal">pts</span></h2>
+            <div class="mt-3">
+                <span class="badge bg-primary px-3 py-2 rounded-pill small">
+                    <i class="bi bi-geo-alt-fill me-1"></i> {{ gym.name }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <h6 class="fw-bold mb-3 text-muted">選擇儲值方案</h6>
+
+    <div class="row g-3">
+        {% for plan in plans %}
+        <div class="col-12">
+            <div class="card plan-card border-0 shadow-sm h-100 {% if plan.is_recommended %}recommended-plan{% endif %}" 
+                 onclick="handlePlanSelect(this, {{ plan.id }}, {{ gym.id }})">
+                <div class="card-body d-flex align-items-center p-3">
+                    <div class="plan-icon me-3">
+                        <i class="bi bi-coin text-warning fs-3"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center">
+                            <span class="fw-bold fs-5">NT$ {{ plan.amount }}</span>
+                            {% if plan.is_recommended %}
+                            <span class="badge bg-danger ms-2" style="font-size: 10px;">HOT</span>
+                            {% endif %}
+                        </div>
+                        <div class="text-muted small">可獲得 {{ plan.points }} 點數</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="btn btn-sm btn-outline-dark rounded-pill px-3">選擇</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-box-seam text-muted display-4"></i>
+            <p class="text-muted mt-2">目前尚無儲值方案，請聯繫球館。</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-5 bg-light p-3 rounded-3 border border-dashed text-muted">
+        <div class="small fw-bold mb-2"><i class="bi bi-shield-check me-1"></i> 儲值須知：</div>
+        <ul class="small mb-0 ps-3">
+            <li>點數僅適用於於「{{ gym.name }}」。</li>
+            <li>確認儲值後將即時扣款並增加點數。</li>
+            <li>如有支付疑問，請洽櫃檯或 LINE 客服。</li>
+        </ul>
+    </div>
+</div>
+
+<div class="modal fade" id="topupLoader" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg text-center p-5" style="border-radius: 20px;">
+            <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+            <h5 class="fw-bold">正在處理交易...</h5>
+            <p class="text-muted small mb-0">請勿關閉視窗或返回上一頁</p>
+        </div>
+    </div>
+</div>
+
+{% csrf_token %}
+
+<style>
+    body { background-color: #f8f9fa; }
+    .fw-black { font-weight: 900; }
+    
+    .plan-card {
+        border-radius: 12px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        border: 2px solid transparent !important;
+    }
+
+    .plan-card:active { transform: scale(0.98); }
+    
+    .plan-card:hover {
+        border-color: #dee2e6 !important;
+        box-shadow: 0 8px 15px rgba(0,0,0,0.05) !important;
+    }
+
+    .recommended-plan {
+        background: linear-gradient(135deg, #ffffff, #f0f7ff);
+        border-color: rgba(13, 110, 253, 0.2) !important;
+    }
+
+    .recommended-plan .btn {
+        background-color: #212529;
+        color: white;
+        border-color: #212529;
+    }
+
+    .plan-icon {
+        width: 48px;
+        height: 48px;
+        background: #fff;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    }
+</style>
+
+<script>
+    const API_BASE = "/badminton_court_management/api";
+    const loaderModal = new bootstrap.Modal(document.getElementById('topupLoader'));
+
+    async function handlePlanSelect(element, planId, gymId) {
+        if (!confirm("確定要進行儲值嗎？")) return;
+        
+        loaderModal.show();
+        await startTopup(planId, gymId);
+    }
+
+    async function startTopup(planId, gymId) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        try {
+            // 1. 建立訂單
+            const res = await fetch(`${API_BASE}/create-topup-order/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ plan_id: planId, gym_id: gymId })
+            });
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                // 2. 模擬確認支付 (未來導向金流)
+                const confirmRes = await fetch(`${API_BASE}/confirm-payment/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ order_id: data.order_id })
+                });
+                const finalData = await confirmRes.json();
+
+                if (finalData.status === 'success') {
+                    setTimeout(() => {
+                        loaderModal.hide();
+                        alert(`✨ 儲值完成！點數已存入帳戶。`);
+                        location.reload();
+                    }, 1500); // 留一段緩衝動畫感
+                } else {
+                    throw new Error(finalData.msg);
+                }
+            } else {
+                throw new Error(data.msg);
+            }
+        } catch (err) {
+            loaderModal.hide();
+            alert("錯誤: " + err.message);
+        }
+    }
+</script>
+{% endblock %}

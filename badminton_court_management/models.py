@@ -79,3 +79,58 @@ class PointLog(models.Model):
     amount = models.IntegerField(verbose_name="變動點數")
     reason = models.CharField(max_length=100, verbose_name="變動原因")
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+# --- 儲值方案 (由球館管理者定義) ---
+class TopupPlan(models.Model):
+    gym = models.ForeignKey(Gym, on_delete=models.CASCADE, related_name='topup_plans')
+    name = models.CharField(max_length=50, verbose_name="方案名稱")
+    amount = models.PositiveIntegerField(verbose_name="支付金額 (TWD)")
+    points = models.PositiveIntegerField(verbose_name="獲得點數")
+    is_active = models.BooleanField(default=True, verbose_name="是否啟用")
+    is_recommended = models.BooleanField(default=False, verbose_name="推薦方案")
+
+    def __str__(self):
+        return f"{self.gym.name} - {self.name} (${self.amount})"
+
+
+# --- 儲值訂單 (主表) ---
+class TopupOrder(models.Model):
+    STATUS_CHOICES = [
+        ('pending', '待付款'),
+        ('processing', '支付中'),
+        ('success', '儲值成功'),
+        ('failed', '儲值失敗'),
+        ('cancelled', '已取消'),
+    ]
+
+    order_id = models.CharField(max_length=50, unique=True, verbose_name="訂單編號")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    wallet = models.ForeignKey(MemberWallet, on_delete=models.CASCADE)
+    plan = models.ForeignKey(TopupPlan, on_delete=models.SET_NULL, null=True)
+
+    amount = models.IntegerField(verbose_name="實際支付金額")
+    points = models.IntegerField(verbose_name="實際獲得點數")
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True, verbose_name="完成支付時間")
+
+    def __str__(self):
+        return f"{self.order_id} ({self.status})"
+
+
+# --- 方案 B：訂單歷程紀錄 (狀態機日誌) ---
+class TopupOrderLog(models.Model):
+    order = models.ForeignKey(TopupOrder, on_delete=models.CASCADE, related_name='logs')
+    from_status = models.CharField(max_length=15, verbose_name="原狀態")
+    to_status = models.CharField(max_length=15, verbose_name="新狀態")
+    operator = models.CharField(max_length=50, default="System", verbose_name="操作者")
+    remark = models.TextField(blank=True, verbose_name="變動備註")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="紀錄時間")
+
+    class Meta:
+        ordering = ['-created_at']  # 最新的紀錄排在最前面
+
+    def __str__(self):
+        return f"{self.order.order_id}: {self.from_status} -> {self.to_status}"

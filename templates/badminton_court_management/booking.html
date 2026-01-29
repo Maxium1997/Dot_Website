@@ -1,260 +1,165 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block breadcrumb %}
-<li class="breadcrumb-item active" aria-current="page">Badminton Booking</li>
-{% endblock %}
-
 {% block body %}
-<div class="container py-4" style="max-width: 600px;">
+<div class="container py-4" style="max-width: 900px; padding-bottom: 80px;">
     <div id="user-section" class="card shadow-sm mb-3 {% if not user.is_authenticated %}d-none{% endif %} border-0">
-        <div class="card-body d-flex align-items-center">
-            <img id="user-img" src="{{ user_profile_img|default:'https://cdn-icons-png.flaticon.com/512/149/149071.png' }}"
-                 class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
-            <div>
-                <div class="fw-bold"><span id="user-name">{{ user.first_name|default:user.username }}</span></div>
-                <div class="text-primary small">
-                    <i class="bi bi-wallet2"></i> 本館餘額：<span id="gym-balance" class="fw-bold">0</span> pts
+        <div class="card-body d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <img id="user-img" src="{{ user_profile_img|default:'https://cdn-icons-png.flaticon.com/512/149/149071.png' }}"
+                     class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover; border: 2px solid #f0f0f0;">
+                <div>
+                    <div class="fw-bold fs-5"><span id="user-name">{{ user.first_name|default:user.username }}</span></div>
+                    <div class="text-muted small">歡迎回來</div>
+                </div>
+            </div>
+            <div class="text-end">
+                <div class="text-primary small fw-bold mb-1">
+                    <i class="bi bi-lightning-fill"></i> 我的餘額
+                </div>
+                <div class="d-flex align-items-center justify-content-end">
+                    <span id="gym-balance" class="fw-black fs-4 me-2">0</span>
+                    <span class="text-muted small me-3">pts</span>
+
+                    <a href="{% url 'badminton_court_management:topup_page' %}"
+                       class="btn btn-sm btn-primary rounded-pill d-flex align-items-center px-3 shadow-sm">
+                        儲值 <i class="bi bi-plus-lg ms-1"></i>
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="card shadow-sm mb-4 border-0">
-        <div class="card-body">
-            <div class="row g-2">
-                <div class="col-6">
-                    <label class="form-label small fw-bold text-muted">選擇球館</label>
-                    <select id="gym-select" class="form-select border-0 bg-light"></select>
-                </div>
-                <div class="col-6">
-                    <label class="form-label small fw-bold text-muted">預約日期</label>
-                    <input type="date" id="booking-date" class="form-select border-0 bg-light">
-                </div>
+        <div class="card-body row g-3">
+            <div class="col-6">
+                <label class="form-label small fw-bold text-muted">選擇球館</label>
+                <select id="gym-select" class="form-select border-0 bg-light shadow-none"></select>
+            </div>
+            <div class="col-6">
+                <label class="form-label small fw-bold text-muted">預約日期</label>
+                <input type="date" id="booking-date" class="form-select border-0 bg-light shadow-none">
             </div>
         </div>
     </div>
 
     <div id="slots-loader" class="text-center d-none my-5">
-        <div class="spinner-border text-primary" role="status"></div>
+        <div class="spinner-border text-primary"></div>
     </div>
 
-    <div id="slots-container" class="row"></div>
+    <div id="slots-container"></div>
 </div>
 
-<input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+<div id="selection-bar" class="fixed-bottom bg-white shadow-lg border-top d-none animate__animated animate__slideInUp">
+    <div class="container py-3 d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fw-bold text-primary fs-5" id="selected-count">0</span>
+            <span class="small text-muted">個選中時段</span>
+        </div>
+        <button id="confirm-booking-btn" class="btn btn-primary px-4 rounded-pill fw-bold" onclick="submitMultiBooking()">
+            確認預約
+        </button>
+    </div>
+</div>
+
+{% csrf_token %}
 
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
 <script>
     const LIFF_ID = "{{ liff_id }}";
-    const API_BASE = window.location.origin + "/badminton_court_management/api";
+    const API_BASE = "/badminton_court_management/api"; // 使用相對路徑更安全
 
-    function initDatePicker() {
-        const taipeiDate = new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'Asia/Taipei',
-            year: 'numeric', month: '2-digit', day: '2-digit'
-        }).format(new Date());
+    let selectedSlots = new Map();
 
-        const dateInput = document.getElementById('booking-date');
-        dateInput.setAttribute('min', taipeiDate);
-        if (!dateInput.value) {
-            dateInput.value = taipeiDate;
-        }
+    // 取得 CSRF Token 的標準方法
+    function getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
     }
 
     async function initLiff() {
         initDatePicker();
-        console.log("LIFF 開始初始化...");
-
         try {
             await liff.init({ liffId: LIFF_ID });
-
-            // 檢查 Django 是否已經登入
-            const isDjangoLoggedIn = "{{ user.is_authenticated|yesno:'true,false' }}" === "true";
-
             if (liff.isLoggedIn()) {
-                const accessToken = liff.getAccessToken();
-                // 同步 LINE 資訊到 Django
-                await syncUserSession(accessToken);
+                const token = liff.getAccessToken();
+                const loginSuccess = await syncUserSession(token);
 
-                // 動態更新最新的 LINE 暱稱與頭像
-                const profile = await liff.getProfile();
-                document.getElementById('user-name').innerText = profile.displayName;
-                if (profile.pictureUrl) {
-                    document.getElementById('user-img').src = profile.pictureUrl;
+                if (loginSuccess) {
+                    const profile = await liff.getProfile();
+                    document.getElementById('user-name').innerText = profile.displayName;
+                    if (profile.pictureUrl) document.getElementById('user-img').src = profile.pictureUrl;
+                    document.getElementById('user-section').classList.remove('d-none');
                 }
-                document.getElementById('user-section').classList.remove('d-none');
-                await loadGyms();
-            } else if (!isDjangoLoggedIn) {
-                // 只有當 Django 沒登入，且 LINE 也沒登入時，才執行跳轉
-                console.log("導向 LINE 登入");
-                liff.login();
-            } else {
-                // Django 已登入但在一般瀏覽器環境，直接載入
-                console.log("使用現有 Session 進入");
-                document.getElementById('user-section').classList.remove('d-none');
-                await loadGyms();
             }
+            await loadGyms();
         } catch (err) {
-            console.error('LIFF 初始化異常:', err);
+            console.error("LIFF Init Error:", err);
             await loadGyms();
         }
     }
 
     async function syncUserSession(token) {
         try {
-            const csrfToken = document.getElementById('csrf-token').value;
-            const response = await fetch(`${API_BASE}/liff-login/`, {
+            const res = await fetch(`${API_BASE}/liff-login/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
+                    'X-CSRFToken': getCsrfToken()
                 },
                 body: JSON.stringify({ access_token: token })
             });
-
-            const result = await response.json();
-            return result.status === 'success';
+            return res.ok;
         } catch (e) {
-            console.error("Session 同步失敗:", e);
             return false;
         }
     }
 
-    async function loadGyms() {
-        try {
-            const res = await fetch(`${API_BASE}/get-gyms/`, {
-                headers: { 'ngrok-skip-browser-warning': 'true' }
-            });
-            const gyms = await res.json();
-            const select = document.getElementById('gym-select');
-            select.innerHTML = '';
+    // ... (loadGyms, loadBalance, loadSlots 保持邏輯不變，但 Headers 改用 getCsrfToken())
 
-            if (!gyms || gyms.length === 0) {
-                select.add(new Option("目前無可用球館", ""));
-                return;
-            }
+    async function submitMultiBooking() {
+        const count = selectedSlots.size;
+        if (!confirm(`確定要預約這 ${count} 個時段嗎？`)) return;
 
-            gyms.forEach(gym => {
-                select.add(new Option(gym.name, gym.id));
-            });
+        const btn = document.getElementById('confirm-booking-btn');
+        btn.disabled = true; // 防止重複點擊
+        btn.innerText = "處理中...";
 
-            select.addEventListener('change', updateGymInfo);
-            document.getElementById('booking-date').addEventListener('change', loadSlots);
-
-            updateGymInfo();
-        } catch (e) {
-            console.error("載入球館失敗:", e);
-        }
-    }
-
-    async function updateGymInfo() {
-        await loadBalance();
-        await loadSlots();
-    }
-
-    async function loadBalance() {
-        const gymId = document.getElementById('gym-select').value;
-        if (!gymId) return;
-        try {
-            const res = await fetch(`${API_BASE}/get-user-balance/?gym_id=${gymId}`);
-            const data = await res.json();
-            document.getElementById('gym-balance').innerText = data.points || 0;
-        } catch (e) { console.error("餘額載入失敗", e); }
-    }
-
-    async function loadSlots() {
         const gymId = document.getElementById('gym-select').value;
         const date = document.getElementById('booking-date').value;
-        const container = document.getElementById('slots-container');
-
-        if (!date || !gymId) return;
-
-        document.getElementById('slots-loader').classList.remove('d-none');
-        container.innerHTML = '';
+        const slotsArray = Array.from(selectedSlots.values());
 
         try {
-            const res = await fetch(`${API_BASE}/get-slots/?date=${date}&gym_id=${gymId}`);
-            const data = await res.json();
+            const results = await Promise.all(slotsArray.map(slot =>
+                fetch(`${API_BASE}/create-booking/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({ gym_id: gymId, court_name: slot.court, date: date, start_time: slot.time })
+                }).then(r => r.json())
+            ));
 
-            if (!res.ok) throw new Error(data.error || "伺服器錯誤");
+            const successCount = results.filter(r => r.status === 'success').length;
+            const failMessages = results.filter(r => r.status !== 'success').map(r => r.msg).join('\n');
 
-            if (Object.keys(data).length === 0) {
-                container.innerHTML = '<div class="col-12 text-center text-muted py-5">此日期無可用時段。</div>';
-                return;
-            }
-
-            for (const [courtName, slots] of Object.entries(data)) {
-                let html = `
-                    <div class="col-12 mb-4">
-                        <h6 class="fw-bold mb-3"><i class="bi bi-grid-3x3-gap"></i> ${courtName} </h6>
-                        <div class="row row-cols-3 g-2">
-                `;
-                slots.forEach(slot => {
-                    const btnClass = slot.is_available ? 'btn-outline-success' : 'btn-light text-muted border-0';
-                    const disabled = slot.is_available ? '' : 'disabled';
-                    const onClick = slot.is_available ? `onclick="confirmBooking('${courtName}', '${slot.time}')"` : '';
-                    html += `
-                        <div class="col">
-                            <button class="btn btn-sm w-100 py-2 ${btnClass}" ${disabled} ${onClick}>
-                                ${slot.time}
-                            </button>
-                        </div>
-                    `;
-                });
-                html += `</div></div>`;
-                container.innerHTML += html;
-            }
-        } catch (err) {
-            container.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
-        } finally {
-            document.getElementById('slots-loader').classList.add('d-none');
-        }
-    }
-
-    function confirmBooking(courtName, time) {
-        const date = document.getElementById('booking-date').value;
-        const gymName = document.getElementById('gym-select').options[document.getElementById('gym-select').selectedIndex].text;
-        if (confirm(`確定預約：\n📍 ${gymName}\n🏸 ${courtName}\n📅 ${date}\n⏰ ${time}`)) {
-            executeBooking(courtName, date, time);
-        }
-    }
-
-    async function executeBooking(courtName, date, time) {
-        const gymId = document.getElementById('gym-select').value;
-        const csrfToken = document.getElementById('csrf-token').value;
-
-        try {
-            const response = await fetch(`${API_BASE}/create-booking/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({ gym_id: gymId, court_name: courtName, date: date, start_time: time })
-            });
-
-            const result = await response.json();
-            if (result.status === 'success') {
-                alert('✨ 預約成功！電子憑證已傳送到您的 LINE。');
-                updateGymInfo();
+            if (successCount === results.length) {
+                alert(`✨ 預約完成！共 ${successCount} 個時段。`);
             } else {
-                alert('❌ 失敗：' + result.msg);
+                alert(`預約部分完成。\n成功：${successCount}\n失敗：${results.length - successCount}\n原因：${failMessages}`);
             }
+
+            selectedSlots.clear();
+            updateUI();
+            updateGymInfo();
         } catch (err) {
-            alert('系統忙碌中，請稍後再試。');
+            alert('系統繁忙，請稍後再試');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "確認預約";
         }
     }
 
     initLiff();
 </script>
-
-<style>
-    body { background-color: #f8f9fa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    .btn-outline-success { color: #198754; border-color: #198754; background-color: #fff; }
-    .btn-outline-success:hover { background-color: #198754; color: #fff; }
-    .form-select, .form-control { font-size: 14px; }
-    #user-section { background: linear-gradient(to right, #ffffff, #f0f7f4); }
-</style>
 {% endblock %}

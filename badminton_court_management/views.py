@@ -1,14 +1,17 @@
 import json
 import pytz
-from datetime import datetime, time
+import uuid
+import traceback
+from django.db import transaction
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.conf import settings
-from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from datetime import datetime, time
 from django.contrib.auth import login
 
-# Allauth 相關整合
+# Allauth 與 LINE 相關整合
 from allauth.socialaccount.models import SocialAccount, SocialLogin
 from allauth.socialaccount.providers.line.views import LineOAuth2Adapter
 from allauth.socialaccount.helpers import complete_social_login
@@ -17,6 +20,7 @@ from linebot import LineBotApi
 from linebot.models import FlexSendMessage
 
 from .models import Court, Gym, MemberWallet, Booking
+from .models import TopupPlan, TopupOrder, TopupOrderLog, PointLog
 from .utils import get_booking_flex_message
 from .services import reserve_court, get_available_slots
 
@@ -25,39 +29,31 @@ line_bot_api = LineBotApi(settings.LINE_CHANNEL_ACCESS_TOKEN)
 TAIPEI_TZ = pytz.timezone('Asia/Taipei')
 
 
-# --- 1. 頁面與基礎 API ---
-
-# badminton_court_management/views.py
+# --- 頁面渲染 ---
 
 def booking_page(request):
     """渲染預約網頁"""
     now_taipei = timezone.now().astimezone(TAIPEI_TZ)
-
     user_profile_img = ""
     if request.user.is_authenticated:
-        # 取得該使用者的 LINE 社交帳號資訊
         social_acc = SocialAccount.objects.filter(user=request.user, provider='line').first()
         if social_acc:
-            # LINE 的原始資料儲存在 extra_data 字典中
-            # 注意：欄位可能是 pictureUrl 或 picture_url，視 allauth 版本而定
             user_profile_img = social_acc.extra_data.get('pictureUrl') or social_acc.extra_data.get('picture_url')
 
     context = {
         'today_date': now_taipei.date().isoformat(),
         'liff_id': settings.LINE_LIFF_ID,
-        'user_profile_img': user_profile_img,  # 將網址傳給模板
+        'user_profile_img': user_profile_img,
     }
     return render(request, 'badminton_court_management/booking.html', context)
 
 
-@csrf_exempt # 測試階段可以先加這行，排除 CSRF 疑慮
+# --- 安全強化後的 API ---
+
 def api_liff_login(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "Method not allowed"}, status=405)
     """
-    LIFF 登入整合 API：
-    接收前端 liff.getAccessToken()，透過 allauth 進行靜默登入。
-    這會將 LINE UID 與你自定義的 Member 模型自動關聯。
+    LIFF 登入 API：
+    不再使用 @csrf_exempt。LIFF 前端應在 POST 時帶上 CSRF Token。
     """
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
@@ -69,42 +65,22 @@ def api_liff_login(request):
         if not access_token:
             return JsonResponse({"error": "Missing access token"}, status=400)
 
-        # 使用 Allauth 的 LineAdapter 驗證 token
         adapter = LineOAuth2Adapter(request)
         provider = adapter.get_provider()
         app = provider.get_app(request)
 
-        # 這裡會向 LINE 伺服器驗證 token 並取得 profile
         token = adapter.parse_token({'access_token': access_token})
         login_obj = adapter.complete_login(request, app, token, response=None)
         login_obj.token = token
         login_obj.state = SocialLogin.state_from_request(request)
 
-        # 在執行 complete_social_login 前檢查
-        print(f"DEBUG: 正在嘗試登入 LINE User, Token: {access_token[:10]}...")
-
-        ret = complete_social_login(request, login_obj)
-
-        # 如果 complete_social_login 回傳的是 HttpResponseRedirect，代表成功跳轉
-        return JsonResponse({"status": "success"})
-    except Exception as e:
-        import traceback
-        print(traceback.format_exc())  # 這會在你的終端機印出詳細錯誤
-        return JsonResponse({"status": "error", "msg": str(e)}, status=500)
-
-        # complete_social_login 會處理：
-        # 1. 如果已有 SocialAccount，則登入關聯的 Member
-        # 2. 如果沒有，則根據 settings 建立新的 Member
         complete_social_login(request, login_obj)
 
-        return JsonResponse({
-            "status": "success",
-            "user": request.user.username,
-            "authenticated": request.user.is_authenticated
-        })
+        return JsonResponse({"status": "success", "user": request.user.username})
     except Exception as e:
-        print(f"LIFF Login Error: {e}")
-        return JsonResponse({"status": "error", "msg": str(e)}, status=500)
+        # 資安考量：後端記錄詳細 log，前端回傳模糊訊息
+        print(f"Login Error: {traceback.format_exc()}")
+        return JsonResponse({"status": "error", "msg": "登入驗證失敗，請重新嘗試"}, status=500)
 
 
 def api_get_gyms(request):
@@ -140,16 +116,11 @@ def api_get_user_balance(request):
     return JsonResponse({'points': wallet.points, 'authenticated': True})
 
 
-# --- 2. 預約執行 API ---
-
-@csrf_exempt
+@login_required
 def api_create_booking(request):
-    """執行預約動作"""
+    """執行預約動作（移除 @csrf_exempt）"""
     if request.method != "POST":
         return JsonResponse({"status": "error", "msg": "不支援的方法"}, status=405)
-
-    if not request.user.is_authenticated:
-        return JsonResponse({"status": "error", "msg": "帳號未識別，請重新開啟頁面"}, status=403)
 
     try:
         data = json.loads(request.body)
@@ -161,7 +132,6 @@ def api_create_booking(request):
         target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
         start_time = datetime.strptime(start_time_str, '%H:%M').time()
 
-        # 結束時間邏輯
         if start_time.hour == 23:
             end_time = time(0, 0)
         else:
@@ -169,7 +139,6 @@ def api_create_booking(request):
 
         court = Court.objects.get(number=court_name, gym_id=gym_id, is_active=True)
 
-        # 執行 Service 邏輯（包含 Transaction 和扣點）
         success, result = reserve_court(
             user=request.user,
             court=court,
@@ -185,9 +154,10 @@ def api_create_booking(request):
             return JsonResponse({"status": "error", "msg": result})
 
     except Court.DoesNotExist:
-        return JsonResponse({"status": "error", "msg": "找不到該場地"})
+        return JsonResponse({"status": "error", "msg": "場地不存在"}, status=404)
     except Exception as e:
-        return JsonResponse({"status": "error", "msg": f"系統錯誤: {str(e)}"}, status=500)
+        print(f"Booking Error: {traceback.format_exc()}")
+        return JsonResponse({"status": "error", "msg": "系統預約失敗"}, status=500)
 
 
 def send_booking_success_notification(user, booking):
@@ -204,3 +174,88 @@ def send_booking_success_notification(user, booking):
             line_bot_api.push_message(social_acc.uid, flex_message)
         except Exception as e:
             print(f"LINE Push Error: {e}")
+
+
+def topup_page(request):
+    gym = Gym.objects.first()  # 獲取當前球館
+    plans = TopupPlan.objects.filter(gym=gym, is_active=True).order_by('amount')
+    wallet, _ = MemberWallet.objects.get_or_create(user=request.user, gym=gym)
+
+    return render(request, 'badminton_court_management/topup.html', {
+        'gym': gym,
+        'plans': plans,
+        'wallet': wallet
+    })
+
+
+@login_required
+@transaction.atomic
+def api_create_topup_order(request):
+    """第一步：產生 pending 訂單"""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'msg': '無效請求'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        plan_id = data.get('plan_id')
+        gym_id = data.get('gym_id')
+
+        # 直接從 DB 取值防止前端竄改金額
+        plan = TopupPlan.objects.filter(id=plan_id, gym_id=gym_id, is_active=True).first()
+        if not plan:
+            return JsonResponse({'status': 'error', 'msg': '無效的儲值方案'})
+
+        wallet, _ = MemberWallet.objects.get_or_create(user=request.user, gym_id=gym_id)
+
+        order = TopupOrder.objects.create(
+            order_id=f"TOPUP-{uuid.uuid4().hex[:12].upper()}",
+            user=request.user,
+            wallet=wallet,
+            plan=plan,
+            amount=plan.amount,
+            points=plan.points,
+            status='pending'
+        )
+
+        TopupOrderLog.objects.create(order=order, from_status='None', to_status='pending', remark="訂單已建立")
+
+        return JsonResponse({'status': 'success', 'order_id': order.order_id, 'amount': order.amount})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'msg': "訂單建立失敗"}, status=500)
+
+
+@login_required
+@transaction.atomic
+def api_confirm_payment(request):
+    """
+    第二步：模擬支付成功。
+    注意：未來對接正式金流時，此 API 必須檢驗金流商簽章，不可信任前端請求。
+    """
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'msg': '無效請求'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        order_id = data.get('order_id')
+
+        # 使用 select_for_update 鎖定行，防止併發操作
+        order = TopupOrder.objects.select_for_update().get(order_id=order_id, user=request.user)
+
+        if order.status == 'success':
+            return JsonResponse({'status': 'error', 'msg': '請勿重複支付'})
+
+        old_status = order.status
+        order.status = 'success'
+        order.paid_at = timezone.now()
+        order.save()
+
+        wallet = order.wallet
+        wallet.points += order.points
+        wallet.save()
+
+        TopupOrderLog.objects.create(order=order, from_status=old_status, to_status='success', remark="模擬支付成功")
+        PointLog.objects.create(wallet=wallet, amount=order.points, reason=f"儲值成功: {order.order_id}")
+
+        return JsonResponse({'status': 'success', 'new_balance': wallet.points})
+    except TopupOrder.DoesNotExist:
+        return JsonResponse({'status': 'error', 'msg': '找不到該訂單'}, status=404)
