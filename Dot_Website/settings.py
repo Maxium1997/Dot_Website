@@ -17,9 +17,11 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # 從 .env 控制 DEBUG 模式，生產環境應為 False
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-# 網域名稱限制，防範 Host Header 攻擊
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
-if not ALLOWED_HOSTS or ALLOWED_HOSTS == ['']:
+# 強化 ALLOWED_HOSTS 解析邏輯，自動過濾掉空格與空值
+raw_hosts = os.getenv('ALLOWED_HOSTS', '')
+ALLOWED_HOSTS = [host.strip() for host in raw_hosts.split(',') if host.strip()]
+# 如果解析後為空，則預設本地端
+if not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # --- LINE 與 API 設定 ---
@@ -113,20 +115,27 @@ if not DEBUG:
     # 確保 Cookie 僅透過 HTTPS 傳輸
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
-    
+
     # 防止 JS 讀取敏感 Cookie
     CSRF_COOKIE_HTTPONLY = True
     SESSION_COOKIE_HTTPONLY = True
-    
+
     # 強制 HTTPS 導向與 HSTS
-    SECURE_SSL_REDIRECT = True
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
+    # 增加環境變數判斷，讓您能靈活開啟/關閉跳轉
+    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False') == 'True'
+else:
+    # DEBUG 為 True 時，務必關閉強制跳轉，否則本地 runserver 會無法開啟
+    SECURE_SSL_REDIRECT = False
+
 # 信任的網域來源，用於 CSRF 驗證
 CSRF_TRUSTED_ORIGINS = [
     'https://*.ngrok-free.app',
+    'https://*.ngrok.io',
+    'https://*.ngrok.io',
     'https://DotWebsiteOfficial.pythonanywhere.com',
     'https://*.railway.app'
 ]
@@ -156,6 +165,21 @@ SOCIALACCOUNT_PROVIDERS = {
         'SCOPE': ['profile', 'openid'],
     }
 }
+# 必須確保路徑完全正確（應用程式名稱.檔案名稱.類別名稱），以LINE登入後執行
+SOCIALACCOUNT_ADAPTER = 'registration.adapter.MySocialAccountAdapter'
+# 當使用者透過 LINE 登入時，自動將資料填充到 User Model
+SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+
+# 讓 Django 在 Social Login 時自動更新欄位
+SOCIALACCOUNT_FORMS = {
+    'signup': 'allauth.socialaccount.forms.SignupForm',
+}
+# 登入後要跳轉的 URL (例如首頁或預約頁面)
+LOGIN_REDIRECT_URL = '/'
+
+# 如果需要，也可以設定登出後的跳轉 URL
+LOGOUT_REDIRECT_URL = '/'
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_EMAIL_REQUIRED = False
 SOCIALACCOUNT_AUTO_SIGNUP = True

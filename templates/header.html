@@ -40,7 +40,15 @@
                                 {% else %}
                                     <i class="bi bi-person-circle fs-5"></i>
                                 {% endif %}
-                                <span class="small fw-bold text-dark">{{ request.user.first_name|default:request.user.username }}</span>
+                                <span class="small fw-bold text-dark">
+                                    {% if request.user.first_name %}
+                                        {{ request.user.first_name }}
+                                    {% elif request.user.socialaccount_set.all.0.extra_data.display_name %}
+                                        {{ request.user.socialaccount_set.all.0.extra_data.display_name }}
+                                    {% else %}
+                                        使用者
+                                    {% endif %}
+                                </span>
                             </a>
 
                             <ul class="dropdown-menu dropdown-menu-end dropdown-glass border-0 shadow-lg mt-3 mx-auto">
