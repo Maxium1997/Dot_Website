@@ -46,6 +46,9 @@ INSTALLED_APPS = [
     'import_export',
     'qrcode',
 
+    # Content Security Policy (CSP) Header Not Set, 沒有設定 CSP
+    'csp',
+
     # Allauth 核心
     'allauth',
     'allauth.account',
@@ -77,6 +80,7 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'csp.middleware.CSPMiddleware',     # For Content Security Policy (CSP) Header Not Set, 沒有設定 CSP
 ]
 
 ROOT_URLCONF = 'Dot_Website.urls'
@@ -144,6 +148,18 @@ CSRF_TRUSTED_ORIGINS = [
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
+
+# For Content Security Policy (CSP) Header Not Set, 沒有設定 CSP
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": ("'self'",),
+        "script-src": ("'self'", "https://cdn.jsdelivr.net"),
+        "style-src": ("'self'", "https://fonts.googleapis.com"),
+        "font-src": ("'self'", "https://fonts.gstatic.com"),
+    }
+}
 
 # --- 其他設定 ---
 
