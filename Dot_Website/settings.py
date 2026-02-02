@@ -287,7 +287,8 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 # 必須確保路徑完全正確（應用程式名稱.檔案名稱.類別名稱），以LINE登入後執行
-SOCIALACCOUNT_ADAPTER = 'registration.adapter.MySocialAccountAdapter'
+# SOCIALACCOUNT_ADAPTER = 'registration.adapter.MySocialAccountAdapter'
+
 # 當使用者透過 LINE 登入時，自動將資料填充到 User Model
 SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
