@@ -20,9 +20,14 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 # 強化 ALLOWED_HOSTS 解析邏輯，自動過濾掉空格與空值
 raw_hosts = os.getenv('ALLOWED_HOSTS', '')
 ALLOWED_HOSTS = [host.strip() for host in raw_hosts.split(',') if host.strip()]
-# 如果解析後為空，則預設本地端
+# 🔧 FIX: Railway / Social Login fallback（避免 callback 500）
 if not ALLOWED_HOSTS:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+    ALLOWED_HOSTS = [
+        'web-production-ecc7b.up.railway.app',
+        '.up.railway.app',
+        'localhost',
+        '127.0.0.1',
+    ]
 
 # --- LINE 與 API 設定 ---
 
@@ -118,23 +123,18 @@ DATABASES = {
 # --- 生產環境安全強化 (當 DEBUG = False 時) ---
 
 if not DEBUG:
-    # 確保 Cookie 僅透過 HTTPS 傳輸
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
-
-    # 防止 JS 讀取敏感 Cookie
     CSRF_COOKIE_HTTPONLY = True
     SESSION_COOKIE_HTTPONLY = True
 
-    # 強制 HTTPS 導向與 HSTS
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
-    # 增加環境變數判斷，讓您能靈活開啟/關閉跳轉
-    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False') == 'True'
+    # 🔧 FIX: Railway + OAuth 不建議強制 redirect
+    SECURE_SSL_REDIRECT = False
 else:
-    # DEBUG 為 True 時，務必關閉強制跳轉，否則本地 runserver 會無法開啟
     SECURE_SSL_REDIRECT = False
 
 # 信任的網域來源，用於 CSRF 驗證（Django 不支援萬用字元，請依部署網域新增）
@@ -186,8 +186,17 @@ CONTENT_SECURITY_POLICY = {
             "https://web-production-ecc7b.up.railway.app",
             "https://profile.line-scdn.net",
             "https://cdn-icons-png.flaticon.com",
-            "https://profile.line-scdn.net",    # 允許 LINE 使用者頭像
-            "https://*.railway.app",    # 允許圖片在其他 Railway 服務
+            "https://*.railway.app",
+        ),
+        # 🔧 FIX: LINE Login 必要
+        "frame-src": (
+            "'self'",
+            "https://access.line.me",
+        ),
+        "connect-src": (
+            "'self'",
+            "https://access.line.me",
+            "https://api.line.me",
         ),
     }
 }
@@ -266,9 +275,14 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-# Allauth & LINE 設定
+# --- Allauth & LINE（🔧 FIX 核心） ---
+
 SOCIALACCOUNT_PROVIDERS = {
     'line': {
+        'APP': {
+            'client_id': os.getenv('LINE_CLIENT_ID'),
+            'secret': os.getenv('LINE_CLIENT_SECRET'),
+        },
         'SCOPE': ['profile', 'openid'],
     }
 }
