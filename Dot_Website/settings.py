@@ -183,6 +183,7 @@ CONTENT_SECURITY_POLICY = {
         "img-src": (
             "'self'",
             "data:",
+            "https://web-production-ecc7b.up.railway.app",
             "https://profile.line-scdn.net",
             "https://cdn-icons-png.flaticon.com",
             "https://profile.line-scdn.net",    # 允許 LINE 使用者頭像
