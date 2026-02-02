@@ -139,7 +139,6 @@ else:
 CSRF_TRUSTED_ORIGINS = [
     'https://*.ngrok-free.app',
     'https://*.ngrok.io',
-    'https://*.ngrok.io',
     'https://DotWebsiteOfficial.pythonanywhere.com',
     'https://*.railway.app'
 ]
