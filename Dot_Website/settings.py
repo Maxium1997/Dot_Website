@@ -78,9 +78,11 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',    # CSRF 防護核心
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'Dot_Website.security_middleware.SecurityAuditMiddleware',   # NIST/ISO 稽核日誌
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'csp.middleware.CSPMiddleware',     # For Content Security Policy (CSP) Header Not Set, 沒有設定 CSP
+    'csp.middleware.CSPMiddleware',     # CSP
+    'Dot_Website.security_middleware.SecurityHeadersMiddleware',  # 安全標頭
 ]
 
 ROOT_URLCONF = 'Dot_Website.urls'
@@ -135,13 +137,17 @@ else:
     # DEBUG 為 True 時，務必關閉強制跳轉，否則本地 runserver 會無法開啟
     SECURE_SSL_REDIRECT = False
 
-# 信任的網域來源，用於 CSRF 驗證
+# 信任的網域來源，用於 CSRF 驗證（Django 不支援萬用字元，請依部署網域新增）
 CSRF_TRUSTED_ORIGINS = [
     'https://*.ngrok-free.app',
     'https://*.ngrok.io',
     'https://DotWebsiteOfficial.pythonanywhere.com',
-    'https://*.railway.app'
+    'https://*.railway.app',
 ]
+# 可從環境變數追加，例如：CSRF_TRUSTED_ORIGINS += os.getenv('CSRF_ORIGINS', '').split(',')
+_extra_csrf = os.getenv('CSRF_TRUSTED_ORIGINS', '')
+if _extra_csrf:
+    CSRF_TRUSTED_ORIGINS.extend(origin.strip() for origin in _extra_csrf.split(',') if origin.strip())
 
 # 辨識 Proxy 轉發的 HTTPS 狀態
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -154,11 +160,94 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 CONTENT_SECURITY_POLICY = {
     "DIRECTIVES": {
         "default-src": ("'self'",),
-        "script-src": ("'self'", "https://cdn.jsdelivr.net"),
-        "style-src": ("'self'", "https://fonts.googleapis.com"),
-        "font-src": ("'self'", "https://fonts.gstatic.com"),
+        "script-src": (
+            "'self'",
+            "'unsafe-inline'",
+            "https://api.line.me",
+            "https://cdn.jsdelivr.net",
+            "https://cdnjs.cloudflare.com",
+            "https://static.line-scdn.net",
+        ),
+        "style-src": (
+            "'self'",
+            "'unsafe-inline'",
+            "https://cdn.jsdelivr.net",
+            "https://cdnjs.cloudflare.com",
+        ),
+        "font-src": (
+            "'self'",
+            "https://fonts.gstatic.com",
+            "https://cdn.jsdelivr.net",
+            "https://cdnjs.cloudflare.com",
+        ),
+        "img-src": (
+            "'self'",
+            "data:",
+            "https://profile.line-scdn.net",
+            "https://cdn-icons-png.flaticon.com",
+        ),
     }
 }
+
+# --- NIST / ISO 27001 / Zero Trust 對齊設定 ---
+
+# NIST PR.AC-1, ISO A.9.4.1: 身份與存取管理 — 密碼原則
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 10}},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
+
+# Zero Trust / ISO A.9.4.2: 工作階段安全 — 限時、重啟後失效、僅 HTTPS
+SESSION_COOKIE_AGE = 60 * 60 * 2  # 2 小時
+SESSION_SAVE_EVERY_REQUEST = True  # 每次請求更新過期時間
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 關閉瀏覽器即過期
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # 明確使用 DB 儲存，利於稽核
+
+# Zero Trust: 明確驗證 — 登入網址保護
+LOGIN_URL = '/accounts/login/'
+
+# 確保稽核日誌目錄存在
+_LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(_LOGS_DIR, exist_ok=True)
+
+# NIST DE.CM-1 / ISO A.12.4.1: 安全稽核與日誌
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'security': {
+            'format': '[%(asctime)s] %(levelname)s %(name)s %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+    },
+    'handlers': {
+        'security_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'security.log'),
+            'formatter': 'security',
+        },
+        'security_console': {
+            'level': 'WARNING',
+            'class': 'logging.StreamHandler',
+            'formatter': 'security',
+        },
+    },
+    'loggers': {
+        'security': {
+            'handlers': ['security_file', 'security_console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+# 安全標頭（NIST PR.DS-5 / ISO A.12.1.2）
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
 # --- 其他設定 ---
 

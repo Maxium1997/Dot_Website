@@ -18,6 +18,9 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+# Register security audit signal handlers (NIST/ISO)
+import Dot_Website.security_signals  # noqa: F401, E402
+
 urlpatterns = [
     path('admin/', admin.site.urls),
 
