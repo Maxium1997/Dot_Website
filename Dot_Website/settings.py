@@ -72,7 +72,7 @@ INSTALLED_APPS = [
     'badminton_court_management',
 ]
 
-SITE_ID = 1
+SITE_ID = 2
 AUTH_USER_MODEL = 'registration.Member'
 
 MIDDLEWARE = [
