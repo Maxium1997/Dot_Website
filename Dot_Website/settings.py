@@ -185,6 +185,8 @@ CONTENT_SECURITY_POLICY = {
             "data:",
             "https://profile.line-scdn.net",
             "https://cdn-icons-png.flaticon.com",
+            "https://profile.line-scdn.net",    # 允許 LINE 使用者頭像
+            "https://*.railway.app",    # 允許圖片在其他 Railway 服務
         ),
     }
 }
