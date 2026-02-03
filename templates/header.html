@@ -35,19 +35,29 @@
                     {% if request.user.is_authenticated %}
                         <div class="dropdown">
                             <a class="user-pill dropdown-toggle d-flex align-items-center gap-2" href="#" data-bs-toggle="dropdown">
-                                {% if LINE_USER_IMG %}
+                                {% if request.user.is_authenticated and LINE_USER_IMG %}
                                     <img src="{{ LINE_USER_IMG }}" alt="User Avatar" class="rounded-circle" style="width: 26px; height: 26px; object-fit: cover; border: 1px solid rgba(0,0,0,0.1);">
                                 {% else %}
                                     <i class="bi bi-person-circle fs-5"></i>
                                 {% endif %}
+
                                 <span class="small fw-bold text-dark">
-                                    {% if request.user.first_name %}
-                                        {{ request.user.first_name }}
-                                    {% elif request.user.socialaccount_set.all.0.extra_data.display_name %}
-                                        {{ request.user.socialaccount_set.all.0.extra_data.display_name }}
+                                    {% if request.user.is_authenticated %}
+                                        <span class="small fw-bold text-dark">
+                                            {% if request.user.first_name %}
+                                                {{ request.user.first_name }}
+                                            {% elif request.user.socialaccount_set.all %}
+                                                {{ request.user.socialaccount_set.all.0.extra_data.display_name|default:"使用者" }}
+                                            {% else %}
+                                                使用者
+                                            {% endif %}
+                                        </span>
                                     {% else %}
-                                        使用者
+                                        <span class="small fw-bold text-dark">
+                                            使用者
+                                        </span>
                                     {% endif %}
+
                                 </span>
                             </a>
 
