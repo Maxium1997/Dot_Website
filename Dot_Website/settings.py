@@ -30,7 +30,7 @@ if not ALLOWED_HOSTS:
         '.up.railway.app',
         '.ngrok-free.app',
         '.ngrok.io',
-        ' DotWebsiteOfficial.pythonanywhere.com'
+        '.pythonanywhere.com'
     ]
 
 # --- LINE 與 API 設定 ---
@@ -87,11 +87,11 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',    # CSRF 防護核心
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-    # 'Dot_Website.security_middleware.SecurityAuditMiddleware',   # NIST/ISO 稽核日誌  # 暫時註解
+    'Dot_Website.security_middleware.SecurityAuditMiddleware',   # NIST/ISO 稽核日誌  # 暫時註解
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'csp.middleware.CSPMiddleware',     # CSP
-    # 'Dot_Website.security_middleware.SecurityHeadersMiddleware',  # 安全標頭  # 暫時註解
+    'Dot_Website.security_middleware.SecurityHeadersMiddleware',  # 安全標頭  # 暫時註解
 ]
 
 ROOT_URLCONF = 'Dot_Website.urls'
@@ -291,7 +291,7 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 # 必須確保路徑完全正確（應用程式名稱.檔案名稱.類別名稱），以LINE登入後執行
-# SOCIALACCOUNT_ADAPTER = 'registration.adapter.MySocialAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'registration.adapter.MySocialAccountAdapter'
 
 # 當使用者透過 LINE 登入時，自動將資料填充到 User Model
 SOCIALACCOUNT_QUERY_EMAIL = True
