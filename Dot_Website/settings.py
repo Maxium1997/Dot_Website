@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- 基礎安全設定 ---
 
-# 從 .env 讀取 SECRET_KEY，不再硬編碼
+# 從 .env 讀取 SECRET_KEY
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # 從 .env 控制 DEBUG 模式，生產環境應為 False
@@ -23,10 +23,14 @@ ALLOWED_HOSTS = [host.strip() for host in raw_hosts.split(',') if host.strip()]
 # 🔧 FIX: Railway / Social Login fallback（避免 callback 500）
 if not ALLOWED_HOSTS:
     ALLOWED_HOSTS = [
-        'web-production-ecc7b.up.railway.app',
-        '.up.railway.app',
         'localhost',
         '127.0.0.1',
+        'web-production-ecc7b.up.railway.app',
+        '.railway.app',
+        '.up.railway.app',
+        '.ngrok-free.app',
+        '.ngrok.io',
+        ' DotWebsiteOfficial.pythonanywhere.com'
     ]
 
 # --- LINE 與 API 設定 ---
@@ -51,7 +55,7 @@ INSTALLED_APPS = [
     'import_export',
     'qrcode',
 
-    # Content Security Policy (CSP) Header Not Set, 沒有設定 CSP
+    # Content Security Policy (CSP) Header
     'csp',
 
     # Allauth 核心
@@ -83,11 +87,11 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',    # CSRF 防護核心
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-    'Dot_Website.security_middleware.SecurityAuditMiddleware',   # NIST/ISO 稽核日誌
+    # 'Dot_Website.security_middleware.SecurityAuditMiddleware',   # NIST/ISO 稽核日誌  # 暫時註解
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'csp.middleware.CSPMiddleware',     # CSP
-    'Dot_Website.security_middleware.SecurityHeadersMiddleware',  # 安全標頭
+    # 'Dot_Website.security_middleware.SecurityHeadersMiddleware',  # 安全標頭  # 暫時註解
 ]
 
 ROOT_URLCONF = 'Dot_Website.urls'
@@ -304,5 +308,4 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_EMAIL_REQUIRED = False
-SOCIALACCOUNT_AUTO_SIGNUP = True
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
