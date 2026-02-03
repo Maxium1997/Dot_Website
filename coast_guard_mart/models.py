@@ -24,7 +24,13 @@ class Product(models.Model):
     name = models.CharField(max_length=200)
     description = RichTextField(config_name='default')
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # 建議用 Decimal 存錢比較精準
-    image = models.ImageField(upload_to='products/')
+    # Cloudinary 圖片（主圖）
+    image = models.ImageField(
+        upload_to='products/',
+        null=True,
+        blank=True,
+        verbose_name="商品主圖"
+    )
     is_active = models.BooleanField(default=True)
     is_display = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -75,7 +81,12 @@ class ProductAccessory(models.Model):
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='products/gallery/', blank=True)
+    image = models.ImageField(
+        upload_to='products/gallery/',
+        null=True,
+        blank=True,
+        verbose_name="商品圖片"
+    )
 
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

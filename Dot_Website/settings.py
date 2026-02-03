@@ -64,6 +64,10 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.line',
 
+    # Cloudinary
+    "cloudinary",
+    "cloudinary_storage",
+
     'ckeditor',
     'registration',
     'website',
@@ -204,6 +208,17 @@ CONTENT_SECURITY_POLICY = {
         ),
     }
 }
+
+
+
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
+    "API_KEY": os.getenv("CLOUDINARY_API_KEY"),
+    "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
+}
+
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+
 
 # --- NIST / ISO 27001 / Zero Trust 對齊設定 ---
 

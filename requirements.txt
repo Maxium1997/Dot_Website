@@ -82,3 +82,4 @@ whitenoise==6.11.0
 wrapt==1.15.0
 yarl==1.9.2
 django-csp==4.0
+django-cloudinary-storage==0.3.0
