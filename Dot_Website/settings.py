@@ -215,7 +215,7 @@ CLOUDINARY_STORAGE = {
     "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
     "API_KEY": os.getenv("CLOUDINARY_API_KEY"),
     "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
-    'SECURE': True,
+    'secure': True,
 }
 
 
@@ -296,15 +296,9 @@ STORAGES = {
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-        "OPTIONS": {
-            "secure": True,
-        }
     },
 }
 
-
-# MEDIA_URL = '/media/'
-# MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # --- Allauth & LINE（🔧 FIX 核心） ---
 
@@ -317,8 +311,6 @@ SOCIALACCOUNT_PROVIDERS = {
         'SCOPE': ['profile', 'openid'],
     }
 }
-# 必須確保路徑完全正確（應用程式名稱.檔案名稱.類別名稱），以LINE登入後執行
-# SOCIALACCOUNT_ADAPTER = 'registration.adapter.MySocialAccountAdapter'
 
 # 當使用者透過 LINE 登入時，自動將資料填充到 User Model
 SOCIALACCOUNT_QUERY_EMAIL = True
