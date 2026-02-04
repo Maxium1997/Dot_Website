@@ -191,6 +191,7 @@ CONTENT_SECURITY_POLICY = {
         "img-src": (
             "'self'",
             "data:",
+            "https://res.cloudinary.com",
             "https://web-production-ecc7b.up.railway.app",
             "https://profile.line-scdn.net",
             "https://cdn-icons-png.flaticon.com",
