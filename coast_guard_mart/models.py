@@ -3,6 +3,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from organization.models import Unit  # 導入 'Organization' 的 Unit 模型
+from cloudinary.models import CloudinaryField
 
 from ckeditor.fields import RichTextField
 import ckeditor
@@ -25,12 +26,17 @@ class Product(models.Model):
     description = RichTextField(config_name='default')
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # 建議用 Decimal 存錢比較精準
     # Cloudinary 圖片（主圖）
-    image = models.ImageField(
-        upload_to='products/',
+    # image = models.ImageField(
+    #     upload_to='products/',
+    #     null=True,
+    #     blank=True,
+    #     verbose_name="商品主圖"
+    # )
+    # 商品主圖修正為 Cloudinary
+    image = CloudinaryField(
+        'products/',
         null=True,
-        blank=True,
-        verbose_name="商品主圖"
-    )
+        blank=True)
     is_active = models.BooleanField(default=True)
     is_display = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -81,12 +87,17 @@ class ProductAccessory(models.Model):
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
-    image = models.ImageField(
-        upload_to='products/gallery/',
+    # image = models.ImageField(
+    #     upload_to='products/gallery/',
+    #     null=True,
+    #     blank=True,
+    #     verbose_name="商品圖片"
+    # )
+    # 商品圖片修正為 Cloudinary
+    image = CloudinaryField(
+        'products/gallery/',
         null=True,
-        blank=True,
-        verbose_name="商品圖片"
-    )
+        blank=True)
 
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

@@ -299,8 +299,8 @@ STORAGES = {
 }
 
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+# MEDIA_URL = '/media/'
+# MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # --- Allauth & LINE（🔧 FIX 核心） ---
 
