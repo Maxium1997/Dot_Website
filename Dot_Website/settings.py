@@ -69,7 +69,7 @@ INSTALLED_APPS = [
     "cloudinary_storage",
 
     'ckeditor',
-    'registration',
+    'registration.apps.RegistrationConfig',
     'website',
     'organization',
     'business',
@@ -321,6 +321,8 @@ SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_FORMS = {
     'signup': 'allauth.socialaccount.forms.SignupForm',
 }
+# Use custom adapter to populate LINE displayName into Member.first_name
+SOCIALACCOUNT_ADAPTER = 'registration.adapter.MySocialAccountAdapter'
 # 登入後要跳轉的 URL (例如首頁或預約頁面)
 LOGIN_REDIRECT_URL = '/'
 
