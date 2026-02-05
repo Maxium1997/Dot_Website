@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
 from datetime import datetime, time
 from django.contrib.auth import login
@@ -181,7 +181,15 @@ def api_create_booking(request):
 
 
 def topup_page(request):
-    gym = Gym.objects.first()  # 獲取當前球館
+    gym_id = request.GET.get('gym_id')
+    gym = None
+    if gym_id:
+        try:
+            gym = Gym.objects.get(id=gym_id)
+        except Gym.DoesNotExist:
+            gym = None
+    if gym is None:
+        gym = Gym.objects.first()
     plans = TopupPlan.objects.filter(gym=gym, is_active=True).order_by('amount')
     wallet, _ = MemberWallet.objects.get_or_create(user=request.user, gym=gym)
 
@@ -223,30 +231,38 @@ def api_create_topup_order(request):
 
         TopupOrderLog.objects.create(order=order, from_status='None', to_status='pending', remark="訂單已建立")
 
-        return JsonResponse({'status': 'success', 'order_id': order.order_id, 'amount': order.amount})
+        return JsonResponse({
+            'status': 'success',
+            'order_id': order.order_id,
+            'amount': order.amount,
+            'msg': '訂單已建立，請至櫃台完成核銷。'
+        })
     except Exception as e:
         return JsonResponse({'status': 'error', 'msg': "訂單建立失敗"}, status=500)
 
 
-@login_required
+def _is_staff(user):
+    return user.is_staff
+
+
+@user_passes_test(_is_staff)
+def staff_topup_orders(request):
+    orders = TopupOrder.objects.select_related('user', 'wallet__gym', 'plan').order_by('-created_at')
+    return render(request, 'badminton_court_management/staff/topup_orders.html', {'orders': orders})
+
+
+@user_passes_test(_is_staff)
 @transaction.atomic
-def api_confirm_payment(request):
-    """
-    第二步：模擬支付成功。
-    注意：未來對接正式金流時，此 API 必須檢驗金流商簽章，不可信任前端請求。
-    """
+def staff_topup_approve(request, order_id):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'msg': '無效請求'}, status=405)
 
     try:
-        data = json.loads(request.body)
-        order_id = data.get('order_id')
-
-        # 使用 select_for_update 鎖定行，防止併發操作
-        order = TopupOrder.objects.select_for_update().get(order_id=order_id, user=request.user)
-
+        order = TopupOrder.objects.select_for_update().get(order_id=order_id)
         if order.status == 'success':
-            return JsonResponse({'status': 'error', 'msg': '請勿重複支付'})
+            return JsonResponse({'status': 'error', 'msg': '訂單已完成'})
+        if order.status in ['failed', 'cancelled']:
+            return JsonResponse({'status': 'error', 'msg': '訂單已結束，無法核銷'})
 
         old_status = order.status
         order.status = 'success'
@@ -257,9 +273,45 @@ def api_confirm_payment(request):
         wallet.points += order.points
         wallet.save()
 
-        TopupOrderLog.objects.create(order=order, from_status=old_status, to_status='success', remark="模擬支付成功")
-        PointLog.objects.create(wallet=wallet, amount=order.points, reason=f"儲值成功: {order.order_id}")
+        TopupOrderLog.objects.create(
+            order=order,
+            from_status=old_status,
+            to_status='success',
+            operator=request.user.username,
+            remark="櫃台核銷成功"
+        )
+        PointLog.objects.create(wallet=wallet, amount=order.points, reason=f"儲值核銷成功: {order.order_id}")
 
         return JsonResponse({'status': 'success', 'new_balance': wallet.points})
+    except TopupOrder.DoesNotExist:
+        return JsonResponse({'status': 'error', 'msg': '找不到該訂單'}, status=404)
+
+
+@user_passes_test(_is_staff)
+@transaction.atomic
+def staff_topup_reject(request, order_id):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'msg': '無效請求'}, status=405)
+
+    try:
+        order = TopupOrder.objects.select_for_update().get(order_id=order_id)
+        if order.status == 'success':
+            return JsonResponse({'status': 'error', 'msg': '訂單已完成，無法取消'})
+        if order.status in ['failed', 'cancelled']:
+            return JsonResponse({'status': 'error', 'msg': '訂單已結束'})
+
+        old_status = order.status
+        order.status = 'cancelled'
+        order.save()
+
+        TopupOrderLog.objects.create(
+            order=order,
+            from_status=old_status,
+            to_status='cancelled',
+            operator=request.user.username,
+            remark="櫃台取消訂單"
+        )
+
+        return JsonResponse({'status': 'success'})
     except TopupOrder.DoesNotExist:
         return JsonResponse({'status': 'error', 'msg': '找不到該訂單'}, status=404)

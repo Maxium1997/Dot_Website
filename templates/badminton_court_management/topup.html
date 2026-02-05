@@ -146,23 +146,11 @@
             const data = await res.json();
 
             if (data.status === 'success') {
-                // 2. 模擬確認支付 (未來導向金流)
-                const confirmRes = await fetch(`${API_BASE}/confirm-payment/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                    body: JSON.stringify({ order_id: data.order_id })
-                });
-                const finalData = await confirmRes.json();
-
-                if (finalData.status === 'success') {
-                    setTimeout(() => {
-                        loaderModal.hide();
-                        alert(`✨ 儲值完成！點數已存入帳戶。`);
-                        location.reload();
-                    }, 1500); // 留一段緩衝動畫感
-                } else {
-                    throw new Error(finalData.msg);
-                }
+                setTimeout(() => {
+                    loaderModal.hide();
+                    alert(`✅ 訂單已建立：${data.order_id}\n請至櫃台完成核銷。`);
+                    location.reload();
+                }, 800);
             } else {
                 throw new Error(data.msg);
             }

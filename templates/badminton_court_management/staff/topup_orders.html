@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="container py-4" style="max-width: 1000px;">
+    <h3 class="fw-bold mb-3">儲值訂單核銷</h3>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>訂單編號</th>
+                            <th>使用者</th>
+                            <th>球館</th>
+                            <th>方案</th>
+                            <th>金額</th>
+                            <th>點數</th>
+                            <th>狀態</th>
+                            <th class="text-end">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td>{{ order.order_id }}</td>
+                            <td>{{ order.user }}</td>
+                            <td>{{ order.wallet.gym.name }}</td>
+                            <td>{{ order.plan.name }}</td>
+                            <td>NT$ {{ order.amount }}</td>
+                            <td>{{ order.points }}</td>
+                            <td>
+                                <span class="badge {% if order.status == 'success' %}bg-success{% elif order.status == 'pending' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                {% if order.status == 'pending' %}
+                                <form method="post" action="{% url 'badminton_court_management:staff_topup_approve' order.order_id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-success">核銷</button>
+                                </form>
+                                <form method="post" action="{% url 'badminton_court_management:staff_topup_reject' order.order_id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-outline-danger">取消</button>
+                                </form>
+                                {% else %}
+                                <span class="text-muted small">無</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">目前沒有訂單</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
