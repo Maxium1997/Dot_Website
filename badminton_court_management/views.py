@@ -6,6 +6,7 @@ from django.db import transaction
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from datetime import datetime, time
@@ -17,7 +18,7 @@ from allauth.socialaccount.providers.line.views import LineOAuth2Adapter
 from allauth.socialaccount.helpers import complete_social_login
 
 from linebot import LineBotApi
-from linebot.models import FlexSendMessage
+from linebot.models import FlexSendMessage, TextSendMessage
 
 from .models import Court, Gym, MemberWallet, Booking
 from .models import TopupPlan, TopupOrder, TopupOrderLog, PointLog
@@ -40,10 +41,12 @@ def booking_page(request):
         if social_acc:
             user_profile_img = social_acc.extra_data.get('pictureUrl') or social_acc.extra_data.get('picture_url')
 
+    gyms = Gym.objects.all().order_by('name')
     context = {
         'today_date': now_taipei.date().isoformat(),
         'liff_id': settings.LINE_LIFF_ID,
         'user_profile_img': user_profile_img,
+        'gyms': gyms,
     }
     return render(request, 'badminton_court_management/booking.html', context)
 
@@ -99,6 +102,7 @@ def api_get_slots(request):
     if not date_str or not gym_id:
         return JsonResponse({"error": "缺少參數"}, status=400)
     try:
+        gym_id = int(gym_id)
         target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
         slots_data = get_available_slots(target_date, gym_id=gym_id)
         return JsonResponse(slots_data)
@@ -149,6 +153,7 @@ def api_create_booking(request):
 
         if success:
             send_booking_success_notification(request.user, result)
+            messages.success(request, "預約完成！")
             return JsonResponse({"status": "success", "msg": "預約成功！"})
         else:
             return JsonResponse({"status": "error", "msg": result})
@@ -171,7 +176,16 @@ def send_booking_success_notification(user, booking):
                 alt_text=f"🏸 預約成功通知",
                 contents=flex_content
             )
-            line_bot_api.push_message(social_acc.uid, flex_message)
+            text_message = TextSendMessage(
+                text=(
+                    "✅ 預約成功！\n"
+                    f"球館：{booking.court.gym.name}\n"
+                    f"場地：{booking.court.number}\n"
+                    f"日期：{booking.booking_date}\n"
+                    f"時間：{booking.start_time.strftime('%H:%M')} - {booking.end_time.strftime('%H:%M')}"
+                )
+            )
+            line_bot_api.push_message(social_acc.uid, [text_message, flex_message])
         except Exception as e:
             print(f"LINE Push Error: {e}")
 

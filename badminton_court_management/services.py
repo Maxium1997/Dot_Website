@@ -76,37 +76,38 @@ def reserve_court(user, court, booking_date, start_time, end_time):
 
 
 def get_available_slots(target_date, gym_id=None):
-    tz = pytz.timezone('Asia/Taipei')
-    now_taipei = timezone.now().astimezone(tz)
-    current_date = now_taipei.date()
-    current_hour = now_taipei.hour
+    if not gym_id:
+        return {}
 
-    query_filter = {'is_active': True}
-    if gym_id:
-        query_filter['gym_id'] = gym_id
-
-    courts = Court.objects.filter(**query_filter)
+    courts = Court.objects.filter(
+        gym_id=gym_id,
+        is_active=True
+    ).order_by('number')
     results = {}
 
     for court in courts:
         slots = []
-        booked_times = Booking.objects.filter(
+        bookings = Booking.objects.filter(
             court=court,
             booking_date=target_date,
             status='confirmed'
-        ).values_list('start_time', flat=True)
+        ).select_related('user').values(
+            'start_time',
+            'user__first_name',
+            'user__username',
+        )
+        booked_by = {
+            b['start_time']: (b['user__first_name'] or b['user__username'] or '使用者')
+            for b in bookings
+        }
 
         for hour in range(9, 24):
-            # 如果是今天且小時已過，則跳過
-            if target_date == current_date and hour <= current_hour:
-                continue
-            if target_date < current_date:
-                continue
-
             start_t = time(hour, 0)
+            booked_name = booked_by.get(start_t)
             slots.append({
                 'time': f"{hour:02d}:00",
-                'is_available': start_t not in booked_times
+                'is_available': booked_name is None,
+                'booked_by': booked_name,
             })
         results[str(court.number)] = slots
     return results
