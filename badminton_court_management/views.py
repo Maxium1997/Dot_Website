@@ -17,6 +17,8 @@ from allauth.socialaccount.models import SocialAccount, SocialLogin
 from allauth.socialaccount.providers.line.views import LineOAuth2Adapter
 from allauth.socialaccount.helpers import complete_social_login
 
+from Dot_Website.utils import send_line_notification
+
 from linebot import LineBotApi
 from linebot.models import FlexSendMessage, TextSendMessage
 
@@ -110,6 +112,7 @@ def api_get_slots(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
+@login_required
 def api_get_user_balance(request):
     """取得點數（整合 LINE 登入後 request.user 就會有資料）"""
     gym_id = request.GET.get('gym_id')
@@ -122,7 +125,7 @@ def api_get_user_balance(request):
 
 @login_required
 def api_create_booking(request):
-    """執行預約動作（移除 @csrf_exempt）"""
+    """執行預約動作"""
     if request.method != "POST":
         return JsonResponse({"status": "error", "msg": "不支援的方法"}, status=405)
 
@@ -152,8 +155,19 @@ def api_create_booking(request):
         )
 
         if success:
-            send_booking_success_notification(request.user, result)
             messages.success(request, "預約完成！")
+
+            msg = (
+                "✅ 預約成功！\n"
+                    f"球館：{result.court.gym.name}\n"
+                    f"場地：{result.court}\n"
+                    f"日期：{result.booking_date}\n"
+                    f"時間：{result.start_time.strftime('%H:%M')} - {result.end_time.strftime('%H:%M')}"
+            )
+            
+            '"透過 LINE 發送預約成功訊息"'
+            send_line_notification(request.user, msg)
+
             return JsonResponse({"status": "success", "msg": "預約成功！"})
         else:
             return JsonResponse({"status": "error", "msg": result})
@@ -164,30 +178,6 @@ def api_create_booking(request):
         print(f"Booking Error: {traceback.format_exc()}")
         return JsonResponse({"status": "error", "msg": "系統預約失敗"}, status=500)
 
-
-def send_booking_success_notification(user, booking):
-    """發送 Flex Message 電子憑證"""
-    # 從整合後的 SocialAccount 取得 LINE UID
-    social_acc = SocialAccount.objects.filter(user=user, provider='line').first()
-    if social_acc:
-        try:
-            flex_content = get_booking_flex_message(booking)
-            flex_message = FlexSendMessage(
-                alt_text=f"🏸 預約成功通知",
-                contents=flex_content
-            )
-            text_message = TextSendMessage(
-                text=(
-                    "✅ 預約成功！\n"
-                    f"球館：{booking.court.gym.name}\n"
-                    f"場地：{booking.court.number}\n"
-                    f"日期：{booking.booking_date}\n"
-                    f"時間：{booking.start_time.strftime('%H:%M')} - {booking.end_time.strftime('%H:%M')}"
-                )
-            )
-            line_bot_api.push_message(social_acc.uid, [text_message, flex_message])
-        except Exception as e:
-            print(f"LINE Push Error: {e}")
 
 
 def topup_page(request):
