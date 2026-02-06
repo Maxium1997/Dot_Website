@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <div class="row g-3">
+        <div class="col-md-3 d-none d-md-block">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="fw-bold mb-2">管理球館</div>
+                    <div class="list-group list-group-flush">
+                        {% for gym_role in gym_roles %}
+                        <a class="list-group-item list-group-item-action {% if selected_gym_role.gym.id == gym_role.gym.id %}active{% endif %}"
+                           href="{% url 'badminton_court_management:staff_gym_staff' %}?gym_id={{ gym_role.gym.id }}">
+                            {{ gym_role.gym.name }}
+                            <span class="badge bg-light text-dark ms-2">{{ gym_role.role }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'badminton_court_management:staff_gym_dashboard' %}?gym_id={{ selected_gym.id }}"
+                           class="btn btn-sm btn-outline-secondary w-100">返回列表</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 d-md-none">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <label class="form-label small fw-bold text-muted">選擇球館</label>
+                    <select class="form-select" onchange="location.href=this.value">
+                        {% for gym_role in gym_roles %}
+                        <option value="{% url 'badminton_court_management:staff_gym_staff' %}?gym_id={{ gym_role.gym.id }}"
+                                {% if selected_gym_role.gym.id == gym_role.gym.id %}selected{% endif %}>
+                            {{ gym_role.gym.name }} ({{ gym_role.role }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <a href="{% url 'badminton_court_management:staff_gym_dashboard' %}?gym_id={{ selected_gym.id }}"
+                       class="btn btn-sm btn-outline-secondary w-100 mt-3">返回列表</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9 col-12">
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="fw-bold mb-3">新增權限</div>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">使用者帳號</label>
+                                <input type="text" name="username" class="form-control" placeholder="輸入 username">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">角色</label>
+                                <select name="role" class="form-select">
+                                    <option value="admin">Admin</option>
+                                    <option value="manager">Manager</option>
+                                    <option value="clerk" selected>Clerk</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-primary w-100">新增</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="table-responsive">
+                    <table class="table mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>使用者</th>
+                                <th>角色</th>
+                                <th>啟用</th>
+                                <th class="text-end">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for staff in staff_list %}
+                            <tr>
+                                <td>{{ staff.user }}</td>
+                                <td>
+                                    <select name="role" class="form-select form-select-sm" form="staff-form-{{ staff.id }}">
+                                        <option value="admin" {% if staff.role == 'admin' %}selected{% endif %}>Admin</option>
+                                        <option value="manager" {% if staff.role == 'manager' %}selected{% endif %}>Manager</option>
+                                        <option value="clerk" {% if staff.role == 'clerk' %}selected{% endif %}>Clerk</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="checkbox" name="is_active" form="staff-form-{{ staff.id }}" {% if staff.is_active %}checked{% endif %}>
+                                </td>
+                                <td class="text-end">
+                                    <form method="post" id="staff-form-{{ staff.id }}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="update">
+                                        <input type="hidden" name="staff_id" value="{{ staff.id }}">
+                                        <button class="btn btn-sm btn-outline-primary">更新</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">尚未設定權限</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

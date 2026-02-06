@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils import timezone
-from .models import Gym, Court, MemberWallet, Booking, PointLog
+from .models import Gym, Court, MemberWallet, Booking, PointLog, GymStaff, TopupPlan, TopupOrder, TopupOrderLog
 
 
 @admin.register(Gym)
@@ -77,3 +77,32 @@ class PointLogAdmin(admin.ModelAdmin):
     list_display = ('wallet', 'amount', 'reason', 'created_at')
     list_filter = ('wallet__gym', 'created_at')
     search_fields = ('wallet__user__username', 'reason')
+
+
+@admin.register(GymStaff)
+class GymStaffAdmin(admin.ModelAdmin):
+    list_display = ('user', 'gym', 'role', 'is_active', 'updated_at')
+    list_filter = ('gym', 'role', 'is_active')
+    search_fields = ('user__username', 'user__email', 'gym__name')
+
+
+@admin.register(TopupPlan)
+class TopupPlanAdmin(admin.ModelAdmin):
+    list_display = ('name', 'gym', 'amount', 'points', 'is_active', 'is_recommended')
+    list_filter = ('gym', 'is_active')
+    search_fields = ('name', 'gym__name')
+
+
+@admin.register(TopupOrder)
+class TopupOrderAdmin(admin.ModelAdmin):
+    list_display = ('order_id', 'user', 'wallet', 'amount', 'points', 'status', 'created_at')
+    list_filter = ('status', 'wallet__gym')
+    search_fields = ('order_id', 'user__username')
+    date_hierarchy = 'created_at'
+
+
+@admin.register(TopupOrderLog)
+class TopupOrderLogAdmin(admin.ModelAdmin):
+    list_display = ('order', 'from_status', 'to_status', 'operator', 'created_at')
+    list_filter = ('to_status',)
+    search_fields = ('order__order_id', 'operator')

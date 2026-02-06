@@ -3,7 +3,7 @@ from django.conf import settings
 from django.core.validators import MinValueValidator
 
 
-# --- 球館與場地管理 ---
+# --- 球館管理 ---
 class Gym(models.Model):
     name = models.CharField(max_length=100, verbose_name="球館名稱")
     address = models.TextField(verbose_name="地址")
@@ -13,6 +13,7 @@ class Gym(models.Model):
         return self.name
 
 
+# --- 球場（場地）管理 ---
 class Court(models.Model):
     gym = models.ForeignKey(Gym, on_delete=models.CASCADE, related_name='courts')
     number = models.CharField(max_length=20, verbose_name="場地編號 (如: A場)")
@@ -23,7 +24,7 @@ class Court(models.Model):
         return f"{self.gym.name} - {self.number}"
 
 
-# --- 會員點數擴充 (按球館區分) ---
+# --- 會員點數錢包 (按球館區分) ---
 class MemberWallet(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -45,7 +46,7 @@ class MemberWallet(models.Model):
         return f"{self.user.username} @ {self.gym.name} ({self.points} pts)"
 
 
-# --- 預約系統 ---
+# --- 球場預約模型 ---
 class Booking(models.Model):
     STATUS_CHOICES = [
         ('pending', '待付款'),
@@ -89,6 +90,8 @@ class TopupPlan(models.Model):
     points = models.PositiveIntegerField(verbose_name="獲得點數")
     is_active = models.BooleanField(default=True, verbose_name="是否啟用")
     is_recommended = models.BooleanField(default=False, verbose_name="推薦方案")
+    active_start = models.DateTimeField(null=True, blank=True, verbose_name="活動開始時間")
+    active_end = models.DateTimeField(null=True, blank=True, verbose_name="活動結束時間")
 
     def __str__(self):
         return f"{self.gym.name} - {self.name} (${self.amount})"
@@ -120,7 +123,7 @@ class TopupOrder(models.Model):
         return f"{self.order_id} ({self.status})"
 
 
-# --- 方案 B：訂單歷程紀錄 (狀態機日誌) ---
+# --- 訂單歷程紀錄 (狀態機日誌) ---
 class TopupOrderLog(models.Model):
     order = models.ForeignKey(TopupOrder, on_delete=models.CASCADE, related_name='logs')
     from_status = models.CharField(max_length=15, verbose_name="原狀態")
@@ -134,3 +137,38 @@ class TopupOrderLog(models.Model):
 
     def __str__(self):
         return f"{self.order.order_id}: {self.from_status} -> {self.to_status}"
+
+
+# --- 球館權限管理 ---
+class GymStaff(models.Model):
+    ROLE_ADMIN = 'admin'
+    ROLE_MANAGER = 'manager'
+    ROLE_CLERK = 'clerk'
+    ROLE_CHOICES = [
+        (ROLE_ADMIN, 'Admin'),
+        (ROLE_MANAGER, 'Manager'),
+        (ROLE_CLERK, 'Clerk'),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='gym_roles'
+    )
+    gym = models.ForeignKey(
+        Gym,
+        on_delete=models.CASCADE,
+        related_name='staff_roles'
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_CLERK)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'gym')
+        verbose_name = "球館權限"
+        verbose_name_plural = "球館權限"
+
+    def __str__(self):
+        return f"{self.user} @ {self.gym} ({self.role})"

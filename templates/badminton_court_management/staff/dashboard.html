@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'badminton_court_management:booking_page' %}" class="text-decoration-none text-muted">Booking</a></li>
+<li class="breadcrumb-item active" aria-current="page">Staff Dashboard</li>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <div class="row g-3">
+        <!-- Desktop: left gym list -->
+        <div class="col-md-3 d-none d-md-block">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="fw-bold mb-2">管理球館</div>
+                    <div class="list-group list-group-flush">
+                        {% for gym_role in gym_roles %}
+                        <a class="list-group-item list-group-item-action {% if selected_gym_role.gym.id == gym_role.gym.id %}active{% endif %}"
+                           href="{% url 'badminton_court_management:staff_gym_dashboard' %}?gym_id={{ gym_role.gym.id }}">
+                            {{ gym_role.gym.name }}
+                            <span class="badge bg-light text-dark ms-2">{{ gym_role.role }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% if selected_role == 'admin' %}
+                    <div class="mt-3">
+                        <a href="{% url 'badminton_court_management:staff_gym_staff' %}?gym_id={{ selected_gym.id }}"
+                           class="btn btn-sm btn-outline-primary w-100">權限設定</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile: gym selector -->
+        <div class="col-12 d-md-none">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <label class="form-label small fw-bold text-muted">選擇球館</label>
+                    <select class="form-select" onchange="location.href=this.value">
+                        {% for gym_role in gym_roles %}
+                        <option value="{% url 'badminton_court_management:staff_gym_dashboard' %}?gym_id={{ gym_role.gym.id }}"
+                                {% if selected_gym_role.gym.id == gym_role.gym.id %}selected{% endif %}>
+                            {{ gym_role.gym.name }} ({{ gym_role.role }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if selected_role == 'admin' %}
+                    <a href="{% url 'badminton_court_management:staff_gym_staff' %}?gym_id={{ selected_gym.id }}"
+                       class="btn btn-sm btn-outline-primary w-100 mt-3">權限設定</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="col-md-9 col-12">
+            <ul class="nav nav-tabs d-none d-md-flex" id="staffTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="booking-tab" data-bs-toggle="tab" data-bs-target="#booking-pane" type="button" role="tab">
+                        場地預約
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="order-tab" data-bs-toggle="tab" data-bs-target="#order-pane" type="button" role="tab">
+                        儲值訂單
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content d-none d-md-block">
+                <div class="tab-pane fade show active" id="booking-pane" role="tabpanel">
+                    <div class="card border-0 shadow-sm">
+                        <div class="table-responsive">
+                            <table class="table mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>使用者</th>
+                                        <th>場地</th>
+                                        <th>日期</th>
+                                        <th>時間</th>
+                                        <th>狀態</th>
+                                        <th class="text-end">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in bookings %}
+                                    <tr>
+                                        <td>{{ booking.user }}</td>
+                                        <td>{{ booking.court.number }}</td>
+                                        <td>{{ booking.booking_date }}</td>
+                                        <td>{{ booking.start_time }} - {{ booking.end_time }}</td>
+                                        <td>{{ booking.get_status_display }}</td>
+                                        <td class="text-end">
+                                        {% if booking.status == 'confirmed' and selected_role == 'admin' or booking.status == 'confirmed' and selected_role == 'manager' %}
+                                            <form method="post" action="{% url 'badminton_court_management:staff_booking_cancel' booking.id %}">
+                                                {% csrf_token %}
+                                                <button class="btn btn-sm btn-outline-danger">取消</button>
+                                            </form>
+                                            {% else %}
+                                            <span class="text-muted small">無</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">目前沒有預約</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="order-pane" role="tabpanel">
+                    <div class="card border-0 shadow-sm">
+                        <div class="table-responsive">
+                            <table class="table mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>使用者</th>
+                                        <th>購置方案</th>
+                                        <th>應付金額</th>
+                                        <th>狀態</th>
+                                        <th>訂單時間</th>
+                                        <th class="text-end">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in orders %}
+                                    <tr>
+                                        <td>{{ order.user }}</td>
+                                        <td>{{ order.plan.name|default:"-" }}</td>
+                                        <td>NT$ {{ order.amount }}</td>
+                                        <td>{{ order.get_status_display }}</td>
+                                        <td>{{ order.created_at }}</td>
+                                        <td class="text-end">
+                                            {% if order.status == 'pending' %}
+                                            <a class="btn btn-sm btn-success" href="{% url 'badminton_court_management:staff_topup_verify' order.order_id %}">
+                                                核銷
+                                            </a>
+                                            {% if selected_role == 'admin' or selected_role == 'manager' %}
+                                            <form method="post" action="{% url 'badminton_court_management:staff_topup_reject' order.order_id %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <button class="btn btn-sm btn-outline-danger">取消</button>
+                                            </form>
+                                            {% endif %}
+                                            {% else %}
+                                            <span class="text-muted small">無</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">目前沒有訂單</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile: accordion lists -->
+            <div class="d-md-none mt-3">
+                <div class="accordion" id="bookingAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="bookingHeading">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#bookingCollapse">
+                                場地預約
+                            </button>
+                        </h2>
+                        <div id="bookingCollapse" class="accordion-collapse collapse show" data-bs-parent="#bookingAccordion">
+                            <div class="accordion-body">
+                                {% for booking in bookings %}
+                                <div class="border rounded p-3 mb-2">
+                                    <div class="fw-bold">{{ booking.user }} - {{ booking.court.number }}</div>
+                                    <div class="small text-muted">{{ booking.booking_date }} {{ booking.start_time }}-{{ booking.end_time }}</div>
+                                    <div class="small">狀態：{{ booking.get_status_display }}</div>
+                                    {% if booking.status == 'confirmed' and selected_role == 'admin' or booking.status == 'confirmed' and selected_role == 'manager' %}
+                                    <form method="post" action="{% url 'badminton_court_management:staff_booking_cancel' booking.id %}" class="mt-2">
+                                        {% csrf_token %}
+                                        <button class="btn btn-sm btn-outline-danger w-100">取消</button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                                {% empty %}
+                                <div class="text-center text-muted">目前沒有預約</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion mt-3" id="orderAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="orderHeading">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#orderCollapse">
+                                儲值訂單
+                            </button>
+                        </h2>
+                        <div id="orderCollapse" class="accordion-collapse collapse show" data-bs-parent="#orderAccordion">
+                            <div class="accordion-body">
+                                {% for order in orders %}
+                                <div class="border rounded p-3 mb-2">
+                                    <div class="fw-bold">{{ order.user }} - {{ order.plan.name|default:"-" }}</div>
+                                    <div class="small">狀態：{{ order.get_status_display }}</div>
+                                    <div class="small text-muted">應付金額：NT$ {{ order.amount }}</div>
+                                    <div class="small text-muted">訂單時間：{{ order.created_at }}</div>
+                                    {% if order.status == 'pending' %}
+                                    <a class="btn btn-sm btn-success w-100" href="{% url 'badminton_court_management:staff_topup_verify' order.order_id %}">
+                                        核銷
+                                    </a>
+                                    {% if selected_role == 'admin' or selected_role == 'manager' %}
+                                    <form method="post" action="{% url 'badminton_court_management:staff_topup_reject' order.order_id %}" class="mt-2">
+                                        {% csrf_token %}
+                                        <button class="btn btn-sm btn-outline-danger w-100">取消</button>
+                                    </form>
+                                    {% endif %}
+                                    {% endif %}
+                                </div>
+                                {% empty %}
+                                <div class="text-center text-muted">目前沒有訂單</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

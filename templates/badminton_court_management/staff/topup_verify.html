@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="container py-4" style="max-width: 700px;">
+    <a href="{% url 'badminton_court_management:staff_gym_dashboard' %}?gym_id={{ order.wallet.gym.id }}"
+       class="btn btn-link text-decoration-none text-muted p-0 mb-3">
+        <i class="bi bi-arrow-left me-1"></i> 返回列表
+    </a>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h5 class="fw-bold mb-3">核銷確認</h5>
+            <div class="mb-2"><strong>訂單編號：</strong>{{ order.order_id }}</div>
+            <div class="mb-2"><strong>使用者：</strong>{{ order.user }}</div>
+            <div class="mb-2"><strong>球館：</strong>{{ order.wallet.gym.name }}</div>
+            <div class="mb-2"><strong>方案：</strong>{{ order.plan.name|default:"-" }}</div>
+            <div class="mb-2"><strong>金額：</strong>NT$ {{ order.amount }}</div>
+            <div class="mb-2"><strong>點數：</strong>{{ order.points }}</div>
+            <div class="mb-2"><strong>狀態：</strong>{{ order.get_status_display }}</div>
+
+            {% if order.status == 'pending' %}
+            <form method="post" action="{% url 'badminton_court_management:staff_topup_approve' order.order_id %}" class="mt-4">
+                {% csrf_token %}
+                <button class="btn btn-success w-100">確認核銷並入帳</button>
+            </form>
+            {% else %}
+            <div class="alert alert-info mt-4">此訂單已處理，無法重複核銷。</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

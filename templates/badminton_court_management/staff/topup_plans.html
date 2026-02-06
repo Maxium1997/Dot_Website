@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <div class="row g-3">
+        <div class="col-md-3 d-none d-md-block">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="fw-bold mb-2">管理球館</div>
+                    <div class="list-group list-group-flush">
+                        {% for gym_role in gym_roles %}
+                        <a class="list-group-item list-group-item-action {% if selected_gym_role.gym.id == gym_role.gym.id %}active{% endif %}"
+                           href="{% url 'badminton_court_management:staff_topup_plans' %}?gym_id={{ gym_role.gym.id }}">
+                            {{ gym_role.gym.name }}
+                            <span class="badge bg-light text-dark ms-2">{{ gym_role.role }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'badminton_court_management:staff_gym_dashboard' %}?gym_id={{ selected_gym.id }}"
+                           class="btn btn-sm btn-outline-secondary w-100">返回列表</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 d-md-none">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <label class="form-label small fw-bold text-muted">選擇球館</label>
+                    <select class="form-select" onchange="location.href=this.value">
+                        {% for gym_role in gym_roles %}
+                        <option value="{% url 'badminton_court_management:staff_topup_plans' %}?gym_id={{ gym_role.gym.id }}"
+                                {% if selected_gym_role.gym.id == gym_role.gym.id %}selected{% endif %}>
+                            {{ gym_role.gym.name }} ({{ gym_role.role }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <a href="{% url 'badminton_court_management:staff_gym_dashboard' %}?gym_id={{ selected_gym.id }}"
+                       class="btn btn-sm btn-outline-secondary w-100 mt-3">返回列表</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9 col-12">
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="fw-bold mb-3">新增儲值方案</div>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">方案名稱</label>
+                                <input type="text" name="name" class="form-control" placeholder="例如：$500 方案">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small text-muted">金額</label>
+                                <input type="number" name="amount" class="form-control" min="1" step="1">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small text-muted">點數</label>
+                                <input type="number" name="points" class="form-control" min="1" step="1">
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" name="is_recommended" id="is_recommended">
+                                    <label class="form-check-label small" for="is_recommended">推薦</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">活動開始</label>
+                                <input type="datetime-local" name="active_start" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">活動結束</label>
+                                <input type="datetime-local" name="active_end" class="form-control">
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-primary w-100">新增</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="table-responsive">
+                    <table class="table mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>方案名稱</th>
+                                <th>金額</th>
+                                <th>點數</th>
+                                <th>推薦</th>
+                                <th>活動時間</th>
+                                <th>狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for plan in plans %}
+                            <tr>
+                                <td>{{ plan.name }}</td>
+                                <td>NT$ {{ plan.amount }}</td>
+                                <td>{{ plan.points }}</td>
+                                <td>{% if plan.is_recommended %}是{% else %}否{% endif %}</td>
+                                <td>
+                                    {% if plan.active_start %}{{ plan.active_start }}{% else %}-{% endif %}
+                                    <br>
+                                    {% if plan.active_end %}{{ plan.active_end }}{% else %}-{% endif %}
+                                </td>
+                                <td>{% if plan.is_active %}啟用{% else %}停用{% endif %}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">尚未建立方案</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -14,6 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.shortcuts import render
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
@@ -41,3 +42,20 @@ urlpatterns = [
     path('line_bot/', include('line_bot.urls')),
     path('badminton_court_management/', include('badminton_court_management.urls')),
 ]+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+def error_403(request, exception=None):
+    return render(request, "403.html", status=403)
+
+
+def error_404(request, exception=None):
+    return render(request, "404.html", status=404)
+
+
+def error_500(request):
+    return render(request, "500.html", status=500)
+
+
+handler403 = error_403
+handler404 = error_404
+handler500 = error_500

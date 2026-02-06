@@ -3,8 +3,11 @@ from . import views
 
 app_name = 'badminton_court_management'
 
+
 urlpatterns = [
     # 頁面 (Templates)
+    path('/', views.booking_page, name='booking_page'),
+    path('booking', views.booking_page, name='booking_page'),
     path('booking/', views.booking_page, name='booking_page'),
 
     # API 介面
@@ -20,14 +23,18 @@ urlpatterns = [
     ])),
 
     path('topup/', views.topup_page, name='topup_page'),  # 儲值方案選擇頁面
+    path('topup-order/<str:order_id>/qrcode/', views.topup_order_qrcode, name='topup_order_qrcode'),
 
-    # Staff topup approvals (server-side verification)
+    path('staff', views.staff_gym_dashboard, name='staff_gym_dashboard'),
+    # Staff management
     path('staff/', include([
-        path('topup-orders/', views.staff_topup_orders, name='staff_topup_orders'),
+        path('dashboard/', views.staff_gym_dashboard, name='staff_gym_dashboard'),
+        path('bookings/<int:booking_id>/cancel/', views.staff_booking_cancel, name='staff_booking_cancel'),
+        path('topup-orders/<str:order_id>/verify/', views.staff_topup_verify, name='staff_topup_verify'),
         path('topup-orders/<str:order_id>/approve/', views.staff_topup_approve, name='staff_topup_approve'),
         path('topup-orders/<str:order_id>/reject/', views.staff_topup_reject, name='staff_topup_reject'),
+        path('gym-staff/', views.staff_gym_staff, name='staff_gym_staff'),
+        path('topup-plans/', views.staff_topup_plans, name='staff_topup_plans'),
     ]))
 
 ]
-
-

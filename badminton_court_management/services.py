@@ -147,3 +147,36 @@ def cancel_booking(user, booking_id):
         return False, "找不到預約紀錄。"
     except Exception as e:
         return False, f"取消失敗: {str(e)}"
+
+
+@transaction.atomic
+def cancel_booking_as_staff(booking):
+    """
+    取消預約並將點數退回原球館錢包（管理員操作）
+    """
+    try:
+        booking = Booking.objects.select_for_update().select_related('court__gym', 'user').get(id=booking.id)
+        if booking.status != 'confirmed':
+            return False, "該預約已取消或無法更改。"
+
+        gym = booking.court.gym
+        wallet = MemberWallet.objects.select_for_update().get(user=booking.user, gym=gym)
+        refund_amount = booking.total_points
+
+        wallet.points += refund_amount
+        wallet.save()
+
+        PointLog.objects.create(
+            wallet=wallet,
+            amount=refund_amount,
+            reason=f"櫃台取消預約退費: {booking.court.number} ({booking.booking_date})"
+        )
+
+        booking.status = 'cancelled'
+        booking.save()
+
+        return True, "預約已取消，點數已退還。"
+    except Booking.DoesNotExist:
+        return False, "找不到預約紀錄。"
+    except Exception as e:
+        return False, f"取消失敗: {str(e)}"

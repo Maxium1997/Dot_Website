@@ -18,14 +18,15 @@
                     <li class="nav-item">
                         <a class="nav-link nav-custom-link" href="{% url 'coast_guard_mart:product_list' %}">SHOP</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-custom-link" href="{% url 'badminton_court_management:booking_page' %}">SPORT</a>
+                    </li>
 
                     {% if request.user.is_superuser %}
                     <li class="nav-item dropdown">
                         <a class="nav-link nav-custom-link dropdown-toggle" href="#" data-bs-toggle="dropdown">ADMIN</a>
                         <ul class="dropdown-menu dropdown-glass border-0 shadow-lg mt-2 mx-auto">
                             <li><a class="dropdown-item" href="{% url 'organization' %}">Organization</a></li>
-                            <li><a class="dropdown-item" href="{% url 'coast_guard_mart:staff_whitelist_manager' %}">Whitelist</a></li>
-                            <li><a class="dropdown-item" href="{% url 'coast_guard_mart:staff_order_dashboard' %}">Dashboard</a></li>
                         </ul>
                     </li>
                     {% endif %}
