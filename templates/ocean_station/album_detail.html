@@ -1,0 +1,402 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block subtitle %}Ocean Station{% endblock %}
+{% block title %}{{ album.title }}{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'ocean_station:index' %}">Ocean Station</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'ocean_station:detail' station.en_name %}">{{ station.name }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ album.title }}</li>
+{% endblock %}
+
+{% block body %}
+<style>
+    .album-hero {
+        padding: 2rem 0;
+    }
+    .album-card {
+        background: #ffffff;
+        border-radius: 18px;
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.05);
+        padding: 1.5rem;
+    }
+    .album-back {
+        margin: 1rem 0 0.75rem;
+        display: inline-block;
+        color: #0d6efd;
+        text-decoration: none;
+    }
+    .album-back:hover {
+        text-decoration: underline;
+    }
+    .photo-grid img {
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+        border-radius: 12px;
+    }
+    .album-meta {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    .upload-card {
+        background: #f8fafc;
+        border: 1px dashed rgba(0,0,0,0.15);
+        border-radius: 14px;
+        padding: 1rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .upload-card input[type="file"] {
+        background: #ffffff;
+    }
+    .photo-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.85rem;
+    }
+    .photo-card {
+        position: relative;
+    }
+    .photo-overlay {
+        position: absolute;
+        inset: 0;
+        border-radius: 12px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-end;
+        padding: 0.5rem;
+        background: linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0));
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        pointer-events: none;
+        z-index: 2;
+    }
+    .photo-card:hover .photo-overlay {
+        opacity: 1;
+    }
+    .photo-cover-btn {
+        background: rgba(255,255,255,0.95);
+        border: none;
+        border-radius: 999px;
+        padding: 0.25rem 0.6rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        pointer-events: auto;
+    }
+    .ajax-messages {
+        margin-top: 1rem;
+    }
+    .photo-controls {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
+    }
+    .sort-input {
+        width: 70px;
+    }
+</style>
+
+<section class="album-hero">
+    <div class="container">
+        <a class="album-back" href="{% url 'ocean_station:detail' station.en_name %}">← 返回驛站</a>
+        <div class="album-card">
+            <h2 class="mb-1">{{ album.title }}</h2>
+            {% if album.description %}
+                <div class="text-muted">{{ album.description }}</div>
+            {% endif %}
+
+            {% if request.user.is_staff %}
+                <div class="album-meta">
+                    <div>
+                        <label class="form-label">相簿名稱</label>
+                        <input type="text" class="form-control" id="album-title" value="{{ album.title }}">
+                    </div>
+                    <div>
+                        <label class="form-label">相簿描述</label>
+                        <textarea class="form-control" id="album-description" rows="2">{{ album.description }}</textarea>
+                    </div>
+                    <div class="d-flex align-items-end gap-2">
+                        <button type="button" class="btn btn-primary" id="album-save">更新</button>
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="row g-3 mt-4 photo-grid">
+                {% for photo in photos %}
+                    <div class="col-6 col-lg-3">
+                        <div class="photo-card" data-photo-id="{{ photo.id }}">
+                            <img src="{{ photo.image.url }}" alt="{{ album.title }}">
+                            {% if request.user.is_staff %}
+                                <div class="photo-overlay">
+                                    <button type="button" class="photo-cover-btn" data-role="cover"{% if photo.is_cover_image %} disabled{% endif %}>
+                                        {% if photo.is_cover_image %}封面{% else %}設為封面{% endif %}
+                                    </button>
+                                </div>
+                                <div class="photo-controls">
+                                    <input class="form-control form-control-sm sort-input" type="number" value="{{ photo.sort_order }}" data-role="sort">
+                                    <label class="photo-label">
+                                        <input type="checkbox" data-role="display"{% if photo.is_display %} checked{% endif %}>
+                                        顯示
+                                    </label>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" data-role="delete">刪除</button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    {% if not request.user.is_staff %}
+                        <div class="col-12 text-muted">尚未有相片。</div>
+                    {% endif %}
+                {% endfor %}
+                {% if request.user.is_staff %}
+                    <div class="col-6 col-lg-3">
+                        <form method="post" enctype="multipart/form-data" class="upload-card" id="photo-upload-form">
+                            {% csrf_token %}
+                            <label class="form-label">加入相片</label>
+                            <input type="file" name="photos" class="form-control" accept="image/*" multiple id="photo-upload-input">
+                            <button type="submit" class="btn btn-primary w-100 mt-2" id="photo-upload-button">上傳</button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if request.user.is_staff %}
+                <div class="mt-4">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="save-order">儲存排序</button>
+                </div>
+            {% endif %}
+            <div class="ajax-messages" id="ajax-messages"></div>
+        </div>
+    </div>
+</section>
+
+{% if request.user.is_staff %}
+<script>
+    (function () {
+        const csrfToken = "{{ csrf_token }}";
+        const uploadForm = document.getElementById("photo-upload-form");
+        const uploadInput = document.getElementById("photo-upload-input");
+        const saveOrderButton = document.getElementById("save-order");
+        const grid = document.querySelector(".photo-grid");
+        const albumSaveButton = document.getElementById("album-save");
+        const albumTitle = document.getElementById("album-title");
+        const albumDescription = document.getElementById("album-description");
+        const messageHost = document.getElementById("ajax-messages");
+
+        const showMessage = (text, kind = "success") => {
+            if (!messageHost) {
+                return;
+            }
+            messageHost.innerHTML = `
+                <div class="alert alert-${kind} py-2" role="alert">${text}</div>
+            `;
+            setTimeout(() => {
+                messageHost.innerHTML = "";
+            }, 2500);
+        };
+
+        const reorderDomBySort = () => {
+            if (!grid) {
+                return;
+            }
+            const cards = Array.from(grid.querySelectorAll(".photo-card"));
+            const uploadCol = grid.querySelector("#photo-upload-form")?.closest(".col-6");
+            cards.sort((a, b) => {
+                const aInput = a.querySelector('[data-role="sort"]');
+                const bInput = b.querySelector('[data-role="sort"]');
+                const aVal = aInput ? parseInt(aInput.value, 10) : 0;
+                const bVal = bInput ? parseInt(bInput.value, 10) : 0;
+                return aVal - bVal;
+            });
+            cards.forEach((card) => {
+                const col = card.closest(".col-6");
+                if (col) {
+                    grid.appendChild(col);
+                }
+            });
+            if (uploadCol) {
+                grid.appendChild(uploadCol);
+            }
+        };
+
+        if (uploadForm) {
+            uploadForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                if (!uploadInput.files.length) {
+                    return;
+                }
+                const formData = new FormData();
+                Array.from(uploadInput.files).forEach((file) => formData.append("photos", file));
+                const response = await fetch("{% url 'ocean_station:album_upload' station.en_name album.id %}", {
+                    method: "POST",
+                    headers: { "X-CSRFToken": csrfToken },
+                    body: formData,
+                });
+                if (!response.ok) {
+                    showMessage("上傳失敗", "danger");
+                    return;
+                }
+                const data = await response.json();
+                data.photos.forEach((photo) => {
+                    const col = document.createElement("div");
+                    col.className = "col-6 col-lg-3";
+                    col.innerHTML = `
+                        <div class="photo-card" data-photo-id="${photo.id}">
+                            <img src="${photo.url}" alt="{{ album.title }}">
+                            <div class="photo-overlay">
+                                <button type="button" class="photo-cover-btn" data-role="cover">設為封面</button>
+                            </div>
+                            <div class="photo-controls">
+                                <input class="form-control form-control-sm sort-input" type="number" value="${photo.sort_order}" data-role="sort">
+                                <label class="photo-label">
+                                    <input type="checkbox" data-role="display" checked>
+                                    顯示
+                                </label>
+                                <button type="button" class="btn btn-outline-danger btn-sm" data-role="delete">刪除</button>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(col);
+                });
+                reorderDomBySort();
+                uploadInput.value = "";
+                showMessage("上傳完成");
+            });
+        }
+
+        if (grid) {
+            grid.addEventListener("click", async (event) => {
+                const button = event.target.closest("button");
+                if (!button) {
+                    return;
+                }
+                const card = button.closest(".photo-card");
+                if (!card) {
+                    return;
+                }
+                const photoId = card.dataset.photoId;
+                if (!photoId) {
+                    return;
+                }
+                if (button.dataset.role === "cover") {
+                    const response = await fetch("{% url 'ocean_station:photo_cover' station.en_name album.id 0 %}".replace("/0/", `/${photoId}/`), {
+                        method: "POST",
+                        headers: { "X-CSRFToken": csrfToken },
+                    });
+                    if (!response.ok) {
+                        showMessage("封面設定失敗", "danger");
+                        return;
+                    }
+                    document.querySelectorAll('[data-role="cover"]').forEach((btn) => {
+                        btn.disabled = false;
+                        btn.textContent = "設為封面";
+                    });
+                    button.disabled = true;
+                    button.textContent = "封面";
+                    showMessage("封面已更新");
+                }
+                if (button.dataset.role === "delete") {
+                    if (!confirm("確定刪除這張相片？")) {
+                        return;
+                    }
+                    const response = await fetch("{% url 'ocean_station:photo_delete' station.en_name album.id 0 %}".replace("/0/", `/${photoId}/`), {
+                        method: "POST",
+                        headers: { "X-CSRFToken": csrfToken },
+                    });
+                    if (!response.ok) {
+                        showMessage("刪除失敗", "danger");
+                        return;
+                    }
+                    card.parentElement.remove();
+                    showMessage("相片已刪除");
+                }
+            });
+        }
+
+        if (grid) {
+            grid.addEventListener("change", async (event) => {
+                const checkbox = event.target.closest('[data-role="display"]');
+                if (!checkbox) {
+                    return;
+                }
+                const card = checkbox.closest(".photo-card");
+                if (!card) {
+                    return;
+                }
+                const photoId = card.dataset.photoId;
+                const response = await fetch("{% url 'ocean_station:photo_display' station.en_name album.id 0 %}".replace("/0/", `/${photoId}/`), {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken,
+                    },
+                    body: JSON.stringify({ is_display: checkbox.checked }),
+                });
+                if (!response.ok) {
+                    checkbox.checked = !checkbox.checked;
+                    showMessage("顯示狀態更新失敗", "danger");
+                } else {
+                    showMessage("顯示狀態已更新");
+                }
+            });
+        }
+
+        if (saveOrderButton) {
+            saveOrderButton.addEventListener("click", async () => {
+                const orders = Array.from(document.querySelectorAll(".photo-card")).map((card) => {
+                    const input = card.querySelector('[data-role="sort"]');
+                    return {
+                        id: card.dataset.photoId,
+                        sort_order: input ? input.value : 0,
+                    };
+                });
+                const response = await fetch("{% url 'ocean_station:photo_reorder' station.en_name album.id %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken,
+                    },
+                    body: JSON.stringify({ orders }),
+                });
+                if (!response.ok) {
+                    showMessage("排序更新失敗", "danger");
+                } else {
+                    showMessage("排序已更新");
+                    reorderDomBySort();
+                }
+            });
+        }
+
+        if (albumSaveButton) {
+            albumSaveButton.addEventListener("click", async () => {
+                const response = await fetch("{% url 'ocean_station:album_update' station.en_name album.id %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken,
+                    },
+                    body: JSON.stringify({
+                        title: albumTitle ? albumTitle.value : "",
+                        description: albumDescription ? albumDescription.value : "",
+                    }),
+                });
+                if (!response.ok) {
+                    showMessage("相簿更新失敗", "danger");
+                } else {
+                    showMessage("相簿已更新");
+                }
+            });
+        }
+    })();
+</script>
+{% endif %}
+{% endblock %}

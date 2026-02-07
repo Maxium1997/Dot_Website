@@ -1,0 +1,592 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block subtitle %}Ocean Station{% endblock %}
+{% block title %}{{ station.name }}{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'ocean_station:index' %}">Ocean Station</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ station.name }}</li>
+{% endblock %}
+
+{% block body %}
+<style>
+    .station-hero {
+        padding: 2.5rem 0;
+    }
+    .detail-card {
+        background: #ffffff;
+        border-radius: 18px;
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.05);
+        padding: 1.5rem;
+    }
+    .cover-image {
+        width: 100%;
+        border-radius: 16px;
+        object-fit: cover;
+        max-height: 320px;
+    }
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem 1.5rem;
+        margin-top: 1.5rem;
+    }
+    .info-item span {
+        display: block;
+        color: #6b7280;
+        font-size: 0.85rem;
+    }
+    .info-item strong {
+        color: #1f2a37;
+        font-weight: 600;
+    }
+    .station-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem 0.6rem;
+        font-size: 0.85rem;
+    }
+    .station-list span {
+        background: #f1f5f9;
+        border-radius: 999px;
+        padding: 0.2rem 0.6rem;
+    }
+    .service-chip {
+        border: 1px solid transparent;
+        cursor: pointer;
+    }
+    .service-chip.active {
+        background: #e6f0ff;
+        border-color: #c9dcff;
+        color: #0b5ed7;
+    }
+    .os-map-card {
+        background: #ffffff;
+        border-radius: 18px;
+        border: 1px solid rgba(0,0,0,0.05);
+        padding: 1rem;
+        box-shadow: 0 12px 24px rgba(0,0,0,0.05);
+        height: 100%;
+    }
+    .os-map {
+        width: 100%;
+        height: 320px;
+    }
+    .map-base {
+        filter: drop-shadow(0 10px 18px rgba(15, 94, 122, 0.12));
+    }
+    .map-marker {
+        fill: #0f6e8c;
+        stroke: #ffffff;
+        stroke-width: 2;
+    }
+    .map-marker--north { fill: #0f6e8c; }
+    .map-marker--central { fill: #1d9c7c; }
+    .map-marker--south { fill: #e06c3b; }
+    .map-marker--east { fill: #6f6ac7; }
+    .map-label {
+        font-size: 36px;
+        fill: #1f2a37;
+        paint-order: stroke;
+        stroke: #ffffff;
+        stroke-width: 3px;
+        pointer-events: none;
+    }
+    .album-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid rgba(0,0,0,0.05);
+        overflow: hidden;
+        box-shadow: 0 10px 22px rgba(0,0,0,0.05);
+        height: 100%;
+        position: relative;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .album-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 28px rgba(0,0,0,0.08);
+    }
+    .album-thumb {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+    }
+    .album-body {
+        padding: 1rem;
+    }
+    .edit-toggle {
+        border: none;
+        background: transparent;
+        color: #0d6efd;
+        padding: 0;
+    }
+    .edit-toggle i {
+        font-size: 1rem;
+    }
+    .edit-field {
+        display: none;
+    }
+    .edit-mode .edit-field {
+        display: block;
+    }
+    .edit-mode .view-field {
+        display: none;
+    }
+    .album-create {
+        border: 1px dashed rgba(0,0,0,0.15);
+        border-radius: 16px;
+        padding: 1rem;
+    }
+    @media (max-width: 991.98px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<section class="station-hero">
+    <div class="container">
+
+        <div class="mt-3">
+            <a href="{% url 'ocean_station:index' %}" class="text-decoration-none">← 返回驛站列表</a>
+        </div>
+
+        <div class="row g-4 align-items-start">
+            <div class="col-lg-4 d-none d-lg-block">
+                <div class="os-map-card">
+                    <svg class="os-map" id="taiwan-map" viewBox="0 0 658 478" aria-label="Taiwan map">
+                        <image class="map-base" href="{% static 'geo/Taiwan.svg' %}" x="0" y="0" width="658" height="478" preserveAspectRatio="xMidYMid meet"></image>
+                        <g id="map-markers"></g>
+                        <g id="map-labels"></g>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="detail-card">
+                    {% if cover_photo %}
+                        <img class="cover-image" src="{{ cover_photo.image.url }}" alt="{{ station.name }}">
+                    {% endif %}
+                    <div class="d-flex align-items-center gap-2 mt-4">
+                        <h2 class="mb-0 view-field" data-field="name">{{ station.name }}</h2>
+                        {% if request.user.is_staff %}
+                            <button type="button" class="edit-toggle" id="station-edit-toggle" aria-label="Edit">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                    {% if request.user.is_staff %}
+                        <div class="edit-field mt-3" id="station-edit-form">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">名稱</label>
+                                    <input class="form-control" name="name" value="{{ station.name }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">別名</label>
+                                    <input class="form-control" name="alias" value="{{ station.alias }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">區域</label>
+                                    <select class="form-select" name="region">
+                                        {% for region_value, region_label in regions %}
+                                            <option value="{{ region_value }}"{% if station.region == region_value %} selected{% endif %}>
+                                                {{ region_label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">承辦單位</label>
+                                    <select class="form-select" name="operator_id">
+                                        {% for unit in units %}
+                                            <option value="{{ unit.id }}"{% if station.operator_id == unit.id %} selected{% endif %}>
+                                                {{ unit.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">地址</label>
+                                    <input class="form-control" name="address" value="{{ station.address }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">電話</label>
+                                    <input class="form-control" name="phone" value="{{ station.phone }}">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">簡介</label>
+                                    <textarea class="form-control" name="overview" rows="2">{{ station.overview }}</textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">地理特色</label>
+                                    <textarea class="form-control" name="geo_features" rows="2">{{ station.geo_features }}</textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">展示規劃</label>
+                                    <textarea class="form-control" name="exhibit_plan" rows="2">{{ station.exhibit_plan }}</textarea>
+                                </div>
+                                <div class="col-12 d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" id="station-save">儲存</button>
+                                    <button type="button" class="btn btn-outline-secondary" id="station-cancel">取消</button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if station.alias %}
+                        <div class="text-muted view-field" data-field="alias">{{ station.alias }}</div>
+                    {% endif %}
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span>區域</span>
+                            <strong class="view-field" data-field="region_label">{{ station.get_region_display }}</strong>
+                        </div>
+                        <div class="info-item">
+                            <span>承辦單位</span>
+                            <strong class="view-field" data-field="operator_name">{{ station.operator.name }}</strong>
+                        </div>
+                        {% if station.address %}
+                        <div class="info-item">
+                            <span>地址</span>
+                            <strong class="view-field" data-field="address">
+                                {{ station.address }}
+                                <a class="ms-2" data-field="address-link" href="https://www.google.com/maps/search/?api=1&query={{ station.address|urlencode }}" target="_blank" rel="noopener noreferrer">
+                                    導航
+                                </a>
+                            </strong>
+                        </div>
+                        {% endif %}
+                        {% if station.phone %}
+                        <div class="info-item">
+                            <span>聯絡電話</span>
+                            <strong class="view-field" data-field="phone">{{ station.phone }}</strong>
+                        </div>
+                        {% endif %}
+                        <div class="info-item">
+                            <span>簡介</span>
+                            <strong class="view-field" data-field="overview">{{ station.overview|default:"-"|linebreaksbr }}</strong>
+                        </div>
+                        {% if station.geo_features %}
+                        <div class="info-item">
+                            <span>地理特色</span>
+                            <strong class="view-field" data-field="geo_features">{{ station.geo_features }}</strong>
+                        </div>
+                        {% endif %}
+                        {% if station.exhibit_plan %}
+                        <div class="info-item">
+                            <span>展示規劃</span>
+                            <strong class="view-field" data-field="exhibit_plan">{{ station.exhibit_plan }}</strong>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if station.services.all or request.user.is_staff %}
+                        <details class="mt-4" open>
+                            <summary class="fw-bold">服務功能</summary>
+                            {% if request.user.is_staff %}
+                                <div class="station-list mt-2 view-field">
+                                    {% for service in station.services.all %}
+                                        <span>{{ service.get_service_display }}</span>
+                                    {% endfor %}
+                                </div>
+                                <div class="station-list mt-2 edit-field" id="service-chips">
+                                    {% for service_value, service_label in service_choices %}
+                                        <span class="service-chip{% if service_value in service_values %} active{% endif %}" data-service="{{ service_value }}">
+                                            {{ service_label }}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="station-list mt-2">
+                                    {% for service in station.services.all %}
+                                        <span>{{ service.get_service_display }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </details>
+                    {% endif %}
+                    {% if station.attractions.all %}
+                        <details class="mt-3" open>
+                            <summary class="fw-bold">周邊景點</summary>
+                            <div class="station-list mt-2">
+                                {% for attraction in station.attractions.all %}
+                                    <a href="https://www.google.com/search?q={{ attraction.name|urlencode }}" target="_blank" rel="noopener noreferrer">
+                                        <span>{{ attraction.name }}</span>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </details>
+                    {% endif %}
+                </div>
+
+                <div class="mt-4">
+                    <h4 class="mb-3">相簿</h4>
+                    <div class="row g-3" id="album-grid">
+                        {% for album in station.albums.all %}
+                            <div class="col-6 col-lg-4">
+                                <div class="album-card">
+                                    {% with album.photos.all|first as album_photo %}
+                                        {% if album_photo %}
+                                            <img class="album-thumb" src="{{ album_photo.image.url }}" alt="{{ album.title }}">
+                                        {% endif %}
+                                    {% endwith %}
+                                    <div class="album-body">
+                                        <div class="fw-bold">{{ album.title }}</div>
+                                        {% if album.description %}
+                                            <div class="small text-muted">{{ album.description|truncatechars:60 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <a class="stretched-link" href="{% url 'ocean_station:album_detail' station.en_name album.id %}"></a>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="col-12">
+                                {% if request.user.is_staff %}
+                                    <div class="album-create" id="album-empty">
+                                        <div class="fw-bold">點擊建立相簿</div>
+                                        <div class="small text-muted mt-1">建立後可上傳照片。</div>
+                                        <div class="mt-3">
+                                            <input class="form-control mb-2" id="album-title" placeholder="相簿名稱">
+                                            <textarea class="form-control mb-2" id="album-description" rows="2" placeholder="相簿描述"></textarea>
+                                            <button type="button" class="btn btn-primary" id="album-create-button">建立</button>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="detail-card text-muted">尚未建立相簿。</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{{ map_station|json_script:"station-map-data" }}
+<script>
+    (function () {
+        const dataElement = document.getElementById("station-map-data");
+        const mapData = dataElement ? JSON.parse(dataElement.textContent || "null") : null;
+        const svg = document.getElementById("taiwan-map");
+        const markersGroup = document.getElementById("map-markers");
+        const labelsGroup = document.getElementById("map-labels");
+        if (!svg || !markersGroup || !labelsGroup || !mapData) {
+            return;
+        }
+
+        const viewBox = svg.viewBox.baseVal;
+        const width = viewBox.width;
+        const height = viewBox.height;
+
+        const latMin = 21.7;
+        const latMax = 25.4;
+        const lngMin = 119.3;
+        const lngMax = 122.1;
+        const xMin = 125.85;
+        const xMax = 462.12;
+        const yMin = 10.15;
+        const yMax = 454.77;
+
+        function project(lat, lng) {
+            const x = xMin + ((lng - lngMin) / (lngMax - lngMin)) * (xMax - xMin);
+            const y = yMin + ((latMax - lat) / (latMax - latMin)) * (yMax - yMin);
+            return { x, y };
+        }
+
+        const lat = parseFloat(mapData.latitude);
+        const lng = parseFloat(mapData.longitude);
+        if (Number.isNaN(lat) || Number.isNaN(lng)) {
+            return;
+        }
+        const point = project(lat, lng);
+        const regionAdjust = {
+            central: { dx: 0, dy: 10 },
+            south: { dx: 0, dy: 18 }
+        };
+        const adjust = regionAdjust[mapData.region] || { dx: 0, dy: 0 };
+        const adjustedPoint = { x: point.x + adjust.dx, y: point.y + adjust.dy };
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        const regionClass = mapData.region ? `map-marker--${mapData.region}` : "";
+        circle.setAttribute("class", `map-marker ${regionClass}`.trim());
+        circle.setAttribute("cx", adjustedPoint.x.toFixed(2));
+        circle.setAttribute("cy", adjustedPoint.y.toFixed(2));
+        circle.setAttribute("r", "4");
+        markersGroup.appendChild(circle);
+
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        const labelOffsets = {
+            north: { dx: 0, dy: -10, anchor: "middle" },
+            east: { dx: 8, dy: 0, anchor: "start" },
+            central: { dx: -8, dy: 0, anchor: "end" },
+            south: { dx: -8, dy: 0, anchor: "end" }
+        };
+        const regionOffset = labelOffsets[mapData.region] || { dx: 8, dy: 0, anchor: "start" };
+        label.setAttribute("class", "map-label");
+        label.setAttribute("x", (adjustedPoint.x + regionOffset.dx).toFixed(2));
+        label.setAttribute("y", (adjustedPoint.y + regionOffset.dy).toFixed(2));
+        label.setAttribute("text-anchor", regionOffset.anchor);
+        label.textContent = mapData.name;
+        labelsGroup.appendChild(label);
+    })();
+</script>
+
+{% if request.user.is_staff %}
+<script>
+    (function () {
+        const editToggle = document.getElementById("station-edit-toggle");
+        const editForm = document.getElementById("station-edit-form");
+        const saveButton = document.getElementById("station-save");
+        const cancelButton = document.getElementById("station-cancel");
+        const csrfToken = "{{ csrf_token }}";
+        const serviceChips = document.getElementById("service-chips");
+
+        if (!editToggle || !editForm) {
+            return;
+        }
+
+        editToggle.addEventListener("click", () => {
+            editForm.closest(".detail-card").classList.toggle("edit-mode");
+        });
+
+        cancelButton.addEventListener("click", () => {
+            editForm.closest(".detail-card").classList.remove("edit-mode");
+        });
+
+        saveButton.addEventListener("click", async () => {
+            const payload = {};
+            editForm.querySelectorAll("[name]").forEach((field) => {
+                payload[field.name] = field.value;
+            });
+            if (serviceChips) {
+                payload.services = Array.from(serviceChips.querySelectorAll(".service-chip.active"))
+                    .map((node) => node.dataset.service);
+            }
+
+            const escapeHtml = (input) => String(input || "").replace(/[&<>"']/g, (ch) => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                "\"": "&quot;",
+                "'": "&#39;"
+            }[ch]));
+
+            const response = await fetch("{% url 'ocean_station:update' station.en_name %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken,
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                alert("更新失敗");
+                return;
+            }
+
+            const data = await response.json();
+            document.querySelector('[data-field="name"]').textContent = data.name;
+            const aliasNode = document.querySelector('[data-field="alias"]');
+            if (aliasNode) {
+                if (data.alias) {
+                    aliasNode.textContent = data.alias;
+                    aliasNode.classList.remove("d-none");
+                } else {
+                    aliasNode.textContent = "";
+                    aliasNode.classList.add("d-none");
+                }
+            }
+            document.querySelector('[data-field="region_label"]').textContent = data.region_label;
+            document.querySelector('[data-field="operator_name"]').textContent = data.operator_name;
+            const addressNode = document.querySelector('[data-field="address"]');
+            if (addressNode) {
+                addressNode.firstChild.textContent = data.address || "";
+                const addressLink = addressNode.querySelector('[data-field="address-link"]');
+                if (addressLink) {
+                    addressLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.address || "")}`;
+                }
+            }
+            const phoneNode = document.querySelector('[data-field="phone"]');
+            if (phoneNode) {
+                phoneNode.textContent = data.phone || "";
+            }
+            const overviewNode = document.querySelector('[data-field="overview"]');
+            if (overviewNode) {
+                const safeText = escapeHtml(data.overview || "-").replace(/\n/g, "<br>");
+                overviewNode.innerHTML = safeText;
+            }
+            const geoNode = document.querySelector('[data-field="geo_features"]');
+            if (geoNode) {
+                geoNode.textContent = data.geo_features || "";
+            }
+            const exhibitNode = document.querySelector('[data-field="exhibit_plan"]');
+            if (exhibitNode) {
+                exhibitNode.textContent = data.exhibit_plan || "";
+            }
+
+            editForm.closest(".detail-card").classList.remove("edit-mode");
+        });
+
+        const albumCreateButton = document.getElementById("album-create-button");
+        if (albumCreateButton) {
+            albumCreateButton.addEventListener("click", async () => {
+                const title = document.getElementById("album-title").value;
+                const description = document.getElementById("album-description").value;
+                const response = await fetch("{% url 'ocean_station:album_create' station.en_name %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken,
+                    },
+                    body: JSON.stringify({ title, description }),
+                });
+
+                if (!response.ok) {
+                    alert("建立失敗");
+                    return;
+                }
+
+                const data = await response.json();
+                const grid = document.getElementById("album-grid");
+                if (grid) {
+                    const wrapper = document.createElement("div");
+                    wrapper.className = "col-6 col-lg-4";
+                    wrapper.innerHTML = `
+                        <div class="album-card">
+                            <div class="album-body">
+                                <div class="fw-bold"></div>
+                                <div class="small text-muted"></div>
+                            </div>
+                        </div>
+                    `;
+                    wrapper.querySelector(".fw-bold").textContent = data.title;
+                    if (data.description) {
+                        wrapper.querySelector(".small").textContent = data.description;
+                    } else {
+                        wrapper.querySelector(".small").remove();
+                    }
+                    grid.appendChild(wrapper);
+                }
+                const emptyBlock = document.getElementById("album-empty");
+                if (emptyBlock) {
+                    emptyBlock.remove();
+                }
+            });
+        }
+
+        if (serviceChips) {
+            serviceChips.addEventListener("click", (event) => {
+                const chip = event.target.closest(".service-chip");
+                if (!chip) {
+                    return;
+                }
+                chip.classList.toggle("active");
+            });
+        }
+    })();
+</script>
+{% endif %}
+{% endblock %}
