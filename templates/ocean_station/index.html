@@ -1,0 +1,445 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block subtitle %}Ocean Station{% endblock %}
+{% block title %}海洋驛站{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item active" aria-current="page">Ocean Station</li>
+{% endblock %}
+
+{% block body %}
+<style>
+    .os-hero {
+        position: relative;
+        padding: 3.5rem 0 2.5rem;
+        overflow: hidden;
+    }
+    .os-hero::before {
+        content: "";
+        position: absolute;
+        top: -120px;
+        right: -120px;
+        width: 320px;
+        height: 320px;
+        background: radial-gradient(circle, rgba(0,140,200,0.15), transparent 60%);
+        border-radius: 50%;
+    }
+    .os-hero::after {
+        content: "";
+        position: absolute;
+        bottom: -140px;
+        left: -140px;
+        width: 360px;
+        height: 360px;
+        background: radial-gradient(circle, rgba(0,60,120,0.12), transparent 60%);
+        border-radius: 50%;
+    }
+    .os-title {
+        font-size: clamp(2rem, 2.8vw, 3.2rem);
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+    .os-subtitle {
+        color: #4b5a6a;
+        max-width: 720px;
+    }
+    .os-stat {
+        background: #ffffff;
+        border: 1px solid rgba(0,0,0,0.05);
+        border-radius: 16px;
+        padding: 1rem 1.25rem;
+        box-shadow: 0 12px 24px rgba(0,0,0,0.05);
+    }
+    .os-filter {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid rgba(0,0,0,0.05);
+        padding: 1rem 1.25rem;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.04);
+    }
+    .os-map-card {
+        background: #ffffff;
+        border-radius: 18px;
+        border: 1px solid rgba(0,0,0,0.05);
+        padding: 1.25rem;
+        box-shadow: 0 12px 24px rgba(0,0,0,0.05);
+        height: 100%;
+        min-height: 360px;
+    }
+    .os-map-title {
+        font-weight: 600;
+        color: #1f2a37;
+    }
+    .os-map-wrap {
+        position: relative;
+        background: radial-gradient(circle at 20% 20%, rgba(0, 132, 189, 0.08), transparent 40%),
+            radial-gradient(circle at 80% 70%, rgba(15, 94, 122, 0.12), transparent 45%);
+        border-radius: 16px;
+        padding: 0.5rem;
+    }
+    .os-map {
+        width: 100%;
+        height: 320px;
+    }
+    .map-base {
+        filter: drop-shadow(0 10px 18px rgba(15, 94, 122, 0.12));
+    }
+    .map-marker {
+        fill: #0f6e8c;
+        stroke: #ffffff;
+        stroke-width: 2;
+        cursor: pointer;
+    }
+    .map-marker--north { fill: #0f6e8c; }
+    .map-marker--central { fill: #1d9c7c; }
+    .map-marker--south { fill: #e06c3b; }
+    .map-marker--east { fill: #6f6ac7; }
+    .map-label {
+        font-size: 20px;
+        fill: #1f2a37;
+        paint-order: stroke;
+        stroke: #ffffff;
+        stroke-width: 3px;
+        pointer-events: none;
+    }
+    .map-legend {
+        display: flex;
+        gap: 0.75rem;
+        font-size: 0.85rem;
+        color: #5b6775;
+        flex-wrap: wrap;
+    }
+    .map-legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .map-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #0f6e8c;
+        display: inline-block;
+    }
+    .map-tooltip {
+        position: absolute;
+        padding: 0.35rem 0.6rem;
+        background: #1f2a37;
+        color: #ffffff;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        pointer-events: none;
+        transform: translate(-50%, -130%);
+        opacity: 0;
+        transition: opacity 0.15s ease;
+        white-space: nowrap;
+    }
+    .map-tooltip.is-visible {
+        opacity: 1;
+    }
+    .station-card {
+        background: #ffffff;
+        border-radius: 18px;
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.05);
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .station-cover {
+        position: relative;
+        background: linear-gradient(135deg, #0f5f7a, #1aa6b7);
+        color: #fff;
+        padding: 1.5rem;
+        min-height: 140px;
+    }
+    .station-tag {
+        display: inline-block;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.2);
+        font-size: 0.75rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+    .station-body {
+        padding: 1.25rem 1.5rem 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .station-meta {
+        color: #5b6775;
+        font-size: 0.92rem;
+    }
+    .station-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem 0.6rem;
+        font-size: 0.85rem;
+    }
+    .station-list span {
+        background: #f1f5f9;
+        border-radius: 999px;
+        padding: 0.2rem 0.6rem;
+    }
+    .station-actions {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+    .station-actions a {
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .os-empty {
+        background: #ffffff;
+        border-radius: 18px;
+        border: 1px dashed rgba(0,0,0,0.15);
+        padding: 2.5rem;
+        text-align: center;
+        color: #6b7280;
+    }
+</style>
+
+<section class="os-hero">
+    <div class="container">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <div class="os-title">Ocean Station</div>
+                <p class="os-subtitle mt-3">
+                    海洋驛站整合海洋文化、產業、保育與安全展示，提供民眾休憩與學習的沿海節點。
+                </p>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="os-map-card">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="os-map-title">台灣海洋驛站分布</div>
+                        <div class="map-legend">
+                            <span><i class="map-dot"></i> 驛站座標</span>
+                        </div>
+                    </div>
+                    <div class="os-map-wrap">
+                        <svg class="os-map" id="taiwan-map" viewBox="0 0 658 478" aria-label="Taiwan map">
+                            <image class="map-base" href="{% static 'geo/Taiwan.svg' %}" x="0" y="0" width="658" height="478" preserveAspectRatio="xMidYMid meet"></image>
+                            <g id="map-markers"></g>
+                            <g id="map-labels"></g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="os-filter mt-4">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-12">
+                    <label class="form-label">搜尋條件</label>
+                </div>
+                <div class="col-12 col-md-5">
+                    <input type="text" name="q" class="form-control" placeholder="輸入驛站或別名" value="{{ filters.q }}">
+                </div>
+                <div class="col-6 col-md-3">
+                    <select name="region" class="form-select">
+                        <option value="">全部區域</option>
+                        {% for region_value, region_label in regions %}
+                            <option value="{{ region_value }}"{% if filters.region == region_value %} selected{% endif %}>
+                                {{ region_label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <select name="service" class="form-select">
+                        <option value="">全部服務</option>
+                        {% for service_value, service_label in services %}
+                            <option value="{{ service_value }}"{% if filters.service == service_value %} selected{% endif %}>
+                                {{ service_label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-1">
+                    <button class="btn btn-primary w-100" type="submit">篩選</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<section class="pb-5">
+    <div class="container">
+        <div class="row g-4">
+            {% if stations %}
+                {% for station in stations %}
+                    <div class="col-md-6 col-xl-4">
+                        <div class="station-card">
+                            <div class="station-cover">
+                                <span class="station-tag">{{ station.get_region_display }}</span>
+                                <h4 class="mt-3 mb-1">{{ station.name }}</h4>
+                                {% if station.alias %}
+                                    <div class="small">{{ station.alias }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="station-body">
+                                <div class="station-meta">
+                                    <div>承辦單位：{{ station.operator.name }}</div>
+                                    {% if station.address %}<div>地址：{{ station.address }}</div>{% endif %}
+                                    {% if station.phone %}<div>電話：{{ station.phone }}</div>{% endif %}
+                                </div>
+                                {% if station.overview %}
+                                    <div class="small text-muted">{{ station.overview|truncatechars:80 }}</div>
+                                {% endif %}
+                                {% if station.services.all %}
+                                    <div>
+                                        <div class="small fw-bold">服務功能</div>
+                                        <div class="station-list">
+                                            {% for service in station.services.all %}
+                                                <span>{{ service.get_service_display }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                {% if station.attractions.all %}
+                                    <div>
+                                        <div class="small fw-bold">周邊景點</div>
+                                        <div class="station-list">
+                                            {% for attraction in station.attractions.all %}
+                                                <span>{{ attraction.name }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                <div class="station-actions">
+                                    <span class="text-muted small">相簿 {{ station.albums.count }} 組</span>
+                                    <a href="#" class="text-primary">查看詳情</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="os-empty">
+                        目前尚未建立海洋驛站資料，請先從後台匯入或新增。
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+{{ map_stations|json_script:"station-map-data" }}
+<script>
+    (function () {
+        const dataElement = document.getElementById("station-map-data");
+        const mapData = dataElement ? JSON.parse(dataElement.textContent || "[]") : [];
+        const svg = document.getElementById("taiwan-map");
+        const markersGroup = document.getElementById("map-markers");
+        const labelsGroup = document.getElementById("map-labels");
+        const mapWrap = document.querySelector(".os-map-wrap");
+        if (!svg || !markersGroup || !labelsGroup || !mapWrap) {
+            return;
+        }
+
+        const viewBox = svg.viewBox.baseVal;
+        const width = viewBox.width;
+        const height = viewBox.height;
+
+        const latMin = 21.7;
+        const latMax = 25.4;
+        const lngMin = 119.3;
+        const lngMax = 122.1;
+        const xMin = 125.85;
+        const xMax = 462.12;
+        const yMin = 10.15;
+        const yMax = 454.77;
+
+        function project(lat, lng) {
+            const x = xMin + ((lng - lngMin) / (lngMax - lngMin)) * (xMax - xMin);
+            const y = yMin + ((latMax - lat) / (latMax - latMin)) * (yMax - yMin);
+            return { x, y };
+        }
+
+        mapData.forEach((station) => {
+            const lat = parseFloat(station.latitude);
+            const lng = parseFloat(station.longitude);
+            if (Number.isNaN(lat) || Number.isNaN(lng)) {
+                return;
+            }
+            const point = project(lat, lng);
+            const regionAdjust = {
+                central: { dx: 0, dy: 10 },
+                south: { dx: 0, dy: 18 }
+            };
+            const adjust = regionAdjust[station.region] || { dx: 0, dy: 0 };
+            const adjustedPoint = { x: point.x + adjust.dx, y: point.y + adjust.dy };
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            const regionClass = station.region ? `map-marker--${station.region}` : "";
+            circle.setAttribute("class", `map-marker ${regionClass}`.trim());
+            circle.setAttribute("cx", adjustedPoint.x.toFixed(2));
+            circle.setAttribute("cy", adjustedPoint.y.toFixed(2));
+            circle.setAttribute("r", "5");
+            markersGroup.appendChild(circle);
+
+            const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            const labelOffsets = {
+                north: { dx: 0, dy: -12, anchor: "middle" },
+                east: { dx: 10, dy: 0, anchor: "start" },
+                central: { dx: -10, dy: 0, anchor: "end" },
+                south: { dx: -10, dy: 0, anchor: "end" }
+            };
+            const regionOffset = labelOffsets[station.region] || { dx: 10, dy: 0, anchor: "start" };
+            label.setAttribute("class", "map-label");
+            label.setAttribute("x", (adjustedPoint.x + regionOffset.dx).toFixed(2));
+            label.setAttribute("y", (adjustedPoint.y + regionOffset.dy).toFixed(2));
+            label.setAttribute("text-anchor", regionOffset.anchor);
+            label.textContent = station.name;
+            labelsGroup.appendChild(label);
+        });
+
+        const labels = Array.from(labelsGroup.querySelectorAll("text")).map((node, idx) => ({
+            node,
+            index: idx
+        }));
+
+        labels.sort((a, b) => {
+            const ay = parseFloat(a.node.getAttribute("y"));
+            const by = parseFloat(b.node.getAttribute("y"));
+            return ay - by;
+        });
+
+        labels.forEach((label, idx) => {
+            let y = parseFloat(label.node.getAttribute("y"));
+            const x = parseFloat(label.node.getAttribute("x"));
+            if (Number.isNaN(y) || Number.isNaN(x)) {
+                return;
+            }
+            for (let i = 0; i < idx; i++) {
+                const prev = labels[i].node;
+                const prevBox = prev.getBBox();
+                let box = label.node.getBBox();
+                const overlap =
+                    box.x < prevBox.x + prevBox.width &&
+                    box.x + box.width > prevBox.x &&
+                    box.y < prevBox.y + prevBox.height &&
+                    box.y + box.height > prevBox.y;
+                if (overlap) {
+                    y = prevBox.y + prevBox.height + 6;
+                    label.node.setAttribute("y", y.toFixed(2));
+                    if (idx % 2 === 0) {
+                        label.node.setAttribute("x", (x + 8).toFixed(2));
+                    }
+                    box = label.node.getBBox();
+                }
+            }
+        });
+    })();
+</script>
+{% endblock %}

@@ -68,16 +68,15 @@ INSTALLED_APPS = [
     "cloudinary",
     "cloudinary_storage",
 
+    'website',
     'ckeditor',
     'registration.apps.RegistrationConfig',
-    'website',
     'organization',
-    'business',
-    'market_place',
     'coast_guard_mart',
     'playground',
     'line_bot',
     'badminton_court_management',
+    'ocean_station',
 ]
 
 SITE_ID = 1

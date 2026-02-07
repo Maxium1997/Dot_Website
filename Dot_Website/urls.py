@@ -23,6 +23,8 @@ from django.conf.urls.static import static
 import Dot_Website.security_signals  # noqa: F401, E402
 
 urlpatterns = [
+    path('', include('website.urls')),
+
     path('admin/', admin.site.urls),
 
     # 優先處理 allauth (LINE 登入相關)
@@ -33,14 +35,12 @@ urlpatterns = [
 
     # 處理 Django 內建登入 (如果 registration 沒寫 login，就由這裡提供)
     path('accounts/', include("django.contrib.auth.urls")),
-    path('', include('website.urls')),
     path('', include('organization.urls')),
-    path('', include('business.urls')),
-    path('', include('market_place.urls')),
     path('', include('playground.urls')),
     path('coast_guard_mart/', include('coast_guard_mart.urls')),
     path('line_bot/', include('line_bot.urls')),
     path('badminton_court_management/', include('badminton_court_management.urls')),
+    path('ocean_station/', include('ocean_station.urls')),
 ]+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 

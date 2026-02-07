@@ -11,9 +11,32 @@ Playground
 {% endblock %}
 
 {% block body %}
-<div class="container">
-    <div class="row justify-content-center">
-        <img src="{% static 'pic/playground/LINE_Bot_QR_code.png' %}">
+<div class="container py-5" style="max-width: 720px;">
+    <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 18px;">
+        <div class="card-body p-4 text-center">
+            <div class="mb-3 text-muted small fw-bold" style="letter-spacing: 1px;">LINE OFFICIAL</div>
+            <h1 class="h4 fw-bold mb-3">Add Our LINE Bot</h1>
+            <p class="text-muted mb-4">Scan the QR code below or tap the button to add us as a friend.</p>
+
+            <div class="d-flex justify-content-center mb-4">
+                <div class="bg-white p-3 shadow-sm" style="border-radius: 16px;">
+                    <img
+                        src="{% static 'pic/playground/452ylnmr.png' %}"
+                        alt="LINE Bot QR Code"
+                        style="width: 220px; height: 220px; object-fit: contain;"
+                    >
+                </div>
+            </div>
+
+            <a
+                class="btn btn-primary rounded-pill px-4"
+                href="https://lin.ee/B69Mm7O"
+                target="_blank"
+                rel="noopener"
+            >
+                Open QR Link
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}
