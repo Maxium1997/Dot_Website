@@ -359,6 +359,7 @@
                             </div>
                         {% endfor %}
                     </div>
+                    <div class="ajax-messages mt-3" id="ajax-messages"></div>
                 </div>
             </div>
         </div>
@@ -442,6 +443,19 @@
         const cancelButton = document.getElementById("station-cancel");
         const csrfToken = "{{ csrf_token }}";
         const serviceChips = document.getElementById("service-chips");
+        const messageHost = document.getElementById("ajax-messages");
+
+        const showMessage = (text, kind = "success") => {
+            if (!messageHost) {
+                return;
+            }
+            messageHost.innerHTML = `
+                <div class="alert alert-${kind} py-2" role="alert">${text}</div>
+            `;
+            setTimeout(() => {
+                messageHost.innerHTML = "";
+            }, 2500);
+        };
 
         if (!editToggle || !editForm) {
             return;
@@ -545,35 +559,12 @@
                 });
 
                 if (!response.ok) {
-                    alert("建立失敗");
+                    showMessage("建立失敗", "danger");
                     return;
                 }
 
-                const data = await response.json();
-                const grid = document.getElementById("album-grid");
-                if (grid) {
-                    const wrapper = document.createElement("div");
-                    wrapper.className = "col-6 col-lg-4";
-                    wrapper.innerHTML = `
-                        <div class="album-card">
-                            <div class="album-body">
-                                <div class="fw-bold"></div>
-                                <div class="small text-muted"></div>
-                            </div>
-                        </div>
-                    `;
-                    wrapper.querySelector(".fw-bold").textContent = data.title;
-                    if (data.description) {
-                        wrapper.querySelector(".small").textContent = data.description;
-                    } else {
-                        wrapper.querySelector(".small").remove();
-                    }
-                    grid.appendChild(wrapper);
-                }
-                const emptyBlock = document.getElementById("album-empty");
-                if (emptyBlock) {
-                    emptyBlock.remove();
-                }
+                showMessage("建立相簿");
+                setTimeout(() => window.location.reload(), 10);
             });
         }
 
