@@ -92,6 +92,7 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',
     'Dot_Website.security_middleware.SecurityAuditMiddleware',   # NIST/ISO 稽核日誌  # 暫時註解
     'django.contrib.messages.middleware.MessageMiddleware',
+    'Dot_Website.debug_middleware.CaptureExceptionMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'csp.middleware.CSPMiddleware',     # CSP
     'Dot_Website.security_middleware.SecurityHeadersMiddleware',  # 安全標頭  # 暫時註解
@@ -205,6 +206,8 @@ CONTENT_SECURITY_POLICY = {
             "'self'",
             "https://access.line.me",
             "https://api.line.me",
+            "https://cdn.jsdelivr.net",
+            "https://cdnjs.cloudflare.com",
         ),
     }
 }
@@ -324,6 +327,9 @@ SOCIALACCOUNT_FORMS = {
 SOCIALACCOUNT_ADAPTER = 'registration.adapter.MySocialAccountAdapter'
 # 登入後要跳轉的 URL (例如首頁或預約頁面)
 LOGIN_REDIRECT_URL = '/'
+
+# DEBUG: show traceback on 500 page for staff users when enabled
+SHOW_ERROR_TRACEBACK = os.getenv('SHOW_ERROR_TRACEBACK', 'False') == 'True'
 
 # 如果需要，也可以設定登出後的跳轉 URL
 LOGOUT_REDIRECT_URL = '/'

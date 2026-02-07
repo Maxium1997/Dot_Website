@@ -82,7 +82,7 @@ Playground
     <div class="row g-4 justify-content-center">
 
         <div class="col-lg-4 col-md-6 col-sm-12">
-            <a href="{% url 'karaoke' %}" class="card feature-card">
+            <a href="{% url 'playground:karaoke' %}" class="card feature-card">
                 <div class="card-img-wrapper">
                     <img src="{% static 'pic/playground/karaoke.jpg' %}" alt="Karaoke">
                 </div>
@@ -106,7 +106,7 @@ Playground
         </div>
 
         <div class="col-lg-4 col-md-6 col-sm-12">
-            <a href="{% url 'url_to_qr_code' %}" class="card feature-card">
+            <a href="{% url 'playground:url_to_qr_code' %}" class="card feature-card">
                 <div class="card-img-wrapper">
                     <img src="{% static 'pic/playground/scan_qr-code.jpg' %}" alt="QR Code">
                 </div>

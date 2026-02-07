@@ -80,6 +80,12 @@
         <div class="col-lg-6 col-md-8 col-sm-11">
             <div class="confirm-glass-card text-center" data-aos="fade-up">
                 <h1 class="confirm-title">500</h1>
+                {% if error_traceback %}
+                    <div class="text-start mt-4">
+                        <div class="small text-muted mb-2">Traceback (staff only)</div>
+                        <pre class="small bg-light p-3 rounded" style="white-space: pre-wrap;">{{ error_traceback }}</pre>
+                    </div>
+                {% endif %}
 
                 <div class="d-flex flex-column align-items-center gap-3">
                     <button type="button" class="btn-login" onclick="history.back()">

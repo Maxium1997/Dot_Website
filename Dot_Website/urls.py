@@ -53,7 +53,10 @@ def error_404(request, exception=None):
 
 
 def error_500(request):
-    return render(request, "500.html", status=500)
+    context = {}
+    if getattr(settings, "SHOW_ERROR_TRACEBACK", False) and request.user.is_staff:
+        context["error_traceback"] = getattr(request, "_error_traceback", "")
+    return render(request, "500.html", context=context, status=500)
 
 
 handler403 = error_403

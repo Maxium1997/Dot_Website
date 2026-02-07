@@ -28,18 +28,27 @@ def index(request):
 
     stations = stations.distinct().order_by("name")
 
-    map_stations = (
+    map_stations = []
+    for station in (
         Station.objects.exclude(latitude__isnull=True)
         .exclude(longitude__isnull=True)
         .values("name", "latitude", "longitude", "region")
         .order_by("name")
-    )
+    ):
+        map_stations.append(
+            {
+                "name": station["name"],
+                "latitude": float(station["latitude"]),
+                "longitude": float(station["longitude"]),
+                "region": station["region"],
+            }
+        )
 
     context = {
         "stations": stations,
         "regions": Station.REGION_CHOICES,
         "services": StationService.SERVICE_CHOICES,
-        "map_stations": list(map_stations),
+        "map_stations": map_stations,
         "filters": {
             "q": query,
             "region": region,
