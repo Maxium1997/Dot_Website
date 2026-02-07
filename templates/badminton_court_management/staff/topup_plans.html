@@ -1,5 +1,15 @@
 {% extends "base.html" %}
 
+{% block subtitle %}
+Topup Plan
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'badminton_court_management:booking_page' %}" class="text-decoration-none text-muted">Booking</a></li>
+<li class="breadcrumb-item"><a href="{% url 'badminton_court_management:topup_page' %}" class="text-decoration-none text-muted">儲值</a></li>
+<li class="breadcrumb-item active" aria-current="page">儲值方案管理</li>
+{% endblock %}
+
 {% block body %}
 <div class="container-fluid py-4">
     <div class="row g-3">
@@ -91,9 +101,12 @@
                                 <th>方案名稱</th>
                                 <th>金額</th>
                                 <th>點數</th>
+                                <th>購買人數</th>
                                 <th>推薦</th>
                                 <th>活動時間</th>
+                                <th>失效時間</th>
                                 <th>狀態</th>
+                                <th class="text-end"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -102,17 +115,31 @@
                                 <td>{{ plan.name }}</td>
                                 <td>NT$ {{ plan.amount }}</td>
                                 <td>{{ plan.points }}</td>
+                                <td>{{ plan.purchase_count }}</td>
                                 <td>{% if plan.is_recommended %}是{% else %}否{% endif %}</td>
                                 <td>
-                                    {% if plan.active_start %}{{ plan.active_start }}{% else %}-{% endif %}
+                                    {% if plan.active_start %}{{ plan.active_start|date:"Y/n/j" }}<br>{{ plan.active_start|date:"H:i" }}{% else %}-{% endif %}
                                     <br>
-                                    {% if plan.active_end %}{{ plan.active_end }}{% else %}-{% endif %}
+                                    {% if plan.active_end %}{{ plan.active_end|date:"Y/n/j" }}<br>{{ plan.active_end|date:"H:i" }}{% else %}-{% endif %}
+                                </td>
+                                <td>
+                                    {% if plan.deactivated_at %}{{ plan.deactivated_at|date:"Y/n/j" }}<br>{{ plan.deactivated_at|date:"H:i" }}{% else %}-{% endif %}
                                 </td>
                                 <td>{% if plan.is_active %}啟用{% else %}停用{% endif %}</td>
+                                <td class="text-end">
+                                    {% if plan.is_active %}
+                                    <form method="post" action="{% url 'badminton_court_management:staff_topup_plan_deactivate' plan.id %}?gym_id={{ selected_gym.id }}">
+                                        {% csrf_token %}
+                                        <button class="btn btn-sm btn-outline-danger">停用</button>
+                                    </form>
+                                    {% else %}
+                                    <span class="text-muted small">-</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">尚未建立方案</td>
+                                <td colspan="9" class="text-center text-muted py-4">尚未建立方案</td>
                             </tr>
                             {% endfor %}
                         </tbody>

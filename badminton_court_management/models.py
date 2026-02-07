@@ -28,12 +28,12 @@ class Court(models.Model):
 class MemberWallet(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='wallets'  # 改為複數，因為一個 user 有多個錢包
     )
     gym = models.ForeignKey(
         Gym,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='member_wallets'
     )
     points = models.PositiveIntegerField(default=0, verbose_name="可用點數")
@@ -56,7 +56,7 @@ class Booking(models.Model):
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
+        on_delete=models.PROTECT
     )
     court = models.ForeignKey(Court, on_delete=models.CASCADE)
     booking_date = models.DateField(verbose_name="預約日期")
@@ -76,7 +76,7 @@ class Booking(models.Model):
 
 # --- 點數流水帳 ---
 class PointLog(models.Model):
-    wallet = models.ForeignKey(MemberWallet, on_delete=models.CASCADE, related_name='logs')
+    wallet = models.ForeignKey(MemberWallet, on_delete=models.PROTECT, related_name='logs')
     amount = models.IntegerField(verbose_name="變動點數")
     reason = models.CharField(max_length=100, verbose_name="變動原因")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -84,7 +84,7 @@ class PointLog(models.Model):
 
 # --- 儲值方案 (由球館管理者定義) ---
 class TopupPlan(models.Model):
-    gym = models.ForeignKey(Gym, on_delete=models.CASCADE, related_name='topup_plans')
+    gym = models.ForeignKey(Gym, on_delete=models.PROTECT, related_name='topup_plans')
     name = models.CharField(max_length=50, verbose_name="方案名稱")
     amount = models.PositiveIntegerField(verbose_name="支付金額 (TWD)")
     points = models.PositiveIntegerField(verbose_name="獲得點數")
@@ -92,6 +92,7 @@ class TopupPlan(models.Model):
     is_recommended = models.BooleanField(default=False, verbose_name="推薦方案")
     active_start = models.DateTimeField(null=True, blank=True, verbose_name="活動開始時間")
     active_end = models.DateTimeField(null=True, blank=True, verbose_name="活動結束時間")
+    deactivated_at = models.DateTimeField(null=True, blank=True, verbose_name="失效時間")
 
     def __str__(self):
         return f"{self.gym.name} - {self.name} (${self.amount})"
@@ -108,9 +109,9 @@ class TopupOrder(models.Model):
     ]
 
     order_id = models.CharField(max_length=50, unique=True, verbose_name="訂單編號")
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    wallet = models.ForeignKey(MemberWallet, on_delete=models.CASCADE)
-    plan = models.ForeignKey(TopupPlan, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    wallet = models.ForeignKey(MemberWallet, on_delete=models.PROTECT)
+    plan = models.ForeignKey(TopupPlan, on_delete=models.PROTECT, null=True)
 
     amount = models.IntegerField(verbose_name="實際支付金額")
     points = models.IntegerField(verbose_name="實際獲得點數")
@@ -125,7 +126,7 @@ class TopupOrder(models.Model):
 
 # --- 訂單歷程紀錄 (狀態機日誌) ---
 class TopupOrderLog(models.Model):
-    order = models.ForeignKey(TopupOrder, on_delete=models.CASCADE, related_name='logs')
+    order = models.ForeignKey(TopupOrder, on_delete=models.PROTECT, related_name='logs')
     from_status = models.CharField(max_length=15, verbose_name="原狀態")
     to_status = models.CharField(max_length=15, verbose_name="新狀態")
     operator = models.CharField(max_length=50, default="System", verbose_name="操作者")
@@ -152,12 +153,12 @@ class GymStaff(models.Model):
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='gym_roles'
     )
     gym = models.ForeignKey(
         Gym,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='staff_roles'
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_CLERK)

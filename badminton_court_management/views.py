@@ -3,6 +3,7 @@ import pytz
 import uuid
 import traceback
 from django.db import transaction, models
+from django.db.models import Count, Q
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.http import JsonResponse, HttpResponse
@@ -23,11 +24,9 @@ from allauth.socialaccount.helpers import complete_social_login
 from Dot_Website.utils import send_line_notification
 
 from linebot import LineBotApi
-from linebot.models import FlexSendMessage, TextSendMessage
 
 from .models import Court, Gym, MemberWallet, Booking
 from .models import TopupPlan, TopupOrder, TopupOrderLog, PointLog, GymStaff
-from .utils import get_booking_flex_message
 from .services import reserve_court, get_available_slots
 from .services import cancel_booking_as_staff
 import qrcode
@@ -135,6 +134,10 @@ def api_get_user_balance(request):
 
 @login_required
 def api_create_booking(request):
+    if not request.user.is_authenticated:
+        messages.error(request, "請先登入後繼續後續動作")
+        redirect(reverse('login'))
+
     """執行預約動作"""
     if request.method != "POST":
         return JsonResponse({"status": "error", "msg": "不支援的方法"}, status=405)
@@ -190,7 +193,6 @@ def api_create_booking(request):
 
 
 @login_required
-@login_required
 def topup_page(request):
     gym_id = request.GET.get('gym_id')
     gym = None
@@ -202,7 +204,13 @@ def topup_page(request):
     if gym is None:
         gym = Gym.objects.first()
     now = timezone.now()
-    TopupPlan.objects.filter(gym=gym, is_active=True, active_end__isnull=False, active_end__lt=now).update(is_active=False)
+    TopupPlan.objects.filter(
+        gym=gym,
+        is_active=True,
+        active_end__isnull=False,
+        active_end__lt=now,
+        deactivated_at__isnull=True,
+    ).update(is_active=False, deactivated_at=now)
     plans = TopupPlan.objects.filter(
         gym=gym,
         is_active=True
@@ -239,7 +247,13 @@ def api_create_topup_order(request):
 
         # 直接從 DB 取值防止前端竄改金額
         now = timezone.now()
-        TopupPlan.objects.filter(gym_id=gym_id, is_active=True, active_end__isnull=False, active_end__lt=now).update(is_active=False)
+        TopupPlan.objects.filter(
+            gym_id=gym_id,
+            is_active=True,
+            active_end__isnull=False,
+            active_end__lt=now,
+            deactivated_at__isnull=True,
+        ).update(is_active=False, deactivated_at=now)
         plan = TopupPlan.objects.filter(
             id=plan_id,
             gym_id=gym_id,
@@ -585,15 +599,44 @@ def staff_topup_plans(request):
         gym=selected_gym_role.gym,
         is_active=True,
         active_end__isnull=False,
-        active_end__lt=now
-    ).update(is_active=False)
-    plans = TopupPlan.objects.filter(gym=selected_gym_role.gym).order_by('-is_active', 'amount')
+        active_end__lt=now,
+        deactivated_at__isnull=True,
+    ).update(is_active=False, deactivated_at=now)
+    plans = TopupPlan.objects.filter(gym=selected_gym_role.gym).annotate(
+        purchase_count=Count('topuporder', filter=Q(topuporder__status='success'))
+    ).order_by('-is_active', 'amount')
     return render(request, 'badminton_court_management/staff/topup_plans.html', {
         'gym_roles': gyms_qs,
         'selected_gym_role': selected_gym_role,
         'selected_gym': selected_gym_role.gym,
         'plans': plans,
     })
+
+
+@login_required
+@require_active_gym_staff
+@transaction.atomic
+def staff_topup_plan_deactivate(request, plan_id):
+    if request.method != 'POST':
+        raise PermissionDenied
+
+    plan = TopupPlan.objects.select_for_update().select_related('gym').filter(id=plan_id).first()
+    if not plan:
+        messages.error(request, "找不到方案。")
+        return redirect('badminton_court_management:staff_gym_dashboard')
+
+    _require_role(request.user, plan.gym, [GymStaff.ROLE_ADMIN, GymStaff.ROLE_MANAGER])
+    if plan.is_active:
+        now = timezone.now()
+        plan.is_active = False
+        if plan.deactivated_at is None:
+            plan.deactivated_at = now
+        plan.save(update_fields=['is_active', 'deactivated_at'])
+        messages.success(request, "方案已停用。")
+    else:
+        messages.info(request, "方案已停用。")
+
+    return redirect(f"{reverse('badminton_court_management:staff_topup_plans')}?gym_id={plan.gym.id}")
 
 
 def topup_order_qrcode(request, order_id):

@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 
+{% block subtitle %}
+Staff Dashboard
+{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'badminton_court_management:booking_page' %}" class="text-decoration-none text-muted">Booking</a></li>
@@ -81,7 +84,7 @@
                                         <th>日期</th>
                                         <th>時間</th>
                                         <th>狀態</th>
-                                        <th class="text-end">操作</th>
+                                        <th class="text-end"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -99,7 +102,6 @@
                                                 <button class="btn btn-sm btn-outline-danger">取消</button>
                                             </form>
                                             {% else %}
-                                            <span class="text-muted small">無</span>
                                             {% endif %}
                                         </td>
                                     </tr>
@@ -125,7 +127,7 @@
                                         <th>應付金額</th>
                                         <th>狀態</th>
                                         <th>訂單時間</th>
-                                        <th class="text-end">操作</th>
+                                        <th class="text-end"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -135,7 +137,7 @@
                                         <td>{{ order.plan.name|default:"-" }}</td>
                                         <td>NT$ {{ order.amount }}</td>
                                         <td>{{ order.get_status_display }}</td>
-                                        <td>{{ order.created_at }}</td>
+                                        <td>{{ order.created_at|date:"Y/n/j H:i" }}</td>
                                         <td class="text-end">
                                             {% if order.status == 'pending' %}
                                             <a class="btn btn-sm btn-success" href="{% url 'badminton_court_management:staff_topup_verify' order.order_id %}">
@@ -148,7 +150,6 @@
                                             </form>
                                             {% endif %}
                                             {% else %}
-                                            <span class="text-muted small">無</span>
                                             {% endif %}
                                         </td>
                                     </tr>
