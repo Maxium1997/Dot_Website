@@ -6,7 +6,7 @@ Playground
 {% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{% url 'playground' %}">Playground</a></li>
+<li class="breadcrumb-item"><a href="{% url 'playground:index' %}">Playground</a></li>
 <li class="breadcrumb-item active" aria-current="page">URL to QR-code</li>
 {% endblock %}
 
@@ -48,7 +48,7 @@ Playground
     </div>
 
     <div class="mt-3 text-center">
-        <a href="{% url 'playground' %}" class="text-decoration-none">← 返回</a>
+        <a href="{% url 'playground:index' %}" class="text-decoration-none">← 返回</a>
     </div>
 </div>
 </div>
