@@ -36,7 +36,7 @@ urlpatterns = [
     # 處理 Django 內建登入 (如果 registration 沒寫 login，就由這裡提供)
     path('accounts/', include("django.contrib.auth.urls")),
     path('', include('organization.urls')),
-    path('', include('playground.urls')),
+    path("playground/", include("playground.urls")),
     path('coast_guard_mart/', include('coast_guard_mart.urls')),
     path('line_bot/', include('line_bot.urls')),
     path('badminton_court_management/', include('badminton_court_management.urls')),
