@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     'line_bot',
     'badminton_court_management',
     'ocean_station',
+    'security_scanner'
 ]
 
 SITE_ID = 1
