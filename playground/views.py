@@ -6,8 +6,8 @@ import zipfile
 import qrcode
 import requests
 from PIL import Image
-from pdf2docx import Converter
-from pdf2image import convert_from_path
+# from pdf2docx import Converter
+# from pdf2image import convert_from_path
 
 from io import BytesIO
 from django.http import HttpResponse
@@ -143,99 +143,3 @@ class URLtoQRcodeView(TemplateView):
             'url_text': url_text
         })
 
-
-def pdf_to_word(request):
-    error = ""
-    if request.method == "POST":
-        pdf_file = request.FILES.get("pdf_file")
-        if not pdf_file:
-            error = "請選擇 PDF 檔案"
-        elif not pdf_file.name.lower().endswith(".pdf"):
-            error = "檔案格式必須為 PDF"
-        elif pdf_file.size > 10 * 1024 * 1024:
-            error = "檔案大小超過 10MB 限制"
-        else:
-            pdf_path = ""
-            docx_path = ""
-            try:
-                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_pdf:
-                    pdf_path = tmp_pdf.name
-                    for chunk in pdf_file.chunks():
-                        tmp_pdf.write(chunk)
-                docx_path = os.path.splitext(pdf_path)[0] + ".docx"
-
-                converter = Converter(pdf_path)
-                try:
-                    converter.convert(docx_path)
-                finally:
-                    converter.close()
-
-                if not os.path.exists(docx_path) or os.path.getsize(docx_path) == 0:
-                    error = "轉換失敗，請確認 PDF 檔案格式"
-                    return render(request, "playground/pdf_to_word.html", {"error": error})
-
-                with open(docx_path, "rb") as docx_file:
-                    data = docx_file.read()
-
-                base_name = os.path.splitext(pdf_file.name)[0] or "converted"
-                response = HttpResponse(
-                    data,
-                    content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                )
-                response["Content-Disposition"] = f'attachment; filename="{base_name}.docx"'
-                return response
-            except Exception as exc:
-                error = "轉換失敗，請確認 PDF 檔案格式"
-                if getattr(request, "user", None) and request.user.is_staff:
-                    error = f"{error}（{exc}）"
-                print(f"PDF to Word Error: {exc}")
-            finally:
-                if pdf_path and os.path.exists(pdf_path):
-                    os.remove(pdf_path)
-                if docx_path and os.path.exists(docx_path):
-                    os.remove(docx_path)
-
-    return render(request, "playground/pdf_to_word.html", {"error": error})
-
-
-def pdf_to_image(request):
-    error = ""
-    if request.method == "POST":
-        pdf_file = request.FILES.get("pdf_file")
-        if not pdf_file:
-            error = "請選擇 PDF 檔案"
-        elif not pdf_file.name.lower().endswith(".pdf"):
-            error = "檔案格式必須為 PDF"
-        elif pdf_file.size > 10 * 1024 * 1024:
-            error = "檔案大小超過 10MB 限制"
-        else:
-            pdf_path = ""
-            try:
-                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_pdf:
-                    pdf_path = tmp_pdf.name
-                    for chunk in pdf_file.chunks():
-                        tmp_pdf.write(chunk)
-
-                images = convert_from_path(pdf_path, fmt="png")
-                if not images:
-                    error = "轉換失敗，請確認 PDF 檔案格式"
-                    return render(request, "playground/transfer/pdf_to_image.html", {"error": error})
-
-                base_name = os.path.splitext(pdf_file.name)[0] or "converted"
-                zip_buffer = BytesIO()
-                with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-                    for idx, img in enumerate(images, 1):
-                        img_buffer = BytesIO()
-                        img.save(img_buffer, format="PNG")
-                        zf.writestr(f"{base_name}_{idx:03}.png", img_buffer.getvalue())
-
-                response = HttpResponse(zip_buffer.getvalue(), content_type="application/zip")
-                response["Content-Disposition"] = f'attachment; filename="{base_name}_images.zip"'
-                return response
-            except Exception:
-                error = "轉換失敗，請確認 PDF 檔案格式"
-            finally:
-                if pdf_path and os.path.exists(pdf_path):
-                    os.remove(pdf_path)
-
-    return render(request, "playground/transfer/pdf_to_image.html", {"error": error})
