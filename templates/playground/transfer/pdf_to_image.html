@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block subtitle %}PDF to Image{% endblock %}
+{% block title %}PDF to Image{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'playground:index' %}">Playground</a></li>
+<li class="breadcrumb-item active" aria-current="page">PDF to Image</li>
+{% endblock %}
+
+{% block body %}
+<style>
+    .tool-card {
+        background: #ffffff;
+        border-radius: 18px;
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.05);
+        padding: 2rem;
+    }
+    .tool-note {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="tool-card">
+        <h3 class="mb-2">PDF to Image</h3>
+        <p class="tool-note">上傳 PDF（10MB 內），轉換完成後下載 ZIP 圖片檔。</p>
+
+        {% if error %}
+            <div class="alert alert-danger py-2" role="alert">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" class="mt-3">
+            {% csrf_token %}
+            <div class="row g-3 align-items-end">
+                <div class="col-md-9">
+                    <label class="form-label">選擇 PDF</label>
+                    <input type="file" name="pdf_file" class="form-control" accept="application/pdf" required>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">開始轉換</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

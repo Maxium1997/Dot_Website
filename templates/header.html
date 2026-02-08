@@ -16,10 +16,16 @@
                         <a class="nav-link nav-custom-link" href="{% url 'index' %}">HOME</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link nav-custom-link" href="{% url 'coast_guard_mart:product_list' %}">SHOP</a>
+                        <a class="nav-link nav-custom-link" href="{% url 'coast_guard_mart:product_list' %}">MART</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-custom-link" href="{% url 'playground:index' %}">TOOL</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link nav-custom-link" href="{% url 'badminton_court_management:booking_page' %}">SPORT</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-custom-link" href="{% url 'ocean_station:index' %}">STATION</a>
                     </li>
 
                     {% if request.user.is_superuser %}
