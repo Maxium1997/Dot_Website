@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import start_scan
+from .views import StartScanAPIView
 
 urlpatterns = [
-    path("scan/start/", start_scan),
+    path("start/", StartScanAPIView.as_view()),
 ]

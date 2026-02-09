@@ -42,6 +42,8 @@ urlpatterns = [
     path('badminton_court_management/', include('badminton_court_management.urls')),
     path('ocean_station/', include('ocean_station.urls')),
     path('security/', include("security_scanner.urls")),
+
+    path('api/scans/', include("security_scanner.urls")),
 ]+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 

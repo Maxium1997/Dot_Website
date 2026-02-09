@@ -77,7 +77,10 @@ INSTALLED_APPS = [
     'line_bot',
     'badminton_court_management',
     'ocean_station',
-    'security_scanner'
+
+    'security_scanner',
+    'rest_framework',
+    'corsheaders',
 ]
 
 SITE_ID = 1
@@ -97,6 +100,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'csp.middleware.CSPMiddleware',     # CSP
     'Dot_Website.security_middleware.SecurityHeadersMiddleware',  # 安全標頭  # 暫時註解
+    'corsheaders.middleware.CorsMiddleware',    # for security_scanner
 ]
 
 ROOT_URLCONF = 'Dot_Website.urls'
@@ -153,6 +157,12 @@ CSRF_TRUSTED_ORIGINS = [
     'https://DotWebsiteOfficial.pythonanywhere.com',
     'https://*.railway.app',
 ]
+
+# for security_scanner
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
+
 # 可從環境變數追加，例如：CSRF_TRUSTED_ORIGINS += os.getenv('CSRF_ORIGINS', '').split(',')
 _extra_csrf = os.getenv('CSRF_TRUSTED_ORIGINS', '')
 if _extra_csrf:

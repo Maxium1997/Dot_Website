@@ -3,10 +3,12 @@ from django.conf import settings
 
 
 class ScanTarget(models.Model):
-
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="scan_targets"
     )
     name = models.CharField(max_length=100)
     url = models.URLField()
