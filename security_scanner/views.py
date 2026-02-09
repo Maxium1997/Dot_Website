@@ -55,3 +55,19 @@ class ScanProgressAPIView(APIView):
             "progress": int(resp.json()["status"])
         })
 
+
+class ScanAlertsAPIView(APIView):
+    def get(self, request):
+        """
+        Fetch vulnerability alerts from OWASP ZAP.
+        """
+        resp = requests.get(
+            f"{ZAP_API}/JSON/core/view/alerts/"
+        )
+
+        data = resp.json()
+
+        return Response({
+            "alerts": data.get("alerts", [])
+        })
+
