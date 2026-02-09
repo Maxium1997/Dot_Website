@@ -2,7 +2,8 @@ import { useState } from "react";
 
 function App() {
   const [url, setUrl] = useState("");
-  const [result, setResult] = useState(null);
+  const [scanId, setScanId] = useState(null);
+  const [progress, setProgress] = useState(null);
 
   async function startScan() {
     const resp = await fetch("http://127.0.0.1:8000/api/scans/start/", {
@@ -12,7 +13,25 @@ function App() {
     });
 
     const data = await resp.json();
-    setResult(data);
+    setScanId(data.scan_id);
+
+    // 開始輪詢進度
+    pollProgress(data.scan_id);
+  }
+
+  async function pollProgress(id) {
+    const timer = setInterval(async () => {
+      const resp = await fetch(
+        `http://127.0.0.1:8000/api/scans/progress/${id}/`
+      );
+      const data = await resp.json();
+
+      setProgress(data.progress);
+
+      if (data.progress >= 100) {
+        clearInterval(timer);
+      }
+    }, 2000);
   }
 
   return (
@@ -25,12 +44,20 @@ function App() {
         onChange={(e) => setUrl(e.target.value)}
       />
 
-      <button onClick={startScan}>Start Scan</button>
+      <button onClick={startScan} style={{ marginLeft: 10 }}>
+        Start Scan
+      </button>
 
-      {result && (
-        <pre style={{ marginTop: 20 }}>
-          {JSON.stringify(result, null, 2)}
-        </pre>
+      {scanId && (
+        <p style={{ marginTop: 20 }}>
+          Scan ID: <b>{scanId}</b>
+        </p>
+      )}
+
+      {progress !== null && (
+        <p>
+          Progress: <b>{progress}%</b>
+        </p>
       )}
     </div>
   );
