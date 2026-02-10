@@ -1,4 +1,5 @@
 import requests
+from requests.exceptions import ConnectionError, Timeout
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -16,23 +17,57 @@ class StartScanAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Step 1: Access URL (add to Scan Tree)
-        requests.get(
-            f"{ZAP_API}/JSON/core/action/accessUrl/",
-            params={"url": url},
-        )
+        try:
+            # Step 1: Access URL (add to Scan Tree)
+            requests.get(
+                f"{ZAP_API}/JSON/core/action/accessUrl/",
+                params={"url": url},
+                timeout=5,
+            )
 
-        # Step 2: Start Active Scan
-        resp = requests.get(
-            f"{ZAP_API}/JSON/ascan/action/scan/",
-            params={"url": url},
-        )
+            # Step 2: Start Active Scan
+            resp = requests.get(
+                f"{ZAP_API}/JSON/ascan/action/scan/",
+                params={"url": url},
+                timeout=10,
+            )
 
-        data = resp.json()
+        except ConnectionError:
+            return Response(
+                {
+                    "error": "ZAP service is not running.",
+                    "hint": "Please run: docker-compose up -d"
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+
+        except Timeout:
+            return Response(
+                {
+                    "error": "ZAP request timed out.",
+                    "hint": "ZAP may still be starting up. Try again in a few seconds."
+                },
+                status=status.HTTP_504_GATEWAY_TIMEOUT
+            )
+
+        # Parse response safely
+        try:
+            data = resp.json()
+        except Exception:
+            return Response(
+                {
+                    "error": "Invalid response from ZAP",
+                    "raw": resp.text
+                },
+                status=status.HTTP_502_BAD_GATEWAY
+            )
 
         if "scan" not in data:
             return Response(
-                {"error": data},
+                {
+                    "error": "ZAP did not return a scan id",
+                    "zap_response": data
+                },
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -41,6 +76,7 @@ class StartScanAPIView(APIView):
             "target": url,
             "scan_id": data["scan"]
         })
+
 
 
 class ScanProgressAPIView(APIView):
