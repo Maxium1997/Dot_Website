@@ -6,7 +6,24 @@ function App() {
   const [progress, setProgress] = useState(null);
   const [alerts, setAlerts] = useState([]);
 
+  // filter state
+  const [riskFilter, setRiskFilter] = useState("All");
+
+  // Risk summary counts
+  const highCount = alerts.filter((a) => a.risk === "High").length;
+  const mediumCount = alerts.filter((a) => a.risk === "Medium").length;
+  const lowCount = alerts.filter((a) => a.risk === "Low").length;
+
+  // filtered alerts
+  const filteredAlerts =
+    riskFilter === "All"
+      ? alerts
+      : alerts.filter((a) => a.risk === riskFilter);
+
   async function startScan() {
+    setAlerts([]);
+    setProgress(null);
+
     const resp = await fetch("http://127.0.0.1:8000/api/scans/start/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -30,7 +47,7 @@ function App() {
 
       if (data.progress >= 100) {
         clearInterval(timer);
-        fetchAlerts(); //掃描完成後抓漏洞
+        fetchAlerts();
       }
     }, 2000);
   }
@@ -41,61 +58,130 @@ function App() {
     setAlerts(data.alerts);
   }
 
-  return (
-    <div style={{ padding: 40 }}>
-      <h1>Security Scanner Dashboard</h1>
+  // Card component
+  function RiskCard({ label, count }) {
+    const active = riskFilter === label;
 
-      <input
-        placeholder="https://example.com"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-      />
-
-      <button onClick={startScan} style={{ marginLeft: 10 }}>
-        Start Scan
+    return (
+      <button
+        onClick={() => setRiskFilter(label)}
+        className={`rounded-2xl p-6 shadow-sm border text-left transition
+        ${
+          active
+            ? "border-black bg-black text-white"
+            : "border-gray-200 bg-white hover:bg-gray-50"
+        }`}
+      >
+        <p className="text-sm font-medium">{label}</p>
+        <p className="text-3xl font-bold mt-2">{count}</p>
       </button>
+    );
+  }
 
-      {scanId && (
-        <p style={{ marginTop: 20 }}>
-          Scan ID: <b>{scanId}</b>
-        </p>
-      )}
+  return (
+    <div className="min-h-screen bg-gray-50 p-10">
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <h1 className="text-3xl font-bold mb-6">
+          Security Scanner Dashboard
+        </h1>
 
-      {progress !== null && (
-        <p>
-          Progress: <b>{progress}%</b>
-        </p>
-      )}
+        {/* Input */}
+        <div className="flex gap-3 mb-6">
+          <input
+            className="flex-1 rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+            placeholder="https://example.com"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
 
-      {/* 漏洞列表 */}
-      {alerts.length > 0 && (
-        <div style={{ marginTop: 30 }}>
-          <h2>Vulnerability Alerts</h2>
-
-          <table border="1" cellPadding="8">
-            <thead>
-              <tr>
-                <th>Risk</th>
-                <th>Name</th>
-                <th>URL</th>
-              </tr>
-            </thead>
-            <tbody>
-              {alerts.slice(0, 10).map((a, idx) => (
-                <tr key={idx}>
-                  <td>{a.risk}</td>
-                  <td>{a.name}</td>
-                  <td style={{ maxWidth: 400 }}>
-                    <a href={a.url} target="_blank">
-                      {a.url}
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <button
+            onClick={startScan}
+            className="rounded-xl bg-black text-white px-5 py-2 font-medium hover:bg-gray-800"
+          >
+            Start Scan
+          </button>
         </div>
-      )}
+
+        {/* Scan status */}
+        {scanId && (
+          <p className="text-sm text-gray-600 mb-2">
+            Scan ID: <b>{scanId}</b>
+          </p>
+        )}
+
+        {progress !== null && (
+          <p className="text-sm text-gray-600 mb-6">
+            Progress: <b>{progress}%</b>
+          </p>
+        )}
+
+        {/* Summary Cards */}
+        {alerts.length > 0 && (
+          <>
+            <div className="grid grid-cols-4 gap-4 mb-8">
+              <RiskCard label="All" count={alerts.length} />
+              <RiskCard label="High" count={highCount} />
+              <RiskCard label="Medium" count={mediumCount} />
+              <RiskCard label="Low" count={lowCount} />
+            </div>
+
+            {/* Alerts Table */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="p-5 border-b">
+                <h2 className="text-xl font-semibold">
+                  Vulnerability Alerts ({riskFilter})
+                </h2>
+              </div>
+
+              <table className="w-full text-sm">
+                <thead className="bg-gray-100 text-gray-600">
+                  <tr>
+                    <th className="text-left px-5 py-3">Risk</th>
+                    <th className="text-left px-5 py-3">Name</th>
+                    <th className="text-left px-5 py-3">URL</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {filteredAlerts.slice(0, 15).map((a, idx) => (
+                    <tr
+                      key={idx}
+                      className="border-t hover:bg-gray-50"
+                    >
+                      <td className="px-5 py-3 font-medium">
+                        {a.risk}
+                      </td>
+                      <td className="px-5 py-3">{a.name}</td>
+                      <td className="px-5 py-3 truncate max-w-md">
+                        <a
+                          href={a.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {a.url}
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {filteredAlerts.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan="3"
+                        className="text-center py-6 text-gray-400"
+                      >
+                        No alerts found for this risk level.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
