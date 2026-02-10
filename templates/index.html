@@ -123,7 +123,7 @@ Dot Website
                 <div class="col-md-5 ps-md-5" data-aos="fade-left">
                     <span class="badge bg-primary mb-2">Shopping</span>
                     <h2 class="fw-bold display-6">Coast Guard Mart</h2>
-                    <p class="text-muted fs-5 my-4">專為海巡署同仁打造的數位化服裝訂購平台。</p>
+                    <p class="text-muted fs-5 my-4">專為海巡署同仁打造的數位化服裝訂購平台</p>
                     <a href="{% url 'coast_guard_mart:product_list' %}" class="btn btn-dark btn-custom">Explore Store</a>
                 </div>
             </div>
@@ -141,7 +141,7 @@ Dot Website
                 <div class="col-md-5 pe-md-5 text-md-end" data-aos="fade-right">
                     <span class="badge bg-success mb-2">Entertainment</span>
                     <h2 class="fw-bold display-6">Playground</h2>
-                    <p class="text-muted fs-5 my-4">發揮創意、探索各類小遊戲與創意。</p>
+                    <p class="text-muted fs-5 my-4">發揮創意、探索各類小遊戲與創意</p>
                     <a href="{% url 'playground:index' %}" class="btn btn-dark btn-custom">Start Playing</a>
                 </div>
             </div>
@@ -159,7 +159,7 @@ Dot Website
                 <div class="col-md-5 ps-md-5" data-aos="fade-left">
                     <span class="badge bg-warning text-dark mb-2">Sports</span>
                     <h2 class="fw-bold display-6">Badminton Court</h2>
-                    <p class="text-muted fs-5 my-4">流汗是最棒的舒壓！輕鬆預約場地，與好友來一場精彩的羽球對決。</p>
+                    <p class="text-muted fs-5 my-4">流汗是最棒的舒壓！輕鬆預約場地，與好友來一場精彩的羽球對決</p>
                     <a href="{% url 'badminton_court_management:booking_page' %}" class="btn btn-dark btn-custom">Book Now</a>
                 </div>
             </div>
@@ -177,8 +177,26 @@ Dot Website
                 <div class="col-md-5 pe-md-5 text-md-end" data-aos="fade-right">
                     <span class="badge bg-success mb-2">Relax</span>
                     <h2 class="fw-bold display-6">Ocean Station</h2>
-                    <p class="text-muted fs-5 my-4">推動全民海洋教育，向海學習發展。</p>
+                    <p class="text-muted fs-5 my-4">推動全民海洋教育，向海學習發展</p>
                     <a href="{% url 'ocean_station:index' %}" class="btn btn-dark btn-custom">Let's Go</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-5 bg-light-alt">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-7 mb-4 mb-md-0" data-aos="fade-up">
+                    <div class="hover-zoom shadow">
+                        <img src="{% static 'pic/index/find_problem.jpg' %}" class="img-fluid" alt="Badminton">
+                    </div>
+                </div>
+                <div class="col-md-5 ps-md-5" data-aos="fade-left">
+                    <span class="badge bg-warning text-dark mb-2">OWASP</span>
+                    <h2 class="fw-bold display-6">Security Scanner</h2>
+                    <p class="text-muted fs-5 my-4">結合 OWASP ZAP 與 React Dashboard，提供網站弱點掃描與視覺化報告</p>
+                    <a href="{% url 'security_scanner:dashboard' %}" class="btn btn-dark btn-custom">Scan Dashboard</a>
                 </div>
             </div>
         </div>

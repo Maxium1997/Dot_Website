@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Security Scanner Dashboard
+{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item active" aria-current="page">Security Scanner</li>
+{% endblock %}
+
+
+{% block body %}
+<div class="container py-5">
+
+  <h1 class="fw-bold mb-4">
+    Security Scanner Dashboard
+  </h1>
+
+  <p class="text-muted">
+    This tool runs OWASP ZAP scans and shows vulnerability reports.
+  </p>
+
+  <hr class="my-4">
+
+  <!-- React Dashboard Entry -->
+  <a href="http://localhost:5173/"
+     target="_blank"
+     class="btn btn-dark btn-lg rounded-pill px-4">
+     🚀 Open React Dashboard
+  </a>
+
+</div>
+{% endblock %}

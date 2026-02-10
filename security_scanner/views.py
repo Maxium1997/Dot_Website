@@ -1,10 +1,16 @@
 import requests
+from django.views.generic import TemplateView
 from requests.exceptions import ConnectionError, Timeout
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
+
 ZAP_API = "http://localhost:8090"
+
+
+class ScannerDashboardView(TemplateView):
+    template_name = "security_scanner/dashboard.html"
 
 
 class StartScanAPIView(APIView):
