@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.conf import settings
 
@@ -26,6 +27,14 @@ class ScanResult(models.Model):
         related_name="results"
     )
 
+    # 唯一的掃描 ID（給前端用）
+    public_id = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        db_index=True
+    )
+
+    # ZAP session 內的 scan id（會重複）
     scan_id = models.CharField(max_length=50)
 
     high = models.IntegerField(default=0)

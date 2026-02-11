@@ -5,6 +5,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
+from .models import ScanTarget, ScanResult
+from urllib.parse import urlparse
+
 
 ZAP_API = "http://localhost:8090"
 
@@ -18,71 +21,66 @@ class StartScanAPIView(APIView):
         url = request.data.get("url")
 
         if not url:
-            return Response(
-                {"error": "Target URL is required"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Target URL is required"}, status=400)
+
+        parsed = urlparse(url)
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
 
         try:
-            # Step 1: Access URL (add to Scan Tree)
+            # 1) Reset session
+            requests.get(f"{ZAP_API}/JSON/core/action/newSession/", timeout=10)
+
+            # 2) Create DB target
+            target = ScanTarget.objects.create(
+                owner=None,
+                name=base_url,
+                url=base_url
+            )
+
+            # 3) Access URL (seed) → 不要太短 timeout
             requests.get(
                 f"{ZAP_API}/JSON/core/action/accessUrl/",
-                params={"url": url},
-                timeout=5,
+                params={"url": base_url},
+                timeout=30
             )
 
-            # Step 2: Start Active Scan
-            resp = requests.get(
+            # 4) Start Active Scan directly (不要 spider)
+            active_resp = requests.get(
                 f"{ZAP_API}/JSON/ascan/action/scan/",
-                params={"url": url},
-                timeout=10,
+                params={"url": base_url},
+                timeout=30
             )
 
-        except ConnectionError:
+            active_data = active_resp.json()
+            print("ZAP active scan response:", active_data)
+
+            if "scan" not in active_data:
+                return Response(
+                    {"error": "Active scan failed", "zap_response": active_data},
+                    status=400
+                )
+
+            scan_id = active_data["scan"]
+
+            # 5) Save placeholder
+            ScanResult.objects.create(target=target, scan_id=scan_id)
+
             return Response(
-                {
-                    "error": "ZAP service is not running.",
-                    "hint": "Please run: docker-compose up -d"
-                },
-                status=status.HTTP_503_SERVICE_UNAVAILABLE
+                {"message": "Scan started!", "scan_id": scan_id, "base_url": base_url},
+                status=200
             )
 
         except Timeout:
             return Response(
                 {
-                    "error": "ZAP request timed out.",
-                    "hint": "ZAP may still be starting up. Try again in a few seconds."
+                    "error": "ZAP timed out starting scan",
+                    "hint": "Try scanning a smaller site or increase timeout"
                 },
-                status=status.HTTP_504_GATEWAY_TIMEOUT
+                status=504
             )
 
-        # Parse response safely
-        try:
-            data = resp.json()
-        except Exception:
-            return Response(
-                {
-                    "error": "Invalid response from ZAP",
-                    "raw": resp.text
-                },
-                status=status.HTTP_502_BAD_GATEWAY
-            )
-
-        if "scan" not in data:
-            return Response(
-                {
-                    "error": "ZAP did not return a scan id",
-                    "zap_response": data
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        return Response({
-            "message": "Scan started successfully!",
-            "target": url,
-            "scan_id": data["scan"]
-        })
-
+        except ConnectionError:
+            return Response({"error": "Cannot connect to ZAP"}, status=503)
 
 
 class ScanProgressAPIView(APIView):
@@ -112,4 +110,45 @@ class ScanAlertsAPIView(APIView):
         return Response({
             "alerts": data.get("alerts", [])
         })
+
+
+class FinalizeScanAPIView(APIView):
+    def post(self, request, scan_id):
+
+        # 不用 get()
+        result = (
+            ScanResult.objects
+            .filter(scan_id=scan_id)
+            .order_by("-id")
+            .first()
+        )
+
+        if not result:
+            return Response(
+                {"error": "ScanResult not found"},
+                status=404
+            )
+
+        resp = requests.get(f"{ZAP_API}/JSON/core/view/alerts/")
+        alerts = resp.json().get("alerts", [])
+
+        high = len([a for a in alerts if a["risk"] == "High"])
+        medium = len([a for a in alerts if a["risk"] == "Medium"])
+        low = len([a for a in alerts if a["risk"] == "Low"])
+
+        result.high = high
+        result.medium = medium
+        result.low = low
+        result.report_json = alerts
+        result.save()
+
+        return Response({
+            "message": "Scan saved successfully!",
+            "high": high,
+            "medium": medium,
+            "low": low,
+            "alerts": alerts
+        })
+
+
 

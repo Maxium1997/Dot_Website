@@ -6,7 +6,7 @@ function App() {
   const [progress, setProgress] = useState(null);
   const [alerts, setAlerts] = useState([]);
 
-  // filter state
+  // Filter state
   const [riskFilter, setRiskFilter] = useState("All");
 
   // Risk summary counts
@@ -14,15 +14,17 @@ function App() {
   const mediumCount = alerts.filter((a) => a.risk === "Medium").length;
   const lowCount = alerts.filter((a) => a.risk === "Low").length;
 
-  // filtered alerts
+  // Filtered alerts
   const filteredAlerts =
     riskFilter === "All"
       ? alerts
       : alerts.filter((a) => a.risk === riskFilter);
 
+  // ✅ Start Scan
   async function startScan() {
     setAlerts([]);
     setProgress(null);
+    setScanId(null);
 
     const resp = await fetch("http://127.0.0.1:8000/api/scans/start/", {
       method: "POST",
@@ -30,35 +32,66 @@ function App() {
       body: JSON.stringify({ url }),
     });
 
+    // ✅只讀一次 JSON（修掉 undefined bug）
     const data = await resp.json();
+
+    if (!resp.ok) {
+      alert("Scan failed:\n" + JSON.stringify(data, null, 2));
+      return;
+    }
+
+    console.log("StartScan response:", data);
+
+    if (!data.scan_id) {
+      alert("No scan_id returned:\n" + JSON.stringify(data, null, 2));
+      return;
+    }
+
     setScanId(data.scan_id);
 
+    // Start polling progress
     pollProgress(data.scan_id);
   }
 
-  async function pollProgress(id) {
+  // ✅ Poll Progress
+  function pollProgress(id) {
     const timer = setInterval(async () => {
       const resp = await fetch(
         `http://127.0.0.1:8000/api/scans/progress/${id}/`
       );
+
       const data = await resp.json();
+
+      if (!resp.ok) {
+        alert("Progress error:\n" + JSON.stringify(data, null, 2));
+        clearInterval(timer);
+        return;
+      }
 
       setProgress(data.progress);
 
+      // ✅ Scan finished → finalize + save DB
       if (data.progress >= 100) {
         clearInterval(timer);
-        fetchAlerts();
+
+        const resp2 = await fetch(
+          `http://127.0.0.1:8000/api/scans/finalize/${id}/`,
+          { method: "POST" }
+        );
+
+        const finalData = await resp2.json();
+
+        if (!resp2.ok) {
+          alert("Finalize error:\n" + JSON.stringify(finalData, null, 2));
+          return;
+        }
+
+        setAlerts(finalData.alerts);
       }
     }, 2000);
   }
 
-  async function fetchAlerts() {
-    const resp = await fetch("http://127.0.0.1:8000/api/scans/alerts/");
-    const data = await resp.json();
-    setAlerts(data.alerts);
-  }
-
-  // Card component
+  // ✅ Card Component
   function RiskCard({ label, count }) {
     const active = riskFilter === label;
 
@@ -66,11 +99,11 @@ function App() {
       <button
         onClick={() => setRiskFilter(label)}
         className={`rounded-2xl p-6 shadow-sm border text-left transition
-        ${
-          active
-            ? "border-black bg-black text-white"
-            : "border-gray-200 bg-white hover:bg-gray-50"
-        }`}
+          ${
+            active
+              ? "border-black bg-black text-white"
+              : "border-gray-200 bg-white hover:bg-gray-50"
+          }`}
       >
         <p className="text-sm font-medium">{label}</p>
         <p className="text-3xl font-bold mt-2">{count}</p>
@@ -89,7 +122,8 @@ function App() {
         {/* Input */}
         <div className="flex gap-3 mb-6">
           <input
-            className="flex-1 rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+            className="flex-1 rounded-xl border border-gray-300 px-4 py-2
+              focus:outline-none focus:ring-2 focus:ring-black"
             placeholder="https://example.com"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -97,13 +131,14 @@ function App() {
 
           <button
             onClick={startScan}
-            className="rounded-xl bg-black text-white px-5 py-2 font-medium hover:bg-gray-800"
+            className="rounded-xl bg-black text-white px-5 py-2
+              font-medium hover:bg-gray-800"
           >
             Start Scan
           </button>
         </div>
 
-        {/* Scan status */}
+        {/* Scan Status */}
         {scanId && (
           <p className="text-sm text-gray-600 mb-2">
             Scan ID: <b>{scanId}</b>
@@ -145,13 +180,8 @@ function App() {
 
                 <tbody>
                   {filteredAlerts.slice(0, 15).map((a, idx) => (
-                    <tr
-                      key={idx}
-                      className="border-t hover:bg-gray-50"
-                    >
-                      <td className="px-5 py-3 font-medium">
-                        {a.risk}
-                      </td>
+                    <tr key={idx} className="border-t hover:bg-gray-50">
+                      <td className="px-5 py-3 font-medium">{a.risk}</td>
                       <td className="px-5 py-3">{a.name}</td>
                       <td className="px-5 py-3 truncate max-w-md">
                         <a
