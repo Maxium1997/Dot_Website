@@ -5,6 +5,24 @@
 Dot Website
 {% endblock %}
 
+{% block meta_description %}Dot Website 個人作品集，包含 Coast Guard Mart 服裝籌補、Badminton Court 場地預約、Ocean Station 海洋驛站與多元實驗功能。{% endblock %}
+
+{% block og_title %}Dot Website｜個人作品集{% endblock %}
+{% block og_description %}探索 Coast Guard Mart、Badminton Court Booking、Ocean Station 海洋驛站與多元實驗工具。{% endblock %}
+
+{% block extra_meta %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Dot Website",
+  "url": "{{ request.scheme }}://{{ request.get_host }}",
+  "description": "Dot Website 個人作品集，包含 Coast Guard Mart 服裝籌補、Badminton Court 場地預約、Ocean Station 海洋驛站與多元實驗功能。",
+  "inLanguage": "zh-Hant"
+}
+</script>
+{% endblock %}
+
 {% block body %}
 <div class="container-fluid p-0">
     <style>
@@ -66,6 +84,9 @@ Dot Website
                     </h1>
                     <p class="hero-subtitle lead text-muted mt-3 mx-auto ms-md-auto me-md-0" style="max-width: 300px;">
                         探索生活中的樂趣。
+                    </p>
+                    <p class="text-muted small mt-2 mx-auto ms-md-auto me-md-0" style="max-width: 360px;">
+                        Django 個人作品集，涵蓋 Coast Guard Mart 服裝籌補、Badminton Court 場地預約、Ocean Station 海洋驛站。
                     </p>
                 </div>
 

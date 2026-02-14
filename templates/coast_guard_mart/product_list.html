@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block subtitle %}Coast Guard Mart{% endblock %}
+{% block meta_description %}Coast Guard Mart 服裝籌補平台，提供商品瀏覽、下單與個人福利金管理。{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item active" aria-current="page">Coast Guard Mart</li>
@@ -77,6 +78,9 @@
 </style>
 
 <div class="container mt-4">
+    <div class="text-muted small mb-3">
+        Coast Guard Mart 服裝籌補平台，提供商品瀏覽、下單與福利金管理。
+    </div>
     <div class="row">
         <div class="col-12 mb-3">
             {% if user.is_authenticated %}

@@ -22,7 +22,11 @@ from django.conf.urls.static import static
 # Register security audit signal handlers (NIST/ISO)
 import Dot_Website.security_signals  # noqa: F401, E402
 
+from website.views import robots_txt, sitemap_xml
+
 urlpatterns = [
+    path("robots.txt", robots_txt, name="robots_txt"),
+    path("sitemap.xml", sitemap_xml, name="sitemap"),
     path('', include('website.urls')),
 
     path('admin/', admin.site.urls),

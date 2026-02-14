@@ -2,6 +2,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>
+        {% block page_title %}
+        {% block subtitle %}{% endblock %}
+        {% block title %}{% endblock %}・Dot Website
+        {% endblock %}
+    </title>
+    <meta name="description" content="{% block meta_description %}Dot Website 提供海洋驛站、抽獎遊戲、LINE Bot 與多元工具服務。{% endblock %}">
+    <meta name="robots" content="index, follow">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Dot Website">
+    <meta property="og:title" content="{% block og_title %}Dot Website{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Dot Website 提供海洋驛站、抽獎遊戲、LINE Bot 與多元工具服務。{% endblock %}">
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'pic/index/carousel.jpg' %}">
+    <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
+    <meta name="google-site-verification" content="yZLVeF9I_z1nJTb6yn9jtNJViqJ0Bb5vYSm0SCvwVhY">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}Dot Website{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Dot Website 提供海洋驛站、抽獎遊戲、LINE Bot 與多元工具服務。{% endblock %}">
+    <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'pic/index/carousel.jpg' %}">
+    <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="{% url 'sitemap' %}">
+    {% block extra_meta %}{% endblock %}
     <link rel="icon" href="{% static 'favicon.ico' %}" sizes="any">
     <link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png' %}">
     <link rel="apple-touch-icon-precomposed" href="{% static 'apple-touch-icon-precomposed.png' %}">
