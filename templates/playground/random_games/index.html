@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block subtitle %}
+Playground
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'playground:index' %}">Playground</a></li>
+<li class="breadcrumb-item active" aria-current="page">隨機遊戲</li>
+{% endblock %}
+
+{% block body %}
+<style>
+    .random-card {
+        border-radius: 18px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        height: 100%;
+    }
+
+    .random-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 16px 28px rgba(0, 0, 0, 0.12);
+    }
+
+    .random-card .card-body {
+        min-height: 150px;
+    }
+
+    .random-card-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        background: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h3 class="mb-1">隨機遊戲</h3>
+            <p class="text-muted mb-0">骰子與抽獎機，快速啟動隨機互動。</p>
+        </div>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+        <div class="col-6 col-md-3">
+            <a class="card random-card text-decoration-none" href="{% url 'playground:random_games_dice' %}">
+                <div class="card-body text-center">
+                    <div class="random-card-icon mb-3">D</div>
+                    <h5 class="card-title mb-2">骰子</h5>
+                    <p class="text-muted small mb-0">1~10 顆骰子即時擲出。</p>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a class="card random-card text-decoration-none" href="{% url 'playground:random_games_raffle' %}">
+                <div class="card-body text-center">
+                    <div class="random-card-icon mb-3">R</div>
+                    <h5 class="card-title mb-2">抽獎機</h5>
+                    <p class="text-muted small mb-0">滾筒動畫抽出中獎項目。</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="mt-4 text-center">
+        <a href="{% url 'playground:index' %}" class="text-decoration-none">← 返回</a>
+    </div>
+</div>
+{% endblock %}

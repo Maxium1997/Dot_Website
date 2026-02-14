@@ -1,0 +1,541 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block subtitle %}
+Playground
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'playground:index' %}">Playground</a></li>
+<li class="breadcrumb-item"><a href="{% url 'playground:random_games' %}">隨機遊戲</a></li>
+<li class="breadcrumb-item active" aria-current="page">抽獎機</li>
+{% endblock %}
+
+{% block body %}
+<style>
+    .raffle-shell {
+        border-radius: 18px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        background: #ffffff;
+    }
+
+    .raffle-window {
+        border-radius: 16px;
+        border: 1px dashed rgba(0, 0, 0, 0.12);
+        background: linear-gradient(160deg, #f8f9fb, #ffffff);
+        padding: 18px;
+        min-height: 260px;
+    }
+
+    .raffle-lines {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        transition: transform 2s ease-out;
+        will-change: transform;
+    }
+
+    .raffle-line {
+        background: transparent;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-weight: 600;
+        color: #334155;
+        text-align: center;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .raffle-line.is-winner {
+        color: #0d6efd;
+        text-shadow: 0 0 12px rgba(13, 110, 253, 0.35);
+    }
+
+    .slot-window {
+        border-radius: 18px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        background: linear-gradient(180deg, #f7f6f2 0%, #ffffff 35%, #f3f6ff 70%, #f7f6f2 100%);
+        padding: 10px;
+        position: relative;
+        overflow: hidden;
+        height: 200px;
+    }
+
+    .slot-window::before,
+    .slot-window::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 40px;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .slot-window::before {
+        top: 0;
+        background: linear-gradient(180deg, rgba(247, 246, 242, 0.9), rgba(247, 246, 242, 0));
+    }
+
+    .slot-window::after {
+        bottom: 0;
+        background: linear-gradient(0deg, rgba(247, 246, 242, 0.9), rgba(247, 246, 242, 0));
+    }
+
+    .slot-highlight {
+        position: absolute;
+        left: 16px;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 56px;
+        border-radius: 12px;
+        background: rgba(13, 110, 253, 0.08);
+        border: 1px solid rgba(13, 110, 253, 0.3);
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    .raffle-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .raffle-badge {
+        background: rgba(13, 110, 253, 0.08);
+        color: #0d6efd;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .raffle-muted {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .history-list {
+        padding-left: 18px;
+        margin: 0;
+    }
+
+    .history-list li {
+        padding: 6px 0;
+        font-weight: 600;
+        color: #198754;
+    }
+
+    .modal {
+        z-index: 1060;
+    }
+
+    .modal-backdrop {
+        z-index: 1050;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h3 class="mb-1">抽獎機</h3>
+            <p class="text-muted mb-0">貼上清單，立即抽出中獎者。</p>
+        </div>
+        <a href="{% url 'playground:random_games' %}" class="text-decoration-none">← 返回</a>
+    </div>
+
+    <div class="raffle-shell p-3">
+        <ul class="nav nav-tabs" id="raffle-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="raffle-input-tab" data-bs-toggle="tab" data-bs-target="#raffle-input" type="button" role="tab" aria-controls="raffle-input" aria-selected="true">輸入清單</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="raffle-draw-tab" data-bs-toggle="tab" data-bs-target="#raffle-draw" type="button" role="tab" aria-controls="raffle-draw" aria-selected="false">滾筒抽獎</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="raffle-history-tab" data-bs-toggle="tab" data-bs-target="#raffle-history" type="button" role="tab" aria-controls="raffle-history" aria-selected="false">中獎記錄</button>
+            </li>
+        </ul>
+        <div class="tab-content p-3">
+            <div class="tab-pane fade show active" id="raffle-input" role="tabpanel" aria-labelledby="raffle-input-tab" tabindex="0">
+                <div class="row g-3">
+                    <div class="col-lg-7">
+                        <label for="raffle-input-text" class="form-label">抽獎項目清單</label>
+                        <textarea id="raffle-input-text" class="form-control" rows="7" placeholder="輸入項目，以空格、換行或逗號分隔"></textarea>
+                        <div class="form-text" id="raffle-input-hint">修改清單會重置抽獎結果。</div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="raffle-reset-button">重設清單</button>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="mb-2 fw-semibold">解析後項目 (<span id="raffle-count">0</span>)</div>
+                        <div id="raffle-badges" class="raffle-badges mb-3"></div>
+                        <div class="raffle-muted" id="raffle-empty-hint">尚未輸入項目。</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="raffle-draw" role="tabpanel" aria-labelledby="raffle-draw-tab" tabindex="0">
+                <div class="row g-3">
+                    <div class="col-lg-4">
+                        <div class="mb-3">
+                            <div class="d-flex flex-wrap gap-3">
+                                <div>
+                                    <div class="fw-semibold mb-1">目前可抽</div>
+                                    <div class="display-6 text-primary" id="raffle-remaining">0</div>
+                                    <div class="raffle-muted">抽獎項目數量</div>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold mb-1">已抽數量</div>
+                                    <div class="display-6 text-success" id="raffle-drawn-count">0</div>
+                                    <div class="raffle-muted">已完成抽出項目</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="raffle-muted mt-2" id="raffle-status">準備就緒。</div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="raffle-window">
+                            <div class="slot-window">
+                                <ul id="raffle-reel" class="raffle-lines"></ul>
+                                <div class="slot-highlight"></div>
+                            </div>
+                            <button type="button" class="btn btn-primary w-100 mt-3" id="raffle-draw-button">開始抽獎</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="raffle-history" role="tabpanel" aria-labelledby="raffle-history-tab" tabindex="0">
+                <div class="fw-semibold mb-2">中獎順序</div>
+                <ol class="history-list" id="raffle-history-list"></ol>
+                <div class="raffle-muted" id="raffle-history-empty">尚無中獎記錄。</div>
+                <hr class="my-3">
+                <div class="fw-semibold mb-2">得獎群組</div>
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control" id="raffle-group-name" placeholder="群組名稱">
+                    <button type="button" class="btn btn-outline-primary" id="raffle-group-add">加入得獎群組</button>
+                </div>
+                <div class="raffle-muted mb-2">將目前中獎名單批次加入群組。</div>
+                <div id="raffle-group-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="raffle-reset-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">重設清單</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                是否重設清單及所有抽獎結果？
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="raffle-reset-confirm">確認重設</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const inputText = document.getElementById('raffle-input-text');
+    const badges = document.getElementById('raffle-badges');
+    const countLabel = document.getElementById('raffle-count');
+    const emptyHint = document.getElementById('raffle-empty-hint');
+    const inputHint = document.getElementById('raffle-input-hint');
+    const resetButton = document.getElementById('raffle-reset-button');
+    const resetConfirm = document.getElementById('raffle-reset-confirm');
+    const resetModalElement = document.getElementById('raffle-reset-modal');
+    const remainingLabel = document.getElementById('raffle-remaining');
+    const drawnLabel = document.getElementById('raffle-drawn-count');
+    const drawButton = document.getElementById('raffle-draw-button');
+    const statusLabel = document.getElementById('raffle-status');
+    const reel = document.getElementById('raffle-reel');
+    const historyList = document.getElementById('raffle-history-list');
+    const historyEmpty = document.getElementById('raffle-history-empty');
+    const groupNameInput = document.getElementById('raffle-group-name');
+    const groupAddButton = document.getElementById('raffle-group-add');
+    const groupList = document.getElementById('raffle-group-list');
+
+    const reelLines = 3;
+    const reelLineHeight = 62;
+    let sourceItems = [];
+    let remainingItems = [];
+    let historyItems = [];
+    let groupItems = [];
+    let totalDrawn = 0;
+    let isInputLocked = false;
+    let reelTimer = null;
+
+    const parseItems = (raw) => raw
+        .split(/[\s,]+/)
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0);
+
+    const updateBadges = () => {
+        badges.innerHTML = '';
+        if (sourceItems.length === 0) {
+            emptyHint.style.display = 'block';
+            return;
+        }
+        emptyHint.style.display = 'none';
+        sourceItems.forEach((item) => {
+            const badge = document.createElement('span');
+            badge.className = 'raffle-badge';
+            badge.textContent = item;
+            badges.appendChild(badge);
+        });
+    };
+
+    const updateRemaining = () => {
+        remainingLabel.textContent = remainingItems.length;
+        drawnLabel.textContent = totalDrawn;
+        drawButton.disabled = remainingItems.length === 0;
+        if (remainingItems.length === 0) {
+            statusLabel.textContent = '已抽完。';
+        } else {
+            statusLabel.textContent = '準備就緒。';
+        }
+    };
+
+    const updateHistory = () => {
+        historyList.innerHTML = '';
+        if (historyItems.length === 0) {
+            historyEmpty.style.display = 'block';
+            return;
+        }
+        historyEmpty.style.display = 'none';
+        historyItems.forEach((item) => {
+            const entry = document.createElement('li');
+            entry.textContent = item;
+            historyList.appendChild(entry);
+        });
+    };
+
+    const renderGroups = () => {
+        groupList.innerHTML = '';
+        if (groupItems.length === 0) {
+            return;
+        }
+        groupItems.forEach((group) => {
+            const card = document.createElement('div');
+            card.className = 'border rounded p-2 mb-2';
+            const title = document.createElement('div');
+            title.className = 'fw-semibold mb-1';
+            title.textContent = group.name;
+            const list = document.createElement('div');
+            list.className = 'raffle-muted';
+            list.textContent = group.items.join('、');
+            card.appendChild(title);
+            card.appendChild(list);
+            groupList.appendChild(card);
+        });
+    };
+
+    const fitText = (element) => {
+        const baseSize = 17;
+        const minSize = 11;
+        let size = baseSize;
+        element.style.fontSize = `${size}px`;
+        element.style.whiteSpace = 'nowrap';
+        element.style.overflow = 'hidden';
+        element.style.textOverflow = 'ellipsis';
+
+        while (size > minSize && element.scrollWidth > element.clientWidth) {
+            size -= 1;
+            element.style.fontSize = `${size}px`;
+        }
+    };
+
+    const renderReel = (items, highlightIndex = -1) => {
+        reel.innerHTML = '';
+        reel.style.transform = 'translateY(0)';
+        reel.style.transition = 'none';
+        if (!items.length) {
+            const line = document.createElement('li');
+            line.className = 'raffle-line';
+            line.textContent = '請先輸入抽獎項目';
+            reel.appendChild(line);
+            fitText(line);
+            reel.style.transition = '';
+            return;
+        }
+        items.forEach((item, index) => {
+            const line = document.createElement('li');
+            line.className = 'raffle-line';
+            if (index === highlightIndex) {
+                line.classList.add('is-winner');
+            }
+            line.textContent = item;
+            reel.appendChild(line);
+            fitText(line);
+        });
+        reel.style.transition = '';
+    };
+
+    const buildReelPreview = () => {
+        if (remainingItems.length === 0) {
+            renderReel([]);
+            return;
+        }
+        const preview = [];
+        for (let i = 0; i < reelLines; i += 1) {
+            preview.push(remainingItems[i % remainingItems.length]);
+        }
+        renderReel(preview, Math.floor(reelLines / 2));
+    };
+
+    const syncFromInput = () => {
+        if (isInputLocked) {
+            return;
+        }
+        sourceItems = parseItems(inputText.value);
+        remainingItems = [...sourceItems];
+        historyItems = [];
+        countLabel.textContent = sourceItems.length;
+        updateBadges();
+        updateRemaining();
+        updateHistory();
+        buildReelPreview();
+    };
+
+    const spinOnce = () => {
+        if (remainingItems.length === 0) {
+            updateRemaining();
+            buildReelPreview();
+            return;
+        }
+        if (drawButton.disabled) {
+            return;
+        }
+
+        if (!isInputLocked) {
+            isInputLocked = true;
+            inputText.disabled = true;
+            inputHint.textContent = '已鎖定清單，請使用重設清單重新開始。';
+        }
+
+        drawButton.disabled = true;
+        statusLabel.textContent = '抽獎中...';
+
+        if (reelTimer) {
+            clearInterval(reelTimer);
+        }
+
+        const winnerIndex = Math.floor(Math.random() * remainingItems.length);
+        const winner = remainingItems[winnerIndex];
+        remainingItems.splice(winnerIndex, 1);
+        historyItems.push(winner);
+        totalDrawn += 1;
+
+        const reelItems = [];
+        const spinCount = 18;
+        const tailCount = reelLines + 1;
+        for (let i = 0; i < spinCount; i += 1) {
+            const item = remainingItems.length === 0
+                ? winner
+                : remainingItems[Math.floor(Math.random() * remainingItems.length)];
+            reelItems.push(item);
+        }
+        reelItems.push(winner);
+        for (let i = 0; i < tailCount; i += 1) {
+            const item = remainingItems.length === 0
+                ? winner
+                : remainingItems[Math.floor(Math.random() * remainingItems.length)];
+            reelItems.push(item);
+        }
+
+        const highlightIndex = Math.floor(reelLines / 2);
+        renderReel(reelItems);
+
+        const targetIndex = spinCount;
+        const offset = (targetIndex - highlightIndex) * reelLineHeight;
+
+        requestAnimationFrame(() => {
+            reel.style.transition = 'transform 2s ease-out';
+            reel.style.transform = `translateY(-${offset}px)`;
+        });
+
+        const onReelStop = () => {
+            reel.removeEventListener('transitionend', onReelStop);
+            const reelEntries = reel.querySelectorAll('.raffle-line');
+            reelEntries.forEach((entry) => entry.classList.remove('is-winner'));
+            if (reelEntries[targetIndex]) {
+                reelEntries[targetIndex].classList.add('is-winner');
+            }
+
+            updateRemaining();
+            updateHistory();
+            if (remainingItems.length === 0) {
+                statusLabel.textContent = '已抽完。';
+            } else {
+                statusLabel.textContent = `本次中獎：${winner}`;
+            }
+            drawButton.disabled = remainingItems.length === 0;
+        };
+
+        reel.addEventListener('transitionend', onReelStop);
+    };
+
+    const resetRaffle = () => {
+        inputText.value = '';
+        sourceItems = [];
+        remainingItems = [];
+        historyItems = [];
+        groupItems = [];
+        totalDrawn = 0;
+        isInputLocked = false;
+        inputText.disabled = false;
+        inputHint.textContent = '修改清單會重置抽獎結果。';
+        countLabel.textContent = '0';
+        updateBadges();
+        updateRemaining();
+        updateHistory();
+        renderGroups();
+        buildReelPreview();
+    };
+
+    resetButton.addEventListener('click', () => {
+        if (window.bootstrap && resetModalElement) {
+            document.body.appendChild(resetModalElement);
+            const modal = bootstrap.Modal.getOrCreateInstance(resetModalElement);
+            modal.show();
+        }
+    });
+
+    resetConfirm.addEventListener('click', () => {
+        resetRaffle();
+        if (window.bootstrap && resetModalElement) {
+            const modal = bootstrap.Modal.getOrCreateInstance(resetModalElement);
+            modal.hide();
+        }
+    });
+
+    groupAddButton.addEventListener('click', () => {
+        if (historyItems.length === 0) {
+            return;
+        }
+        const rawName = groupNameInput.value.trim();
+        const name = rawName || `群組 ${groupItems.length + 1}`;
+        groupItems.push({ name, items: [...historyItems] });
+        historyItems = [];
+        groupNameInput.value = '';
+        renderGroups();
+        updateHistory();
+        updateRemaining();
+    });
+
+    inputText.addEventListener('input', syncFromInput);
+    drawButton.addEventListener('click', spinOnce);
+
+    syncFromInput();
+</script>
+{% endblock %}

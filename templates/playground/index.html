@@ -116,6 +116,18 @@ Playground
                 </div>
             </a>
         </div>
+
+        <div class="col-lg-4 col-md-6 col-sm-12">
+            <a href="{% url 'playground:random_games' %}" class="card feature-card">
+                <div class="card-img-wrapper">
+                    <img src="{% static 'pic/playground/random.jpg' %}" alt="Random Games">
+                </div>
+                <div class="card-content text-center">
+                    <h5 class="card-title">隨機遊戲</h5>
+                    <p class="text-muted small mb-0">骰子與抽獎機，一鍵啟動隨機時刻。</p>
+                </div>
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block subtitle %}
+Playground
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'playground:index' %}">Playground</a></li>
+<li class="breadcrumb-item"><a href="{% url 'playground:random_games' %}">隨機遊戲</a></li>
+<li class="breadcrumb-item active" aria-current="page">骰子</li>
+{% endblock %}
+
+{% block body %}
+<style>
+    .dice-panel {
+        border-radius: 18px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        background: #fff;
+    }
+
+    .dice-tray {
+        min-height: 220px;
+        border-radius: 14px;
+        background: linear-gradient(145deg, #f2f4f7, #ffffff);
+        border: 1px dashed rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 12px;
+        padding: 16px;
+        position: relative;
+        overflow: hidden;
+        perspective: 800px;
+    }
+
+    .dice-go-overlay {
+        position: absolute;
+        inset: 0;
+        border: none;
+        border-radius: 14px;
+        background: rgba(13, 110, 253, 0.08);
+        color: #0d6efd;
+        font-size: 2.4rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+        cursor: pointer;
+        z-index: 2;
+    }
+
+    .dice-go-overlay:hover {
+        background: rgba(13, 110, 253, 0.18);
+        color: #0a58ca;
+    }
+
+    .dice-go-overlay:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .dice {
+        width: 64px;
+        height: 64px;
+        position: relative;
+    }
+
+    .cube {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transform-style: preserve-3d;
+        transition: transform 0.35s ease;
+    }
+
+    .dice.rolling .cube {
+        transition: transform 0.12s linear;
+    }
+
+    .dice.bounce .cube {
+        transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.2, 1.1);
+    }
+
+    .dice.bounce {
+        animation: dice-bounce 0.45s ease-out;
+    }
+
+    @keyframes dice-bounce {
+        0% { transform: translateY(0) scale(1); }
+        40% { transform: translateY(-8px) scale(1.02); }
+        70% { transform: translateY(4px) scale(0.98); }
+        100% { transform: translateY(0) scale(1); }
+    }
+
+    .face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 14px;
+        background: linear-gradient(145deg, #ffffff, #f2f4f7);
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.06);
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        padding: 10px;
+        backface-visibility: hidden;
+    }
+
+    .face.front { transform: translateZ(32px); }
+    .face.back { transform: rotateY(180deg) translateZ(32px); }
+    .face.right { transform: rotateY(90deg) translateZ(32px); }
+    .face.left { transform: rotateY(-90deg) translateZ(32px); }
+    .face.top { transform: rotateX(90deg) translateZ(32px); }
+    .face.bottom { transform: rotateX(-90deg) translateZ(32px); }
+
+    .pip {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #222;
+        align-self: center;
+        justify-self: center;
+    }
+
+    .sum-panel {
+        border-radius: 18px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        background: #f8f9fb;
+        padding: 24px;
+        height: 100%;
+    }
+
+    .sum-number {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #0d6efd;
+    }
+
+    .sum-subtext {
+        color: #6c757d;
+        font-size: 0.95rem;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h3 class="mb-1">骰子</h3>
+            <p class="text-muted mb-0">選擇骰子數量，快速擲出總和。</p>
+        </div>
+        <a href="{% url 'playground:random_games' %}" class="text-decoration-none">← 返回</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-md-8">
+            <div class="dice-panel p-3">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                    <div>
+                        <label for="dice-count" class="form-label mb-1">骰子數量</label>
+                        <select id="dice-count" class="form-select" style="width: 140px;">
+                            <option value="1">1 顆</option>
+                            <option value="2">2 顆</option>
+                            <option value="3">3 顆</option>
+                            <option value="4">4 顆</option>
+                            <option value="5">5 顆</option>
+                            <option value="6">6 顆</option>
+                            <option value="7">7 顆</option>
+                            <option value="8">8 顆</option>
+                            <option value="9">9 顆</option>
+                            <option value="10">10 顆</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="dice-tray" class="dice-tray">
+                    <div id="dice-list" class="d-flex flex-wrap gap-3"></div>
+                    <button type="button" id="roll-button" class="dice-go-overlay">GO</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="sum-panel d-flex flex-column justify-content-center align-items-center text-center">
+                <div class="sum-number" id="sum-number">0</div>
+                <div class="sum-subtext">本次總和</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const diceTray = document.getElementById('dice-tray');
+    const diceList = document.getElementById('dice-list');
+    const diceCount = document.getElementById('dice-count');
+    const rollButton = document.getElementById('roll-button');
+    const sumNumber = document.getElementById('sum-number');
+    const pipMap = {
+        1: [[2, 2]],
+        2: [[1, 1], [3, 3]],
+        3: [[1, 1], [2, 2], [3, 3]],
+        4: [[1, 1], [1, 3], [3, 1], [3, 3]],
+        5: [[1, 1], [1, 3], [2, 2], [3, 1], [3, 3]],
+        6: [[1, 1], [1, 3], [2, 1], [2, 3], [3, 1], [3, 3]]
+    };
+
+    const rollDuration = 1700;
+    const rollInterval = 120;
+
+    const createFace = (value, className) => {
+        const face = document.createElement('div');
+        face.className = `face ${className}`;
+        pipMap[value].forEach(([row, col]) => {
+            const pip = document.createElement('span');
+            pip.className = 'pip';
+            pip.style.gridRow = row;
+            pip.style.gridColumn = col;
+            face.appendChild(pip);
+        });
+        return face;
+    };
+
+    const createDice = (value) => {
+        const dice = document.createElement('div');
+        dice.className = 'dice';
+        const cube = document.createElement('div');
+        cube.className = 'cube';
+        cube.appendChild(createFace(1, 'front'));
+        cube.appendChild(createFace(6, 'back'));
+        cube.appendChild(createFace(3, 'right'));
+        cube.appendChild(createFace(4, 'left'));
+        cube.appendChild(createFace(5, 'top'));
+        cube.appendChild(createFace(2, 'bottom'));
+        dice.appendChild(cube);
+        updateDiceFace(dice, value);
+        return dice;
+    };
+
+    const rotationMap = {
+        1: { x: 0, y: 0 },
+        2: { x: 90, y: 0 },
+        3: { x: 0, y: -90 },
+        4: { x: 0, y: 90 },
+        5: { x: -90, y: 0 },
+        6: { x: 0, y: 180 }
+    };
+
+    const updateDiceFace = (dice, value) => {
+        const cube = dice.querySelector('.cube');
+        const { x, y } = rotationMap[value];
+        cube.style.transform = `rotateX(${x}deg) rotateY(${y}deg)`;
+        dice.dataset.value = value;
+    };
+
+    const randomSpin = (dice, intensity = 1) => {
+        const cube = dice.querySelector('.cube');
+        const spinX = Math.floor(Math.random() * 6) * 90 * intensity;
+        const spinY = Math.floor(Math.random() * 6) * 90 * intensity;
+        const tiltX = ((Math.random() * 10) - 5) * intensity;
+        const tiltY = ((Math.random() * 10) - 5) * intensity;
+        cube.style.transform = `rotateX(${spinX + tiltX}deg) rotateY(${spinY + tiltY}deg)`;
+    };
+
+    const randomValue = () => Math.floor(Math.random() * 6) + 1;
+
+    const updateSum = () => {
+        const values = [...diceList.querySelectorAll('.dice')].map((dice) => Number(dice.dataset.value) || 0);
+        const total = values.reduce((sum, value) => sum + value, 0);
+        sumNumber.textContent = total;
+    };
+
+    const populateDice = (count) => {
+        diceList.innerHTML = '';
+        for (let i = 0; i < count; i += 1) {
+            diceList.appendChild(createDice(randomValue()));
+        }
+        updateSum();
+    };
+
+    const rollDice = () => {
+        if (rollButton.disabled) {
+            return;
+        }
+        const diceItems = [...diceList.querySelectorAll('.dice')];
+        if (!diceItems.length) {
+            return;
+        }
+
+        rollButton.disabled = true;
+        diceItems.forEach((dice) => dice.classList.add('rolling'));
+
+        const startTime = Date.now();
+        const intervalId = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / rollDuration, 1);
+            const intensity = 1 - (progress * 0.6);
+            const driftRange = 12 * intensity;
+            diceItems.forEach((dice) => {
+                const dx = (Math.random() * driftRange * 2) - driftRange;
+                const dy = (Math.random() * driftRange * 2) - driftRange;
+                dice.style.transform = `translate(${dx}px, ${dy}px)`;
+                randomSpin(dice, intensity);
+                dice.dataset.value = randomValue();
+            });
+            if (progress >= 1) {
+                clearInterval(intervalId);
+                const finalValues = diceItems.map(() => randomValue());
+                diceItems.forEach((dice, index) => {
+                    dice.style.transform = '';
+                    updateDiceFace(dice, finalValues[index]);
+                    dice.classList.remove('rolling');
+                    dice.classList.add('bounce');
+                });
+                updateSum();
+                rollButton.disabled = false;
+                setTimeout(() => {
+                    diceItems.forEach((dice) => dice.classList.remove('bounce'));
+                }, 500);
+            }
+        }, rollInterval);
+    };
+
+    diceCount.addEventListener('change', (event) => {
+        const count = Number(event.target.value) || 1;
+        populateDice(count);
+    });
+
+    rollButton.addEventListener('click', rollDice);
+
+    populateDice(Number(diceCount.value));
+</script>
+{% endblock %}

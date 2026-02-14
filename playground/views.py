@@ -143,3 +143,14 @@ class URLtoQRcodeView(TemplateView):
             'url_text': url_text
         })
 
+
+class RandomGamesView(TemplateView):
+    template_name = 'playground/random_games/index.html'
+
+
+class DiceView(TemplateView):
+    template_name = 'playground/random_games/dice.html'
+
+
+class RaffleView(TemplateView):
+    template_name = 'playground/random_games/raffle.html'
