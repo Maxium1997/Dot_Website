@@ -1,0 +1,5 @@
+# Example for image: sample_001.jpg
+# Format per line: class_id x_center y_center width height (normalized 0-1)
+0 0.123 0.456 0.078 0.112
+30 0.321 0.502 0.075 0.108
+63 0.654 0.448 0.080 0.116
